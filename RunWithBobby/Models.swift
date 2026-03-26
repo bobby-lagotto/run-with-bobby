@@ -3,7 +3,7 @@ import SwiftUI
 
 // MARK: - Chat Models
 struct ChatMessage: Identifiable, Codable {
-    let id = UUID()
+    var id = UUID()
     var content: String
     var isFromUser: Bool
     var timestamp: Date
@@ -16,7 +16,7 @@ struct ChatMessage: Identifiable, Codable {
 }
 
 struct Conversation: Identifiable, Codable {
-    let id = UUID()
+    var id = UUID()
     var title: String
     var messages: [ChatMessage]
     var createdAt: Date
@@ -42,7 +42,7 @@ struct Conversation: Identifiable, Codable {
 
 // MARK: - Training Plan Models
 struct TrainingPlan: Identifiable, Codable {
-    let id = UUID()
+    var id = UUID()
     var title: String
     var weeklyPlan: [DayTraining]
     var userProfile: RunnerProfile
@@ -59,7 +59,7 @@ struct TrainingPlan: Identifiable, Codable {
 }
 
 struct DayTraining: Identifiable, Codable {
-    let id = UUID()
+    var id = UUID()
     var dayOfWeek: String
     var workoutType: WorkoutType
     var description: String
@@ -98,12 +98,23 @@ enum WorkoutType: String, CaseIterable, Codable {
     
     var color: Color {
         switch self {
-        case .rest: return .gray
-        case .easy: return .green
-        case .tempo: return .orange
-        case .intervals: return .red
-        case .long: return .purple
-        case .recovery: return .blue
+        case .rest: return .workoutRest
+        case .easy: return .workoutEasy
+        case .tempo: return .workoutTempo
+        case .intervals: return .workoutIntervals
+        case .long: return .workoutLong
+        case .recovery: return .workoutRecovery
+        }
+    }
+
+    var sfSymbol: String {
+        switch self {
+        case .rest: return "bed.double.fill"
+        case .easy: return "figure.walk"
+        case .tempo: return "figure.run"
+        case .intervals: return "bolt.fill"
+        case .long: return "figure.run.circle.fill"
+        case .recovery: return "leaf.fill"
         }
     }
 }

@@ -1,327 +1,330 @@
 import Foundation
-import MLX
-import MLXNN
 
 class BobbyAI: ObservableObject {
     @Published var isLoading = false
     @Published var errorMessage: String?
-    
-    private var model: MLXModel?
+    @Published var activeProviderName: String = ""
+
+    private var aiSettings: AISettings?
+    private var openAIProvider: OpenAIProvider?
+    // MLXProvider will be added when mlx-swift-examples is integrated
+    // private var mlxProvider: MLXProvider?
+    private var healthManager: HealthKitManager?
+
+    private let toolRouter = ToolRouter()
+    private let maxToolIterations = 3
+
     private let systemPrompt = """
-    Sei Bobby, un coach di corsa esperto e motivante. Sei specializzato nella creazione di piani di allenamento personalizzati per runner di ogni livello.
-    
+    Sei Bobby, un coach di corsa esperto e motivante. Parli italiano. Sei specializzato nella creazione di piani di allenamento personalizzati per runner di ogni livello.
+
     Le tue caratteristiche:
-    - Comunicazione diretta e motivante
+    - Comunicazione diretta, concisa e motivante
     - Conoscenza approfondita dell'allenamento della corsa
     - Capacità di adattare i piani in base al livello e agli obiettivi
     - Attenzione alla progressione graduale e alla prevenzione infortuni
-    
-    Quando generi un piano di allenamento, includi sempre:
-    - Giorni specifici della settimana
-    - Tipo di allenamento
-    - Distanza e ritmo
-    - Descrizione dettagliata di riscaldamento, lavoro e defaticamento
-    - Note motivazionali e tecniche
-    
-    Formato esempio:
-    LUNEDÌ — Riposo
-    Recupero completo. Al massimo una passeggiata.
-    
-    MARTEDÌ — Interval Training · 11 km
-    Riscaldamento: 2 km a 5:40/km...
-    
-    Adatta sempre il piano alle caratteristiche specifiche dell'utente.
+
+    REGOLE IMPORTANTI — SEGUI SEMPRE:
+    1. Quando l'utente chiede di creare, aggiornare o generare un piano, chiama SUBITO il tool "calculate_training_plan". NON chiedere ulteriori informazioni — usa il profilo utente già disponibile. NON inventare km o distanze.
+    2. Prima di calcolare il piano, chiama "get_user_profile" per avere i dati aggiornati dell'utente.
+    3. Dopo aver calcolato il piano, presentalo in formato chiaro:
+       GIORNO — Tipo Allenamento · Xkm
+       Descrizione dettagliata dell'allenamento
+    4. Dopo aver presentato il piano, chiama "save_training_plan" per salvarlo.
+    5. Se l'utente vuole modificare il piano attivo, usa "optimize_plan".
+    6. Se l'utente vuole vedere il piano corrente, usa "get_active_plan".
+    7. NON fare domande prima di usare i tools — agisci subito basandoti sui dati disponibili.
+    8. Quando l'utente chiede informazioni sulla salute, affaticamento, recupero, o vuole un'analisi del proprio stato fisico, chiama SUBITO "get_health_summary" per ottenere i dati reali da Apple Health (frequenza cardiaca, HRV, passi, sonno, allenamenti, VO2 Max, SpO2).
+    9. Se i dati Health mostrano segnali di sovrallenamento (FC a riposo alta, HRV basso, scarso sonno, calo delle prestazioni), suggerisci recupero attivo e riduci l'intensità del piano.
+    10. Quando analizzi i dati Health, sii specifico: cita i numeri reali e spiega cosa significano per il runner. Es: "La tua FC a riposo è 55bpm, ottimo indicatore di fitness cardiovascolare."
+
+    Rispondi SEMPRE in italiano. Sii conciso ma motivante.
     """
-    
-    init() {
-        loadModel()
+
+    // MARK: - Setup
+
+    func configure(with settings: AISettings, healthManager: HealthKitManager? = nil) {
+        self.aiSettings = settings
+        self.healthManager = healthManager
+        updateProvider()
     }
-    
-    private func loadModel() {
-        Task {
-            await MainActor.run {
-                isLoading = true
-                errorMessage = nil
-            }
-            
-            do {
-                // Carica un modello locale leggero (es. phi-3-mini o llama-3.2-1b)
-                // Per ora simuliamo il caricamento - in produzione caricheresti il modello MLX
-                try await Task.sleep(nanoseconds: 1_000_000_000) // 1 secondo
-                
-                await MainActor.run {
-                    isLoading = false
-                }
-            } catch {
-                await MainActor.run {
-                    isLoading = false
-                    errorMessage = "Errore nel caricamento del modello: \(error.localizedDescription)"
-                }
-            }
+
+    func updateProvider() {
+        guard let settings = aiSettings else { return }
+
+        // Setup OpenAI provider if API key available
+        if let apiKey = settings.openAIAPIKey, !apiKey.isEmpty {
+            openAIProvider = OpenAIProvider(apiKey: apiKey, model: settings.openAIModel)
+        } else {
+            openAIProvider = nil
+        }
+
+        // Update active provider name
+        if let provider = resolveProvider() {
+            activeProviderName = provider.providerName
+        } else {
+            activeProviderName = "Nessun provider"
         }
     }
-    
-    func generateResponse(to userMessage: String, userProfile: RunnerProfile, conversationHistory: [ChatMessage]) async -> String {
+
+    private func resolveProvider() -> LLMService? {
+        guard let settings = aiSettings else { return openAIProvider }
+
+        switch settings.providerType {
+        case .local:
+            // MLX provider will go here
+            return nil
+        case .openai:
+            return openAIProvider
+        case .auto:
+            // Try local first, then OpenAI
+            // For now, only OpenAI is available
+            return openAIProvider
+        }
+    }
+
+    // MARK: - Generate Response (Agent Loop)
+
+    func generateResponse(
+        to userMessage: String,
+        userProfile: RunnerProfile,
+        planManager: TrainingPlanManager,
+        conversationHistory: [ChatMessage]
+    ) async -> String {
         await MainActor.run {
             isLoading = true
+            errorMessage = nil
         }
-        
+
         defer {
-            Task {
-                await MainActor.run {
-                    isLoading = false
-                }
+            Task { @MainActor in
+                self.isLoading = false
             }
         }
-        
-        // Per ora usiamo una logica simulata - in produzione useresti MLX
-        return await generateSimulatedResponse(userMessage: userMessage, userProfile: userProfile)
+
+        guard let provider = resolveProvider() else {
+            let error = LLMError.noProviderAvailable
+            await MainActor.run { self.errorMessage = error.errorDescription }
+            return "⚙️ Per iniziare, configura il tuo assistente AI nelle impostazioni.\n\nPuoi:\n• Inserire la tua API key OpenAI\n• Scaricare un modello locale\n\nTocca il menu ⋯ in alto a destra → Impostazioni AI"
+        }
+
+        // Build conversation messages
+        var messages = buildMessages(userMessage: userMessage, userProfile: userProfile, conversationHistory: conversationHistory)
+
+        // Agent loop: generate → tool calls → execute → re-generate
+        for iteration in 0..<maxToolIterations {
+            do {
+                let response = try await provider.generate(
+                    messages: messages,
+                    toolDefinitions: ToolRouter.toolDefinitions
+                )
+
+                // If no tool calls, return the text response
+                if response.toolCalls.isEmpty {
+                    return response.text.trimmingCharacters(in: .whitespacesAndNewlines)
+                }
+
+                // Execute tool calls
+                var toolResults: [ToolResult] = []
+                for toolCall in response.toolCalls {
+                    let result = await toolRouter.execute(toolCall, userProfile: userProfile, planManager: planManager, healthManager: healthManager)
+                    toolResults.append(result)
+
+                    #if DEBUG
+                    print("🔧 Tool call: \(toolCall.name) → \(result.content.prefix(200))")
+                    #endif
+                }
+
+                // Append assistant message WITH tool_calls (required by OpenAI API)
+                let assistantContent = response.text
+                messages.append(LLMMessage(
+                    role: .assistant,
+                    content: assistantContent,
+                    toolCalls: response.toolCalls
+                ))
+
+                // Append tool results as tool messages with matching IDs
+                for result in toolResults {
+                    messages.append(LLMMessage(
+                        role: .tool,
+                        content: result.content,
+                        toolCallId: result.toolCallId
+                    ))
+                }
+
+                // Last iteration: force a final response
+                if iteration == maxToolIterations - 1 {
+                    messages.append(LLMMessage(
+                        role: .system,
+                        content: "Hai già usato gli strumenti. Ora rispondi all'utente con i risultati ottenuti. Non chiamare altri strumenti."
+                    ))
+                }
+
+            } catch {
+                #if DEBUG
+                print("❌ LLM Error: \(error)")
+                #endif
+
+                // Try fallback to OpenAI if we were using local
+                if let settings = aiSettings, settings.providerType == .auto || settings.providerType == .local,
+                   let fallback = openAIProvider, fallback.isAvailable {
+                    do {
+                        let fallbackResponse = try await fallback.generate(
+                            messages: messages,
+                            toolDefinitions: ToolRouter.toolDefinitions
+                        )
+                        if fallbackResponse.toolCalls.isEmpty {
+                            return fallbackResponse.text.trimmingCharacters(in: .whitespacesAndNewlines)
+                        }
+                    } catch {
+                        // Fallback also failed
+                    }
+                }
+
+                await MainActor.run { self.errorMessage = error.localizedDescription }
+                return "Mi dispiace, ho avuto un problema tecnico. \(error.localizedDescription)"
+            }
+        }
+
+        return "Mi scuso, non sono riuscito a completare la richiesta. Riprova!"
     }
-    
-    private func generateSimulatedResponse(userMessage: String, userProfile: RunnerProfile) async -> String {
-        // Simula processing time
-        try? await Task.sleep(nanoseconds: 2_000_000_000)
-        
-        let message = userMessage.lowercased()
-        
-        // Logica di risposta basata su pattern
-        if message.contains("ciao") || message.contains("salve") || message.contains("buongiorno") {
-            return "Ciao! Sono Bobby, il tuo personal trainer di corsa! 🏃‍♂️\n\nPer creare il piano perfetto per te, dimmi:\n• Quanti km corri alla settimana?\n• Quanti allenamenti fai?\n• Qual è il tuo obiettivo principale?"
-        }
-        
-        if message.contains("km") && (message.contains("settimana") || message.contains("settimanali")) {
-            return "Perfetto! E quanti allenamenti riesci a fare alla settimana? Generalmente sono consigliabili 3-5 sessioni per un buon equilibrio tra progresso e recupero."
-        }
-        
-        if message.contains("allenamenti") || message.contains("sessioni") {
-            return "Ottimo! Ora dimmi qual è il tuo obiettivo principale:\n\n🚀 Migliorare la velocità\n💪 Aumentare la resistenza\n🏃‍♂️ Mantenersi in forma\n⚖️ Perdere peso\n🏆 Preparazione gara\n\nE qual è il tuo ritmo attuale per km?"
-        }
-        
-        if message.contains("velocità") || message.contains("speed") {
-            return generateSpeedFocusedPlan(userProfile: userProfile)
-        }
-        
-        if message.contains("resistenza") || message.contains("endurance") {
-            return generateEndurancePlan(userProfile: userProfile)
-        }
-        
-        if message.contains("piano") || message.contains("programma") || message.contains("allenamento") {
-            return generateBasicTrainingPlan(userProfile: userProfile)
-        }
-        
-        if message.contains("modifica") || message.contains("cambia") || message.contains("ottimizza") {
-            return "Perfetto! Posso ottimizzare il tuo piano. Dimmi cosa vorresti modificare:\n\n• Aumentare o diminuire il volume?\n• Cambiare il focus (velocità/resistenza)?\n• Modificare i giorni di allenamento?\n• Altro?"
-        }
-        
-        // Risposta generica motivante
-        return "Ottima domanda! Come Bobby, sono qui per aiutarti a raggiungere i tuoi obiettivi di corsa. Condividi più dettagli sui tuoi allenamenti attuali e posso darti consigli specifici o creare un piano personalizzato! 🏃‍♂️💪"
-    }
-    
-    private func generateBasicTrainingPlan(userProfile: RunnerProfile) -> String {
-        let weeklyKm = Int(userProfile.weeklyKilometers)
-        let workouts = userProfile.workoutsPerWeek
-        
-        return """
-        🏃‍♂️ **PIANO SETTIMANALE PERSONALIZZATO**
-        *Basato su \(weeklyKm)km/settimana, \(workouts) allenamenti*
-        
-        **LUNEDÌ** — Riposo
-        Recupero completo. Al massimo una passeggiata tranquilla.
-        
-        **MARTEDÌ** — Interval Training · \(Int(Double(weeklyKm) * 0.25))km
-        Riscaldamento: 2km a ritmo facile
-        Lavoro: 6 × 800m a ritmo gara con 90" recupero
-        Defaticamento: 1km lento
-        
-        **MERCOLEDÌ** — Corsa Facile · \(Int(Double(weeklyKm) * 0.3))km
-        Tutto a ritmo conversazionale. Non guardare l'orologio!
-        
-        **GIOVEDÌ** — Tempo Run · \(Int(Double(weeklyKm) * 0.35))km
-        Riscaldamento: 2km facili
-        Lavoro: 20-25min a ritmo soglia
-        Defaticamento: 2km lenti
-        
-        **VENERDÌ** — Recupero · \(Int(Double(weeklyKm) * 0.2))km
-        Corsetta leggera, solo per muovere le gambe.
-        
-        **SABATO** — Lungo · \(Int(Double(weeklyKm) * 0.45))km ⭐
-        I primi 70% a ritmo facile, ultimi 30% progressivi.
-        
-        **DOMENICA** — Riposo
-        Giorno di riposo attivo: stretching, camminata o altre attività.
-        
-        💡 **Nota**: Ascolta sempre il tuo corpo. Se senti fatica eccessiva, non esitare a prendere un giorno extra di riposo!
+
+    // MARK: - Message Building
+
+    private func buildMessages(userMessage: String, userProfile: RunnerProfile, conversationHistory: [ChatMessage]) -> [LLMMessage] {
+        var messages: [LLMMessage] = []
+
+        // System prompt with tool descriptions and user profile context
+        let profileContext = """
+
+        PROFILO UTENTE ATTUALE:
+        - Km settimanali: \(Int(userProfile.weeklyKilometers))
+        - Allenamenti/settimana: \(userProfile.workoutsPerWeek)
+        - Obiettivo: \(userProfile.primaryGoal.rawValue)
+        - Ritmo attuale: \(userProfile.currentPace) min/km
+        - Esperienza: \(userProfile.experience.rawValue)
+        - Gara obiettivo: \(userProfile.raceDistance?.rawValue ?? "Nessuna")
         """
+
+        var healthContext = ""
+        if let hm = healthManager, hm.isAvailable {
+            healthContext = """
+
+            APPLE HEALTH: Disponibile. Puoi usare il tool "get_health_summary" per leggere i dati reali di salute dell'utente (frequenza cardiaca, HRV, passi, sonno, allenamenti, VO2 Max). Usa questo tool quando l'utente chiede analisi della salute o dello stato fisico.
+            """
+        } else {
+            healthContext = "\n\n    APPLE HEALTH: Non disponibile su questo dispositivo."
+        }
+
+        let fullSystemPrompt = systemPrompt + profileContext + healthContext + "\n\n" + ToolRouter.toolDescriptionsForPrompt
+        messages.append(LLMMessage(role: .system, content: fullSystemPrompt))
+
+        // Conversation history (last 20 messages to stay within context)
+        let recentHistory = conversationHistory.suffix(20)
+        for msg in recentHistory {
+            messages.append(LLMMessage(
+                role: msg.isFromUser ? .user : .assistant,
+                content: msg.content
+            ))
+        }
+
+        // Current user message
+        messages.append(LLMMessage(role: .user, content: userMessage))
+
+        return messages
     }
-    
-    private func generateSpeedFocusedPlan(userProfile: RunnerProfile) -> String {
-        return """
-        ⚡ **PIANO FOCUS VELOCITÀ**
-        *Piano specifico per migliorare la tua velocità di corsa*
-        
-        **LUNEDÌ** — Riposo Attivo
-        Stretching dinamico + core stability (15-20 min)
-        
-        **MARTEDÌ** — Sprint Intervals · 10km
-        Riscaldamento: 3km progressivi
-        Lavoro: 8 × 200m all-out con 200m recupero camminando
-        + 4 × 400m a 95% con 2min recupero
-        Defaticamento: 2km facili
-        
-        **MERCOLEDÌ** — Corsa Facile · 8km
-        Ritmo conversazionale per recupero attivo
-        
-        **GIOVEDÌ** — Pyramid Training · 11km
-        Riscaldamento: 2km facili
-        Lavoro: 400-800-1200-1600-1200-800-400m
-        (recupero = metà della distanza percorsa)
-        Defaticamento: 2km
-        
-        **VENERDÌ** — Riposo
-        
-        **SABATO** — Tempo Run + Strides · 12km
-        6km a ritmo soglia + 6 × 100m strides
-        
-        **DOMENICA** — Lungo Facile · 16km
-        Ritmo aerobico per mantenere la base
-        
-        🎯 **Focus**: Questo piano sviluppa potenza anaerobica e velocità neuromuscolari. Fondamentale rispettare i recuperi!
-        """
-    }
-    
-    private func generateEndurancePlan(userProfile: RunnerProfile) -> String {
-        return """
-        💪 **PIANO FOCUS RESISTENZA**
-        *Costruiamo la tua base aerobica*
-        
-        **LUNEDÌ** — Riposo
-        
-        **MARTEDÌ** — Corsa Facile · 10km
-        Zona 1-2, completamente aerobico
-        
-        **MERCOLEDÌ** — Fartlek · 12km
-        Riscaldamento 3km + 20min di fartlek naturale
-        (accelerazioni quando ti senti bene) + 3km facili
-        
-        **GIOVEDÌ** — Medio · 13km
-        3km riscaldamento + 6km a ritmo medio + 4km facili
-        
-        **VENERDÌ** — Corsa Facile · 8km
-        Recupero attivo, ritmo molto comodo
-        
-        **SABATO** — Lungo Progressivo · 22km ⭐
-        Km 1-12: ritmo aerobico
-        Km 13-18: ritmo medio
-        Km 19-22: ritmo sostenuto
-        
-        **DOMENICA** — Cross Training
-        Bici, nuoto o camminata in natura (45-60min)
-        
-        🔋 **Obiettivo**: Aumentare la capacità del sistema cardiovascolare e l'efficienza metabolica. La pazienza è la chiave!
-        """
-    }
-    
+
+    // MARK: - Text Plan Extraction (fallback parser for saving plans from LLM text output)
+
     func extractTrainingPlan(from response: String, userProfile: RunnerProfile) -> TrainingPlan? {
-        // Estrai il piano di allenamento dalla risposta e convertilo in TrainingPlan
         let days = ["LUNEDÌ", "MARTEDÌ", "MERCOLEDÌ", "GIOVEDÌ", "VENERDÌ", "SABATO", "DOMENICA"]
         var weeklyPlan: [DayTraining] = []
-        
+
         for day in days {
             if let dayInfo = extractDayInfo(from: response, dayName: day) {
                 weeklyPlan.append(dayInfo)
             }
         }
-        
-        if !weeklyPlan.isEmpty {
+
+        if weeklyPlan.count >= 3 {
             let title = extractPlanTitle(from: response)
             return TrainingPlan(title: title, weeklyPlan: weeklyPlan, userProfile: userProfile)
         }
-        
+
         return nil
     }
-    
+
     private func extractDayInfo(from text: String, dayName: String) -> DayTraining? {
-        // Semplificata - in produzione useresti regex più sofisticati
         let lines = text.components(separatedBy: .newlines)
-        
+
         for (index, line) in lines.enumerated() {
             if line.contains(dayName) {
                 let workoutLine = line.replacingOccurrences(of: "*", with: "")
                 let components = workoutLine.components(separatedBy: "—")
-                
+
                 if components.count >= 2 {
                     let workoutInfo = components[1].trimmingCharacters(in: .whitespaces)
                     let workoutType = determineWorkoutType(from: workoutInfo)
                     let distance = extractDistance(from: workoutInfo)
-                    
-                    // Cerca la descrizione nelle righe successive
+
                     var description = ""
-                    for i in (index + 1)..<min(index + 4, lines.count) {
-                        if !lines[i].trimmingCharacters(in: .whitespaces).isEmpty &&
-                           !lines[i].contains("**") {
-                            description += lines[i].trimmingCharacters(in: .whitespaces) + "\n"
+                    for i in (index + 1)..<min(index + 5, lines.count) {
+                        let trimmed = lines[i].trimmingCharacters(in: .whitespaces)
+                        if !trimmed.isEmpty && !trimmed.hasPrefix("**") && !trimmed.hasPrefix("LUNED")
+                            && !trimmed.hasPrefix("MARTED") && !trimmed.hasPrefix("MERCOLED")
+                            && !trimmed.hasPrefix("GIOVED") && !trimmed.hasPrefix("VENERD")
+                            && !trimmed.hasPrefix("SABATO") && !trimmed.hasPrefix("DOMENIC") {
+                            description += trimmed + "\n"
+                        } else if trimmed.hasPrefix("**") || days.contains(where: { trimmed.contains($0) }) {
+                            break
                         }
                     }
-                    
+
                     return DayTraining(
                         dayOfWeek: dayName,
                         workoutType: workoutType,
                         description: description.trimmingCharacters(in: .whitespacesAndNewlines),
                         distance: distance,
-                        estimatedDuration: Int(distance * 6), // stima 6 min/km
+                        estimatedDuration: distance > 0 ? Int(distance * 6) : 0,
                         paceZones: []
                     )
                 }
             }
         }
-        
+
         return nil
     }
-    
+
+    private let days = ["LUNEDÌ", "MARTEDÌ", "MERCOLEDÌ", "GIOVEDÌ", "VENERDÌ", "SABATO", "DOMENICA"]
+
     private func determineWorkoutType(from text: String) -> WorkoutType {
         let lowercased = text.lowercased()
-        
         if lowercased.contains("riposo") { return .rest }
         if lowercased.contains("interval") || lowercased.contains("sprint") { return .intervals }
-        if lowercased.contains("tempo") || lowercased.contains("medio") { return .tempo }
-        if lowercased.contains("lungo") { return .long }
-        if lowercased.contains("recupero") || lowercased.contains("leggera") { return .recovery }
-        
+        if lowercased.contains("tempo") || lowercased.contains("medio") || lowercased.contains("soglia") { return .tempo }
+        if lowercased.contains("lungo") || lowercased.contains("long") { return .long }
+        if lowercased.contains("recupero") || lowercased.contains("recovery") || lowercased.contains("leggera") { return .recovery }
         return .easy
     }
-    
+
     private func extractDistance(from text: String) -> Double {
-        // Cerca pattern come "10km" o "10 km"
-        let regex = try? NSRegularExpression(pattern: #"(\d+(?:\.\d+)?)\s*km"#, options: .caseInsensitive)
+        let regex = try? NSRegularExpression(pattern: #"(\d+(?:[.,]\d+)?)\s*km"#, options: .caseInsensitive)
         if let match = regex?.firstMatch(in: text, options: [], range: NSRange(text.startIndex..., in: text)) {
             if let range = Range(match.range(at: 1), in: text) {
-                return Double(text[range]) ?? 5.0
+                let numStr = text[range].replacingOccurrences(of: ",", with: ".")
+                return Double(numStr) ?? 0.0
             }
         }
-        return 5.0 // default
+        return 0.0
     }
-    
+
     private func extractPlanTitle(from text: String) -> String {
         let lines = text.components(separatedBy: .newlines)
         for line in lines {
-            if line.contains("**") && (line.contains("PIANO") || line.contains("FOCUS")) {
-                return line.replacingOccurrences(of: "*", with: "").trimmingCharacters(in: .whitespaces)
+            let cleaned = line.replacingOccurrences(of: "*", with: "").trimmingCharacters(in: .whitespaces)
+            if (cleaned.contains("PIANO") || cleaned.contains("FOCUS")) && cleaned.count > 5 {
+                return cleaned
             }
         }
         return "Piano Personalizzato - \(DateFormatter.localizedString(from: Date(), dateStyle: .short, timeStyle: .none))"
-    }
-}
-
-// Estensione per il supporto MLX (placeholder per integrazione futura)
-extension BobbyAI {
-    private class MLXModel {
-        // Placeholder per il modello MLX
-        // In produzione caricheresti qui il modello locale
-    }
-    
-    private func loadMLXModel() async throws -> MLXModel {
-        // Implementazione del caricamento del modello MLX
-        // Es: phi-3-mini, llama-3.2-1b, o altri modelli ottimizzati per mobile
-        throw NSError(domain: "MLXModel", code: 1, userInfo: [NSLocalizedDescriptionKey: "Modello non ancora implementato"])
     }
 }

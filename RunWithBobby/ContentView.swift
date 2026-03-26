@@ -1,24 +1,23 @@
 import SwiftUI
 
 struct ContentView: View {
-    @StateObject private var appState = AppState()
+    @EnvironmentObject var appState: AppState
+    @EnvironmentObject var aiSettings: AISettings
     @State private var isFirstLaunch = true
-    
+
     var body: some View {
         Group {
             if isFirstLaunch && !appState.isProfileComplete {
                 WelcomeView(appState: appState, isFirstLaunch: $isFirstLaunch)
             } else {
                 ChatView()
-                    .environmentObject(appState)
             }
         }
         .onAppear {
-            // Controlla se è il primo avvio
             checkFirstLaunch()
         }
     }
-    
+
     private func checkFirstLaunch() {
         let hasLaunchedBefore = UserDefaults.standard.bool(forKey: "hasLaunchedBefore")
         if hasLaunchedBefore {
@@ -34,72 +33,82 @@ struct WelcomeView: View {
     @ObservedObject var appState: AppState
     @Binding var isFirstLaunch: Bool
     @State private var currentStep = 0
-    @State private var showingChat = false
-    
+
     private let welcomeSteps = [
         WelcomeStep(
-            icon: "🏃‍♂️",
+            icon: "figure.run",
             title: "Benvenuto in Run with Bobby",
             description: "Il tuo personal trainer di corsa con intelligenza artificiale locale",
-            color: .blue
+            color: .bobbyRed
         ),
         WelcomeStep(
-            icon: "🧠",
+            icon: "lock.shield.fill",
             title: "AI Completamente Locale",
             description: "Tutta l'intelligenza artificiale funziona sul tuo iPhone. I tuoi dati non lasciano mai il device",
-            color: .green
+            color: .bobbyCaramel
         ),
         WelcomeStep(
-            icon: "📋",
+            icon: "list.clipboard.fill",
             title: "Piani Personalizzati",
             description: "Bobby crea piani di allenamento su misura per i tuoi obiettivi e livello",
-            color: .orange
+            color: .bobbyRed
         ),
         WelcomeStep(
-            icon: "💬",
+            icon: "bubble.left.and.bubble.right.fill",
             title: "Conversazione Naturale",
             description: "Parla con Bobby come faresti con un vero coach. Chiedi consigli, ottimizza i piani",
-            color: .purple
+            color: .bobbyCaramel
         )
     ]
-    
+
     var body: some View {
         VStack(spacing: 40) {
             Spacer()
-            
+
             // Progress indicator
-            HStack {
+            HStack(spacing: 8) {
                 ForEach(0..<welcomeSteps.count, id: \.self) { index in
-                    Circle()
-                        .fill(index <= currentStep ? Color.accentColor : Color.gray.opacity(0.3))
-                        .frame(width: 8, height: 8)
+                    Capsule()
+                        .fill(index <= currentStep ? Color.bobbyRed : Color.bobbyWarmGray.opacity(0.3))
+                        .frame(width: index == currentStep ? 24 : 8, height: 8)
+                        .animation(.spring(response: 0.4), value: currentStep)
                 }
             }
-            
+
             // Current step content
             let step = welcomeSteps[currentStep]
-            
+
             VStack(spacing: 24) {
-                Text(step.icon)
-                    .font(.system(size: 80))
-                    .scaleEffect(currentStep == 0 ? 1.2 : 1.0)
-                    .animation(.spring(response: 0.6), value: currentStep)
-                
+                ZStack {
+                    Circle()
+                        .fill(step.color.opacity(0.12))
+                        .frame(width: 120, height: 120)
+                    Image(systemName: step.icon)
+                        .font(.system(size: 48, weight: .medium))
+                        .foregroundStyle(step.color)
+                }
+                .scaleEffect(currentStep == 0 ? 1.1 : 1.0)
+                .animation(.spring(response: 0.6, dampingFraction: 0.7), value: currentStep)
+
                 Text(step.title)
-                    .font(.title)
-                    .fontWeight(.bold)
+                    .font(.title2.weight(.bold))
                     .multilineTextAlignment(.center)
-                    .foregroundColor(step.color)
-                
+                    .foregroundColor(.bobbyCharcoal)
+
                 Text(step.description)
                     .font(.body)
                     .multilineTextAlignment(.center)
-                    .foregroundColor(.secondary)
-                    .padding(.horizontal)
+                    .foregroundColor(.bobbyWarmGray)
+                    .padding(.horizontal, 32)
             }
-            
+            .id(currentStep)
+            .transition(.asymmetric(
+                insertion: .move(edge: .trailing).combined(with: .opacity),
+                removal: .move(edge: .leading).combined(with: .opacity)
+            ))
+
             Spacer()
-            
+
             // Navigation buttons
             HStack {
                 if currentStep > 0 {
@@ -108,41 +117,40 @@ struct WelcomeView: View {
                             currentStep -= 1
                         }
                     }
-                    .buttonStyle(.bordered)
+                    .font(.body.weight(.medium))
+                    .foregroundColor(.bobbyWarmGray)
                 }
-                
+
                 Spacer()
-                
-                if currentStep < welcomeSteps.count - 1 {
-                    Button("Avanti") {
-                        withAnimation(.easeInOut(duration: 0.3)) {
+
+                Button(currentStep < welcomeSteps.count - 1 ? "Avanti" : "Inizia a Correre!") {
+                    withAnimation(.easeInOut(duration: 0.3)) {
+                        if currentStep < welcomeSteps.count - 1 {
                             currentStep += 1
-                        }
-                    }
-                    .buttonStyle(.borderedProminent)
-                } else {
-                    Button("Inizia a Correre! 🚀") {
-                        withAnimation(.easeInOut(duration: 0.5)) {
+                        } else {
                             isFirstLaunch = false
                         }
                     }
-                    .buttonStyle(.borderedProminent)
-                    .controlSize(.large)
                 }
+                .font(.headline)
+                .foregroundColor(.white)
+                .frame(height: 50)
+                .frame(maxWidth: currentStep < welcomeSteps.count - 1 ? 140 : .infinity)
+                .background(Color.bobbyRed)
+                .clipShape(Capsule())
+                .animation(.spring(response: 0.4), value: currentStep)
             }
-            .padding(.horizontal)
+            .padding(.horizontal, 24)
             .padding(.bottom, 40)
         }
         .padding()
         .background(
             LinearGradient(
-                gradient: Gradient(colors: [
-                    welcomeSteps[currentStep].color.opacity(0.1),
-                    Color.clear
-                ]),
+                colors: [Color.bobbyGroupedBackground, Color.bobbyBackground],
                 startPoint: .top,
                 endPoint: .bottom
             )
+            .ignoresSafeArea()
         )
     }
 }

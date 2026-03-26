@@ -15,6 +15,15 @@
 		3D92FB3A2C8E4B6700123456 /* TrainingPlanManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D92FB392C8E4B6700123456 /* TrainingPlanManager.swift */; };
 		3D92FB3C2C8E4B7800123456 /* Models.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D92FB3B2C8E4B7800123456 /* Models.swift */; };
 		3D92FB3E2C8E4B8900123456 /* BobbyAI.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D92FB3D2C8E4B8900123456 /* BobbyAI.swift */; };
+		3D92FB402C8E4B9A00123456 /* Theme.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D92FB3F2C8E4B9A00123456 /* Theme.swift */; };
+		AA00000100000001AABBCCDD /* LLMService.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA00000200000001AABBCCDD /* LLMService.swift */; };
+		AA00000100000002AABBCCDD /* OpenAIProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA00000200000002AABBCCDD /* OpenAIProvider.swift */; };
+		AA00000100000003AABBCCDD /* MLXProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA00000200000003AABBCCDD /* MLXProvider.swift */; };
+		AA00000100000004AABBCCDD /* ToolRouter.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA00000200000004AABBCCDD /* ToolRouter.swift */; };
+		AA00000100000005AABBCCDD /* AISettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA00000200000005AABBCCDD /* AISettings.swift */; };
+		AA00000100000006AABBCCDD /* KeychainHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA00000200000006AABBCCDD /* KeychainHelper.swift */; };
+		AA00000100000007AABBCCDD /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA00000200000007AABBCCDD /* SettingsView.swift */; };
+		AA00000100000008AABBCCDD /* HealthKitManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA00000200000008AABBCCDD /* HealthKitManager.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -27,6 +36,16 @@
 		3D92FB392C8E4B6700123456 /* TrainingPlanManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrainingPlanManager.swift; sourceTree = "<group>"; };
 		3D92FB3B2C8E4B7800123456 /* Models.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Models.swift; sourceTree = "<group>"; };
 		3D92FB3D2C8E4B8900123456 /* BobbyAI.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BobbyAI.swift; sourceTree = "<group>"; };
+		3D92FB3F2C8E4B9A00123456 /* Theme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Theme.swift; sourceTree = "<group>"; };
+		AA00000200000001AABBCCDD /* LLMService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LLMService.swift; sourceTree = "<group>"; };
+		AA00000200000002AABBCCDD /* OpenAIProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OpenAIProvider.swift; sourceTree = "<group>"; };
+		AA00000200000003AABBCCDD /* MLXProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MLXProvider.swift; sourceTree = "<group>"; };
+		AA00000200000004AABBCCDD /* ToolRouter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ToolRouter.swift; sourceTree = "<group>"; };
+		AA00000200000005AABBCCDD /* AISettings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AISettings.swift; sourceTree = "<group>"; };
+		AA00000200000006AABBCCDD /* KeychainHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeychainHelper.swift; sourceTree = "<group>"; };
+		AA00000200000007AABBCCDD /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
+		AA00000200000008AABBCCDD /* HealthKitManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HealthKitManager.swift; sourceTree = "<group>"; };
+		AA00000200000009AABBCCDD /* RunWithBobby.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = RunWithBobby.entitlements; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -59,16 +78,42 @@
 		3D92FB282C8E4B2A00123456 /* RunWithBobby */ = {
 			isa = PBXGroup;
 			children = (
+				AA00000200000009AABBCCDD /* RunWithBobby.entitlements */,
 				3D92FB292C8E4B2A00123456 /* RunWithBobbyApp.swift */,
 				3D92FB2B2C8E4B2A00123456 /* ContentView.swift */,
 				3D92FB372C8E4B5600123456 /* ChatView.swift */,
 				3D92FB3B2C8E4B7800123456 /* Models.swift */,
 				3D92FB3D2C8E4B8900123456 /* BobbyAI.swift */,
 				3D92FB392C8E4B6700123456 /* TrainingPlanManager.swift */,
+				3D92FB3F2C8E4B9A00123456 /* Theme.swift */,
+				AA00000300000001AABBCCDD /* LLM */,
+				AA00000300000002AABBCCDD /* Settings */,
 				3D92FB2D2C8E4B2B00123456 /* Assets.xcassets */,
 				3D92FB2F2C8E4B2B00123456 /* Preview Content */,
 			);
 			path = RunWithBobby;
+			sourceTree = "<group>";
+		};
+		AA00000300000001AABBCCDD /* LLM */ = {
+			isa = PBXGroup;
+			children = (
+				AA00000200000001AABBCCDD /* LLMService.swift */,
+				AA00000200000002AABBCCDD /* OpenAIProvider.swift */,
+				AA00000200000003AABBCCDD /* MLXProvider.swift */,
+				AA00000200000004AABBCCDD /* ToolRouter.swift */,
+			);
+			path = LLM;
+			sourceTree = "<group>";
+		};
+		AA00000300000002AABBCCDD /* Settings */ = {
+			isa = PBXGroup;
+			children = (
+				AA00000200000005AABBCCDD /* AISettings.swift */,
+				AA00000200000006AABBCCDD /* KeychainHelper.swift */,
+				AA00000200000007AABBCCDD /* SettingsView.swift */,
+				AA00000200000008AABBCCDD /* HealthKitManager.swift */,
+			);
+			path = Settings;
 			sourceTree = "<group>";
 		};
 		3D92FB2F2C8E4B2B00123456 /* Preview Content */ = {
@@ -158,6 +203,15 @@
 				3D92FB2A2C8E4B2A00123456 /* RunWithBobbyApp.swift in Sources */,
 				3D92FB3C2C8E4B7800123456 /* Models.swift in Sources */,
 				3D92FB3A2C8E4B6700123456 /* TrainingPlanManager.swift in Sources */,
+				3D92FB402C8E4B9A00123456 /* Theme.swift in Sources */,
+				AA00000100000001AABBCCDD /* LLMService.swift in Sources */,
+				AA00000100000002AABBCCDD /* OpenAIProvider.swift in Sources */,
+				AA00000100000003AABBCCDD /* MLXProvider.swift in Sources */,
+				AA00000100000004AABBCCDD /* ToolRouter.swift in Sources */,
+				AA00000100000005AABBCCDD /* AISettings.swift in Sources */,
+				AA00000100000006AABBCCDD /* KeychainHelper.swift in Sources */,
+				AA00000100000007AABBCCDD /* SettingsView.swift in Sources */,
+				AA00000100000008AABBCCDD /* HealthKitManager.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -216,7 +270,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
@@ -273,7 +327,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
@@ -288,17 +342,19 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = RunWithBobby/RunWithBobby.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_ASSET_PATHS = "\"RunWithBobby/Preview Content\"";
-				DEVELOPMENT_TEAM = "";
+				DEVELOPMENT_TEAM = 4YW6S35MTZ;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_NSHealthShareUsageDescription = "Run with Bobby legge i tuoi dati di salute (corse, frequenza cardiaca, VO2 Max, sonno, peso) per creare piani di allenamento personalizzati. I dati restano sul dispositivo.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -307,7 +363,7 @@
 				PRODUCT_BUNDLE_IDENTIFIER = com.runwithbobby.app;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
-				SWIFT_VERSION = 5.0;
+				SWIFT_VERSION = 5.9;
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};
 			name = Debug;
@@ -317,17 +373,19 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = RunWithBobby/RunWithBobby.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_ASSET_PATHS = "\"RunWithBobby/Preview Content\"";
-				DEVELOPMENT_TEAM = "";
+				DEVELOPMENT_TEAM = 4YW6S35MTZ;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_NSHealthShareUsageDescription = "Run with Bobby legge i tuoi dati di salute (corse, frequenza cardiaca, VO2 Max, sonno, peso) per creare piani di allenamento personalizzati. I dati restano sul dispositivo.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -336,7 +394,7 @@
 				PRODUCT_BUNDLE_IDENTIFIER = com.runwithbobby.app;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
-				SWIFT_VERSION = 5.0;
+				SWIFT_VERSION = 5.9;
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};
 			name = Release;

@@ -3,11 +3,13 @@ import SwiftUI
 @main
 struct RunWithBobbyApp: App {
     @StateObject private var appState = AppState()
-    
+    @StateObject private var aiSettings = AISettings()
+
     var body: some Scene {
         WindowGroup {
             ContentView()
                 .environmentObject(appState)
+                .environmentObject(aiSettings)
                 .preferredColorScheme(.none) // Supporta sia light che dark mode
                 .onAppear {
                     setupApp()
@@ -31,18 +33,28 @@ struct RunWithBobbyApp: App {
     }
     
     private func configureAppearance() {
-        // Configurazione della UI generale
+        let titleColor = UIColor(red: 0.173, green: 0.094, blue: 0.063, alpha: 1.0) // #2C1810
+        let bgColor = UIColor(red: 0.984, green: 0.976, blue: 0.969, alpha: 1.0) // #FBF9F7
+        let accentUIColor = UIColor(red: 0.851, green: 0.271, blue: 0.271, alpha: 1.0) // #D94545
+
         let appearance = UINavigationBarAppearance()
-        appearance.configureWithOpaqueBackground()
-        appearance.titleTextAttributes = [.foregroundColor: UIColor.label]
-        appearance.largeTitleTextAttributes = [.foregroundColor: UIColor.label]
-        
+        appearance.configureWithDefaultBackground()
+        appearance.backgroundColor = bgColor
+        appearance.titleTextAttributes = [
+            .foregroundColor: titleColor,
+            .font: UIFont.systemFont(ofSize: 17, weight: .semibold)
+        ]
+        appearance.largeTitleTextAttributes = [
+            .foregroundColor: titleColor,
+            .font: UIFont.systemFont(ofSize: 34, weight: .bold)
+        ]
+
         UINavigationBar.appearance().standardAppearance = appearance
         UINavigationBar.appearance().compactAppearance = appearance
         UINavigationBar.appearance().scrollEdgeAppearance = appearance
-        
-        // Configurazione dei colori dell'app
-        UIView.appearance(whenContainedInInstancesOf: [UIAlertController.self]).tintColor = UIColor.systemBlue
+        UINavigationBar.appearance().tintColor = accentUIColor
+
+        UIView.appearance(whenContainedInInstancesOf: [UIAlertController.self]).tintColor = accentUIColor
     }
     
     private func createDirectoriesIfNeeded() {
