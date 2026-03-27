@@ -23,29 +23,7 @@ struct ChatView: View {
                 messageInputArea
             }
             .background(BobbyTheme.background(for: colorScheme).ignoresSafeArea())
-            .navigationTitle("Bobby")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Menu {
-                        Button(action: { showingPlansArchive = true }) {
-                            Label("Archivio Piani", systemImage: "list.clipboard")
-                        }
-                        Button(action: { showingProfileSetup = true }) {
-                            Label("Profilo Runner", systemImage: "person.crop.circle")
-                        }
-                        Button(action: { showingSettings = true }) {
-                            Label("Impostazioni AI", systemImage: "gearshape")
-                        }
-                        Button(action: { appState.startNewConversation() }) {
-                            Label("Nuova Chat", systemImage: "plus.bubble")
-                        }
-                    } label: {
-                        Image(systemName: "ellipsis.circle")
-                            .foregroundColor(.bobbyRed)
-                    }
-                }
-            }
+            .navigationBarHidden(true)
             .sheet(isPresented: $showingPlansArchive, onDismiss: {
                 if let plan = planToDiscuss {
                     askBobbyAboutPlan(plan)
@@ -117,6 +95,25 @@ struct ChatView: View {
                     ProgressView()
                         .tint(.bobbyRed)
                         .scaleEffect(0.8)
+                }
+
+                Menu {
+                    Button(action: { showingPlansArchive = true }) {
+                        Label("Archivio Piani", systemImage: "list.clipboard")
+                    }
+                    Button(action: { showingProfileSetup = true }) {
+                        Label("Profilo Runner", systemImage: "person.crop.circle")
+                    }
+                    Button(action: { showingSettings = true }) {
+                        Label("Impostazioni AI", systemImage: "gearshape")
+                    }
+                    Button(action: { appState.startNewConversation() }) {
+                        Label("Nuova Chat", systemImage: "plus.bubble")
+                    }
+                } label: {
+                    Image(systemName: "ellipsis.circle")
+                        .font(.title3)
+                        .foregroundColor(BobbyTheme.accentColor(for: colorScheme))
                 }
             }
 

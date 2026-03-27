@@ -33,19 +33,33 @@ struct RunWithBobbyApp: App {
     }
     
     private func configureAppearance() {
-        let titleColor = UIColor(red: 0.173, green: 0.094, blue: 0.063, alpha: 1.0) // #2C1810
-        let bgColor = UIColor(red: 0.984, green: 0.976, blue: 0.969, alpha: 1.0) // #FBF9F7
+        // Light mode colors
+        let titleColorLight = UIColor(red: 0.173, green: 0.094, blue: 0.063, alpha: 1.0) // #2C1810
+        let bgColorLight = UIColor(red: 0.984, green: 0.976, blue: 0.969, alpha: 1.0) // #FBF9F7
+
+        // Dark mode colors
+        let titleColorDark = UIColor.white
+        let bgColorDark = UIColor(red: 0.110, green: 0.078, blue: 0.071, alpha: 1.0) // #1C1412
+
         let accentUIColor = UIColor(red: 0.851, green: 0.271, blue: 0.271, alpha: 1.0) // #D94545
+
+        // Colori adattivi che cambiano automaticamente con light/dark mode
+        let adaptiveTitleColor = UIColor { traitCollection in
+            traitCollection.userInterfaceStyle == .dark ? titleColorDark : titleColorLight
+        }
+        let adaptiveBgColor = UIColor { traitCollection in
+            traitCollection.userInterfaceStyle == .dark ? bgColorDark : bgColorLight
+        }
 
         let appearance = UINavigationBarAppearance()
         appearance.configureWithDefaultBackground()
-        appearance.backgroundColor = bgColor
+        appearance.backgroundColor = adaptiveBgColor
         appearance.titleTextAttributes = [
-            .foregroundColor: titleColor,
+            .foregroundColor: adaptiveTitleColor,
             .font: UIFont.systemFont(ofSize: 17, weight: .semibold)
         ]
         appearance.largeTitleTextAttributes = [
-            .foregroundColor: titleColor,
+            .foregroundColor: adaptiveTitleColor,
             .font: UIFont.systemFont(ofSize: 34, weight: .bold)
         ]
 
