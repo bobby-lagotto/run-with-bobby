@@ -9,21 +9,41 @@ struct SettingsView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.colorScheme) var colorScheme
 
+    // OpenAI state
     @State private var apiKeyInput: String = ""
     @State private var showingAPIKey = false
     @State private var apiKeyValidated = false
     @State private var validationMessage = ""
     @State private var isValidating = false
+
+    // Anthropic state
+    @State private var anthropicKeyInput: String = ""
+    @State private var showingAnthropicKey = false
+    @State private var anthropicKeyValidated = false
+    @State private var anthropicValidationMessage = ""
+    @State private var isValidatingAnthropic = false
+
+    // Clipboard detection
+    @State private var clipboardKey: String?
+    @State private var clipboardKeyType: ClipboardKeyType?
+
+    // Other state
     @State private var healthConnected: Bool = UserDefaults.standard.bool(forKey: "healthkit_connected")
     @State private var showingHealthError = false
     @State private var healthErrorMessage = ""
     @State private var downloadError: String?
+    @State private var showingAPIKeyGuide = false
+
+    enum ClipboardKeyType {
+        case openai, anthropic
+    }
 
     var body: some View {
         NavigationView {
             Form {
                 providerSection
                 openAISection
+                anthropicSection
                 localModelSection
                 healthSection
                 infoSection
@@ -48,7 +68,27 @@ struct SettingsView: View {
             }
             .onAppear {
                 apiKeyInput = aiSettings.openAIAPIKey ?? ""
+                anthropicKeyInput = aiSettings.anthropicAPIKey ?? ""
+                detectClipboardKey()
             }
+            .sheet(isPresented: $showingAPIKeyGuide) {
+                APIKeyGuideView()
+            }
+        }
+    }
+
+    // MARK: - Clipboard Detection
+
+    private func detectClipboardKey() {
+        guard let pasted = UIPasteboard.general.string, !pasted.isEmpty else { return }
+        let trimmed = pasted.trimmingCharacters(in: .whitespacesAndNewlines)
+
+        if AISettings.looksLikeAnthropicKey(trimmed) && anthropicKeyInput.isEmpty {
+            clipboardKey = trimmed
+            clipboardKeyType = .anthropic
+        } else if AISettings.looksLikeOpenAIKey(trimmed) && apiKeyInput.isEmpty {
+            clipboardKey = trimmed
+            clipboardKeyType = .openai
         }
     }
 
@@ -92,6 +132,25 @@ struct SettingsView: View {
 
     private var openAISection: some View {
         Section {
+            // Clipboard banner
+            if let key = clipboardKey, clipboardKeyType == .openai {
+                HStack(spacing: 8) {
+                    Image(systemName: "doc.on.clipboard")
+                        .foregroundColor(.bobbyRed)
+                    Text("API Key trovata negli appunti")
+                        .font(.caption)
+                    Spacer()
+                    Button("Usa") {
+                        apiKeyInput = key
+                        clipboardKey = nil
+                        clipboardKeyType = nil
+                    }
+                    .font(.caption.weight(.semibold))
+                    .foregroundColor(.bobbyRed)
+                }
+                .padding(.vertical, 4)
+            }
+
             HStack(spacing: 12) {
                 Image(systemName: "key.fill")
                     .foregroundColor(.bobbyCaramel)
@@ -117,7 +176,7 @@ struct SettingsView: View {
             }
 
             if !apiKeyInput.isEmpty {
-                Button(action: validateAPIKey) {
+                Button(action: validateOpenAIKey) {
                     HStack {
                         if isValidating {
                             ProgressView()
@@ -152,11 +211,144 @@ struct SettingsView: View {
                     Text("GPT-4.1").tag("gpt-4.1")
                 }
             }
+
+            // Deep link + guide
+            HStack(spacing: 12) {
+                Button {
+                    if let url = URL(string: "https://platform.openai.com/api-keys") {
+                        UIApplication.shared.open(url)
+                    }
+                } label: {
+                    HStack(spacing: 4) {
+                        Image(systemName: "arrow.up.right.square")
+                        Text("Ottieni API Key")
+                    }
+                    .font(.caption.weight(.medium))
+                    .foregroundColor(.bobbyRed)
+                }
+
+                Spacer()
+
+                Button {
+                    showingAPIKeyGuide = true
+                } label: {
+                    HStack(spacing: 4) {
+                        Image(systemName: "questionmark.circle")
+                        Text("Guida")
+                    }
+                    .font(.caption.weight(.medium))
+                    .foregroundColor(.bobbyWarmGray)
+                }
+            }
         } header: {
             Label("OpenAI", systemImage: "cloud")
                 .foregroundColor(.bobbyRed)
         } footer: {
             Text("La API key viene salvata in modo sicuro nel Keychain del dispositivo.")
+                .font(.caption)
+        }
+    }
+
+    // MARK: - Anthropic Section
+
+    private var anthropicSection: some View {
+        Section {
+            // Clipboard banner
+            if let key = clipboardKey, clipboardKeyType == .anthropic {
+                HStack(spacing: 8) {
+                    Image(systemName: "doc.on.clipboard")
+                        .foregroundColor(.bobbyRed)
+                    Text("API Key Anthropic trovata negli appunti")
+                        .font(.caption)
+                    Spacer()
+                    Button("Usa") {
+                        anthropicKeyInput = key
+                        clipboardKey = nil
+                        clipboardKeyType = nil
+                    }
+                    .font(.caption.weight(.semibold))
+                    .foregroundColor(.bobbyRed)
+                }
+                .padding(.vertical, 4)
+            }
+
+            HStack(spacing: 12) {
+                Image(systemName: "key.fill")
+                    .foregroundColor(.bobbyCaramel)
+                    .frame(width: 28)
+
+                if showingAnthropicKey {
+                    TextField("sk-ant-...", text: $anthropicKeyInput)
+                        .textFieldStyle(.roundedBorder)
+                        .font(.system(.body, design: .monospaced))
+                        .autocorrectionDisabled()
+                        .textInputAutocapitalization(.never)
+                } else {
+                    SecureField("API Key Anthropic", text: $anthropicKeyInput)
+                        .textFieldStyle(.roundedBorder)
+                        .autocorrectionDisabled()
+                        .textInputAutocapitalization(.never)
+                }
+
+                Button(action: { showingAnthropicKey.toggle() }) {
+                    Image(systemName: showingAnthropicKey ? "eye.slash" : "eye")
+                        .foregroundColor(.bobbyWarmGray)
+                }
+            }
+
+            if !anthropicKeyInput.isEmpty {
+                Button(action: validateAnthropicKey) {
+                    HStack {
+                        if isValidatingAnthropic {
+                            ProgressView()
+                                .tint(.bobbyRed)
+                                .scaleEffect(0.8)
+                        } else {
+                            Image(systemName: anthropicKeyValidated ? "checkmark.circle.fill" : "arrow.clockwise")
+                                .foregroundColor(anthropicKeyValidated ? .green : .bobbyRed)
+                        }
+                        Text(isValidatingAnthropic ? "Verifica in corso..." : (anthropicKeyValidated ? "API Key valida" : "Verifica API Key"))
+                            .foregroundColor(anthropicKeyValidated ? .green : .bobbyRed)
+                    }
+                }
+                .disabled(isValidatingAnthropic)
+            }
+
+            if !anthropicValidationMessage.isEmpty {
+                Text(anthropicValidationMessage)
+                    .font(.caption)
+                    .foregroundColor(anthropicKeyValidated ? .green : .red)
+            }
+
+            HStack(spacing: 12) {
+                Image(systemName: "brain.head.profile")
+                    .foregroundColor(.bobbyCaramel)
+                    .frame(width: 28)
+
+                Picker("Modello", selection: $aiSettings.anthropicModel) {
+                    Text("Claude Sonnet 4").tag("claude-sonnet-4-20250514")
+                    Text("Claude Haiku 3.5").tag("claude-haiku-4-5-20251001")
+                }
+            }
+
+            // Deep link
+            Button {
+                if let url = URL(string: "https://console.anthropic.com/settings/keys") {
+                    UIApplication.shared.open(url)
+                }
+            } label: {
+                HStack(spacing: 4) {
+                    Image(systemName: "arrow.up.right.square")
+                    Text("Ottieni API Key")
+                }
+                .font(.caption.weight(.medium))
+                .foregroundColor(.bobbyRed)
+            }
+        } header: {
+            Label("Anthropic", systemImage: "brain.head.profile")
+                .foregroundColor(.bobbyRed)
+        } footer: {
+            Text("Claude eccelle nel seguire istruzioni complesse e nel tool-calling in italiano.")
                 .font(.caption)
         }
     }
@@ -367,11 +559,15 @@ struct SettingsView: View {
         case .local:
             return aiSettings.isModelDownloaded ? "Modello locale attivo" : "Modello locale non disponibile"
         case .openai:
-            return aiSettings.hasAPIKey ? "OpenAI \(aiSettings.openAIModel)" : "API Key mancante"
+            return aiSettings.hasOpenAIKey ? "OpenAI \(aiSettings.openAIModel)" : "API Key mancante"
+        case .anthropic:
+            return aiSettings.hasAnthropicKey ? "Anthropic \(aiSettings.anthropicModel)" : "API Key mancante"
         case .auto:
             if aiSettings.isModelDownloaded {
-                return "Locale (con fallback OpenAI)"
-            } else if aiSettings.hasAPIKey {
+                return "Locale (con fallback cloud)"
+            } else if aiSettings.hasAnthropicKey {
+                return "Anthropic \(aiSettings.anthropicModel)"
+            } else if aiSettings.hasOpenAIKey {
                 return "OpenAI \(aiSettings.openAIModel)"
             } else {
                 return "Nessun provider configurato"
@@ -382,7 +578,8 @@ struct SettingsView: View {
     private func providerDescription(for type: LLMProviderType) -> String {
         switch type {
         case .local: return "Modello on-device, privacy totale"
-        case .openai: return "Cloud, più preciso e veloce"
+        case .openai: return "Cloud OpenAI, veloce e preciso"
+        case .anthropic: return "Cloud Anthropic, ottimo in italiano"
         case .auto: return "Locale se disponibile, altrimenti cloud"
         }
     }
@@ -393,10 +590,17 @@ struct SettingsView: View {
         } else {
             aiSettings.openAIAPIKey = nil
         }
+        if !anthropicKeyInput.isEmpty {
+            aiSettings.anthropicAPIKey = anthropicKeyInput
+        } else {
+            aiSettings.anthropicAPIKey = nil
+        }
         onProviderChanged?()
     }
 
-    private func validateAPIKey() {
+    // MARK: - Validation
+
+    private func validateOpenAIKey() {
         isValidating = true
         validationMessage = ""
 
@@ -423,8 +627,164 @@ struct SettingsView: View {
                 await MainActor.run {
                     isValidating = false
                     apiKeyValidated = false
-                    validationMessage = "Errore: \(error.localizedDescription)"
+                    validationMessage = parseAPIError(error)
                 }
+            }
+        }
+    }
+
+    private func validateAnthropicKey() {
+        isValidatingAnthropic = true
+        anthropicValidationMessage = ""
+
+        Task {
+            do {
+                let provider = AnthropicProvider(apiKey: anthropicKeyInput, model: "claude-haiku-4-5-20251001")
+                let testMessages = [
+                    LLMMessage(role: .user, content: "Rispondi solo 'OK'")
+                ]
+                let response = try await provider.generate(messages: testMessages, toolDefinitions: nil)
+
+                await MainActor.run {
+                    isValidatingAnthropic = false
+                    if !response.text.isEmpty {
+                        anthropicKeyValidated = true
+                        anthropicValidationMessage = "Connessione riuscita!"
+                    } else {
+                        anthropicKeyValidated = false
+                        anthropicValidationMessage = "Risposta vuota dal server."
+                    }
+                }
+            } catch {
+                await MainActor.run {
+                    isValidatingAnthropic = false
+                    anthropicKeyValidated = false
+                    anthropicValidationMessage = parseAPIError(error)
+                }
+            }
+        }
+    }
+
+    private func parseAPIError(_ error: Error) -> String {
+        let message = error.localizedDescription
+        if message.contains("401") {
+            return "Chiave API non valida. Verifica di averla copiata correttamente."
+        } else if message.contains("429") {
+            return "Troppi tentativi. Riprova tra qualche secondo."
+        } else if message.contains("402") || message.contains("insufficient_quota") || message.contains("billing") {
+            return "Credito esaurito. Ricarica il tuo account sul portale del provider."
+        } else if message.contains("403") {
+            return "Accesso negato. Verifica i permessi della tua API key."
+        } else if message.contains("timeout") || message.contains("Timeout") {
+            return "Timeout di connessione. Verifica la tua connessione internet."
+        }
+        return "Errore: \(message)"
+    }
+}
+
+// MARK: - API Key Guide View
+
+struct APIKeyGuideView: View {
+    @Environment(\.dismiss) private var dismiss
+
+    var body: some View {
+        NavigationView {
+            ScrollView {
+                VStack(alignment: .leading, spacing: 24) {
+                    Text("Come ottenere una API Key")
+                        .font(.title2.weight(.bold))
+                        .padding(.top)
+
+                    guideStep(
+                        number: 1,
+                        icon: "person.crop.circle",
+                        title: "Crea un account",
+                        description: "Registrati su platform.openai.com (OpenAI) o console.anthropic.com (Anthropic) se non hai ancora un account."
+                    )
+
+                    guideStep(
+                        number: 2,
+                        icon: "creditcard",
+                        title: "Aggiungi un metodo di pagamento",
+                        description: "Vai nella sezione Billing del portale e aggiungi una carta. I costi sono a consumo (pochi centesimi per conversazione)."
+                    )
+
+                    guideStep(
+                        number: 3,
+                        icon: "key.fill",
+                        title: "Genera la API Key",
+                        description: "Nella sezione API Keys, clicca 'Create new secret key'. Copiala subito: non potrai rivederla."
+                    )
+
+                    guideStep(
+                        number: 4,
+                        icon: "doc.on.clipboard",
+                        title: "Incolla nell'app",
+                        description: "Torna in Run with Bobby e incolla la chiave nel campo corrispondente. Verrà salvata in modo sicuro nel Keychain del dispositivo."
+                    )
+
+                    Divider()
+
+                    VStack(alignment: .leading, spacing: 12) {
+                        Text("Link rapidi")
+                            .font(.headline)
+
+                        Button {
+                            if let url = URL(string: "https://platform.openai.com/api-keys") {
+                                UIApplication.shared.open(url)
+                            }
+                        } label: {
+                            HStack {
+                                Image(systemName: "arrow.up.right.square")
+                                Text("OpenAI API Keys")
+                                Spacer()
+                            }
+                            .foregroundColor(.bobbyRed)
+                        }
+
+                        Button {
+                            if let url = URL(string: "https://console.anthropic.com/settings/keys") {
+                                UIApplication.shared.open(url)
+                            }
+                        } label: {
+                            HStack {
+                                Image(systemName: "arrow.up.right.square")
+                                Text("Anthropic API Keys")
+                                Spacer()
+                            }
+                            .foregroundColor(.bobbyRed)
+                        }
+                    }
+                }
+                .padding()
+            }
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button("Chiudi") { dismiss() }
+                        .foregroundColor(.bobbyRed)
+                }
+            }
+        }
+    }
+
+    private func guideStep(number: Int, icon: String, title: String, description: String) -> some View {
+        HStack(alignment: .top, spacing: 16) {
+            ZStack {
+                Circle()
+                    .fill(Color.bobbyRed.opacity(0.15))
+                    .frame(width: 44, height: 44)
+                Image(systemName: icon)
+                    .foregroundColor(.bobbyRed)
+                    .font(.system(size: 18))
+            }
+
+            VStack(alignment: .leading, spacing: 4) {
+                Text("\(number). \(title)")
+                    .font(.subheadline.weight(.semibold))
+                Text(description)
+                    .font(.caption)
+                    .foregroundColor(.secondary)
             }
         }
     }

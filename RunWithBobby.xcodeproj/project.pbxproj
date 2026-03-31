@@ -24,6 +24,7 @@
 		AA00000100000006AABBCCDD /* KeychainHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA00000200000006AABBCCDD /* KeychainHelper.swift */; };
 		AA00000100000007AABBCCDD /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA00000200000007AABBCCDD /* SettingsView.swift */; };
 		AA00000100000008AABBCCDD /* HealthKitManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA00000200000008AABBCCDD /* HealthKitManager.swift */; };
+		CC0000010000000AAABBCCDD /* AnthropicProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC0000020000000AAABBCCDD /* AnthropicProvider.swift */; };
 		BB00000300000001AABBCCDD /* MLXLLM in Frameworks */ = {isa = PBXBuildFile; productRef = BB00000200000001AABBCCDD /* MLXLLM */; };
 		BB00000300000002AABBCCDD /* MLXLMCommon in Frameworks */ = {isa = PBXBuildFile; productRef = BB00000200000002AABBCCDD /* MLXLMCommon */; };
 /* End PBXBuildFile section */
@@ -48,6 +49,7 @@
 		AA00000200000007AABBCCDD /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		AA00000200000008AABBCCDD /* HealthKitManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HealthKitManager.swift; sourceTree = "<group>"; };
 		AA00000200000009AABBCCDD /* RunWithBobby.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = RunWithBobby.entitlements; sourceTree = "<group>"; };
+		CC0000020000000AAABBCCDD /* AnthropicProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnthropicProvider.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -111,6 +113,7 @@
 			children = (
 				AA00000200000001AABBCCDD /* LLMService.swift */,
 				AA00000200000002AABBCCDD /* OpenAIProvider.swift */,
+				CC0000020000000AAABBCCDD /* AnthropicProvider.swift */,
 				AA00000200000003AABBCCDD /* MLXProvider.swift */,
 				AA00000200000004AABBCCDD /* ToolRouter.swift */,
 			);
@@ -221,6 +224,7 @@
 				AA00000100000006AABBCCDD /* KeychainHelper.swift in Sources */,
 				AA00000100000007AABBCCDD /* SettingsView.swift in Sources */,
 				AA00000100000008AABBCCDD /* HealthKitManager.swift in Sources */,
+				CC0000010000000AAABBCCDD /* AnthropicProvider.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -370,7 +374,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.0;
+				MARKETING_VERSION = 1.1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.runwithbobby.app;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
@@ -403,7 +407,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.0;
+				MARKETING_VERSION = 1.1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.runwithbobby.app;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;

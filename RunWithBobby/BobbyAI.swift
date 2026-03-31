@@ -8,6 +8,7 @@ class BobbyAI: ObservableObject {
 
     private var aiSettings: AISettings?
     private var openAIProvider: OpenAIProvider?
+    private var anthropicProvider: AnthropicProvider?
     private(set) var mlxProvider: MLXProvider
     private var healthManager: HealthKitManager?
 
@@ -62,6 +63,13 @@ class BobbyAI: ObservableObject {
             openAIProvider = nil
         }
 
+        // Setup Anthropic provider if API key available
+        if let apiKey = settings.anthropicAPIKey, !apiKey.isEmpty {
+            anthropicProvider = AnthropicProvider(apiKey: apiKey, model: settings.anthropicModel)
+        } else {
+            anthropicProvider = nil
+        }
+
         // Update active provider name
         if let provider = resolveProvider() {
             activeProviderName = provider.providerName
@@ -71,16 +79,22 @@ class BobbyAI: ObservableObject {
     }
 
     private func resolveProvider() -> LLMService? {
-        guard let settings = aiSettings else { return openAIProvider }
+        guard let settings = aiSettings else { return openAIProvider ?? anthropicProvider }
 
         switch settings.providerType {
         case .local:
             return settings.isModelDownloaded ? mlxProvider : nil
         case .openai:
             return openAIProvider
+        case .anthropic:
+            return anthropicProvider
         case .auto:
+            // Priority: local -> anthropic -> openai
             if settings.isModelDownloaded {
                 return mlxProvider
+            }
+            if let anthropic = anthropicProvider, anthropic.isAvailable {
+                return anthropic
             }
             return openAIProvider
         }
@@ -104,7 +118,7 @@ class BobbyAI: ObservableObject {
         guard let provider = resolveProvider() else {
             let error = LLMError.noProviderAvailable
             self.errorMessage = error.errorDescription
-            return "⚙️ Per iniziare, configura il tuo assistente AI nelle impostazioni.\n\nPuoi:\n• Inserire la tua API key OpenAI\n• Scaricare un modello locale\n\nTocca il menu ⋯ in alto a destra → Impostazioni AI"
+            return "⚙️ Per iniziare, configura il tuo assistente AI nelle impostazioni.\n\nPuoi:\n• Inserire la tua API key OpenAI o Anthropic\n• Scaricare un modello locale\n\nTocca il menu ⋯ in alto a destra → Impostazioni AI"
         }
 
         // Load local model into memory on-demand
@@ -181,19 +195,23 @@ class BobbyAI: ObservableObject {
                 print("❌ LLM Error: \(error)")
                 #endif
 
-                // Try fallback to OpenAI if we were using local
-                if let settings = aiSettings, settings.providerType == .auto || settings.providerType == .local,
-                   let fallback = openAIProvider, fallback.isAvailable {
-                    do {
-                        let fallbackResponse = try await fallback.generate(
-                            messages: messages,
-                            toolDefinitions: ToolRouter.toolDefinitions
-                        )
-                        if fallbackResponse.toolCalls.isEmpty {
-                            return fallbackResponse.text.trimmingCharacters(in: .whitespacesAndNewlines)
+                // Try fallback to cloud providers if we were using local
+                if let settings = aiSettings, settings.providerType == .auto || settings.providerType == .local {
+                    // Try Anthropic first, then OpenAI
+                    let candidates: [LLMService?] = [anthropicProvider, openAIProvider]
+                    let fallbackProviders = candidates.compactMap { $0 }.filter { $0.isAvailable }
+                    for fallback in fallbackProviders {
+                        do {
+                            let fallbackResponse = try await fallback.generate(
+                                messages: messages,
+                                toolDefinitions: ToolRouter.toolDefinitions
+                            )
+                            if fallbackResponse.toolCalls.isEmpty {
+                                return fallbackResponse.text.trimmingCharacters(in: .whitespacesAndNewlines)
+                            }
+                        } catch {
+                            continue // Try next fallback
                         }
-                    } catch {
-                        // Fallback also failed
                     }
                 }
 
