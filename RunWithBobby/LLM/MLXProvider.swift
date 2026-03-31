@@ -1,49 +1,82 @@
 import Foundation
+import MLXLLM
+import MLXLMCommon
+import MLX
 
-/// MLX Local Model Provider
-///
-/// This provider uses mlx-swift-examples LLM library for on-device inference.
-/// To enable local models, add to Package.swift:
-///   .package(url: "https://github.com/ml-explore/mlx-swift-examples", branch: "main")
-/// and uncomment the MLX imports and implementation below.
-///
-/// Supported models (from mlx-community on HuggingFace):
-/// - mlx-community/Phi-3.5-mini-instruct-4bit (~2GB)
-/// - mlx-community/Llama-3.2-1B-Instruct-4bit (~700MB)
-/// - mlx-community/Llama-3.2-3B-Instruct-4bit (~1.8GB)
+@MainActor
+class MLXProvider: LLMService, ObservableObject {
 
-// TODO: Uncomment when mlx-swift-examples is added as dependency
-// import LLM
-// import MLX
+    var isAvailable: Bool { modelContainer != nil }
+    var providerName: String { "Locale (\(displayName))" }
 
-class MLXProvider: LLMService {
-
-    var isAvailable: Bool { isModelLoaded }
-    var providerName: String { "Locale (\(modelName))" }
-
-    private let modelName: String
-    private var isModelLoaded = false
-
-    // TODO: Replace with actual MLX ModelContainer
-    // private var modelContainer: ModelContainer?
+    private let modelId: String
+    private let displayName: String
+    private var modelContainer: ModelContainer?
 
     @Published var downloadProgress: Double = 0
     @Published var isDownloading = false
 
-    init(modelName: String = "Phi-3.5-mini-instruct-4bit") {
-        self.modelName = modelName
-        checkModelAvailability()
+    init(modelId: String = "mlx-community/Qwen2.5-0.5B-Instruct-4bit") {
+        self.modelId = modelId
+        self.displayName = modelId.components(separatedBy: "/").last ?? modelId
     }
 
+    // MARK: - Generation
+
     func generate(messages: [LLMMessage], toolDefinitions: [ToolDefinitionSchema]?) async throws -> LLMResponse {
-        guard isModelLoaded else { throw LLMError.modelNotLoaded }
+        guard let container = modelContainer else { throw LLMError.modelNotLoaded }
 
-        // TODO: Implement actual MLX inference
-        // let prompt = formatMessages(messages, toolDefinitions: toolDefinitions)
-        // let output = try await modelContainer?.generate(prompt: prompt, parameters: .init(temperature: 0.7))
-        // return parseMLXOutput(output)
+        // Convert to chat message format for the tokenizer's chat template
+        let chatMessages: [[String: String]] = messages.map { msg in
+            var content = msg.content
+            // Inject tool definitions into system message so the local model knows about tools
+            if msg.role == .system, let tools = toolDefinitions, !tools.isEmpty {
+                content += "\n\nHai a disposizione questi strumenti. Per chiamarne uno, rispondi SOLO con un blocco <tool_call>{...}</tool_call>.\n"
+                for tool in tools {
+                    let params = tool.parameters.properties.map { "\($0.key): \($0.value.type) — \($0.value.description)" }.joined(separator: ", ")
+                    content += "- \(tool.name)(\(params)): \(tool.description)\n"
+                }
+            }
+            return ["role": msg.role.rawValue, "content": content]
+        }
 
-        throw LLMError.modelNotLoaded
+        let result = try await container.perform { context in
+            let input = try await context.processor.prepare(
+                input: .init(messages: chatMessages)
+            )
+            return try MLXLMCommon.generate(
+                input: input,
+                parameters: GenerateParameters(temperature: 0.7),
+                context: context
+            ) { tokens in
+                // Continue generating
+                if tokens.count >= 1024 {
+                    return .stop
+                }
+                return .more
+            }
+        }
+
+        let text = result.output
+        let toolCalls = parseToolCalls(from: text)
+
+        // Remove tool call blocks from display text
+        var cleanText = text
+        if !toolCalls.isEmpty {
+            let pattern = #"<tool_call>\s*\{[\s\S]*?\}\s*</tool_call>"#
+            if let regex = try? NSRegularExpression(pattern: pattern, options: .dotMatchesLineSeparators) {
+                cleanText = regex.stringByReplacingMatches(
+                    in: text,
+                    range: NSRange(text.startIndex..., in: text),
+                    withTemplate: ""
+                )
+            }
+        }
+
+        return LLMResponse(
+            text: cleanText.trimmingCharacters(in: .whitespacesAndNewlines),
+            toolCalls: toolCalls
+        )
     }
 
     // MARK: - Model Management
@@ -52,64 +85,50 @@ class MLXProvider: LLMService {
         isDownloading = true
         downloadProgress = 0
 
-        // TODO: Implement model download from HuggingFace Hub
-        // let config = ModelConfiguration.huggingFace("mlx-community/\(modelName)")
-        // modelContainer = try await ModelContainer.load(configuration: config) { progress in
-        //     Task { @MainActor in
-        //         self.downloadProgress = progress.fractionCompleted
-        //     }
-        // }
+        do {
+            let config = ModelConfiguration(id: modelId)
 
-        isDownloading = false
-        isModelLoaded = true
+            let container = try await LLMModelFactory.shared.loadContainer(
+                configuration: config
+            ) { [weak self] progress in
+                Task { @MainActor in
+                    self?.downloadProgress = progress.fractionCompleted
+                }
+            }
+
+            self.modelContainer = container
+            downloadProgress = 1.0
+            isDownloading = false
+        } catch {
+            isDownloading = false
+            downloadProgress = 0
+            throw error
+        }
+    }
+
+    /// Try to load an already-downloaded model from cache (no network needed)
+    func loadIfAvailable() async {
+        let config = ModelConfiguration(id: modelId)
+        do {
+            let container = try await LLMModelFactory.shared.loadContainer(
+                configuration: config
+            ) { _ in }
+            self.modelContainer = container
+        } catch {
+            // Model not cached yet — that's fine
+        }
     }
 
     func unloadModel() {
-        // Free memory
-        // modelContainer = nil
-        isModelLoaded = false
+        modelContainer = nil
     }
 
-    private func checkModelAvailability() {
-        let documentsPath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
-        let modelDir = documentsPath.appendingPathComponent("Models/\(modelName)")
-        isModelLoaded = FileManager.default.fileExists(atPath: modelDir.path)
-    }
+    // MARK: - Tool Call Parsing
 
-    // MARK: - Message Formatting for Local Models
-
-    private func formatMessages(_ messages: [LLMMessage], toolDefinitions: [ToolDefinitionSchema]?) -> String {
-        // Format as chat template for the model
-        // Most instruction-tuned models use a specific chat format
-        var prompt = ""
-
-        for message in messages {
-            switch message.role {
-            case .system:
-                prompt += "<|system|>\n\(message.content)\n"
-                // Append tool descriptions for local models
-                if let tools = toolDefinitions, !tools.isEmpty {
-                    prompt += "\nPer chiamare uno strumento, usa questo formato:\n<tool_call>{\"name\": \"nome_tool\", \"arguments\": {...}}</tool_call>\n"
-                }
-            case .user:
-                prompt += "<|user|>\n\(message.content)\n"
-            case .assistant:
-                prompt += "<|assistant|>\n\(message.content)\n"
-            case .tool:
-                prompt += "<|tool|>\n\(message.content)\n"
-            }
-        }
-
-        prompt += "<|assistant|>\n"
-        return prompt
-    }
-
-    /// Parse tool calls from local model text output
     private func parseToolCalls(from text: String) -> [ToolCall] {
         var toolCalls: [ToolCall] = []
 
-        // Look for <tool_call>...</tool_call> blocks
-        let pattern = #"<tool_call>\s*(\{[^}]+\})\s*</tool_call>"#
+        let pattern = #"<tool_call>\s*(\{[\s\S]*?\})\s*</tool_call>"#
         guard let regex = try? NSRegularExpression(pattern: pattern, options: .dotMatchesLineSeparators) else {
             return toolCalls
         }

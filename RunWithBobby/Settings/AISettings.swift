@@ -20,6 +20,8 @@ class AISettings: ObservableObject {
     private static let localModelKey = "ai_local_model"
     private static let openAIModelKey = "ai_openai_model"
     private static let apiKeyKeychainKey = "openai_api_key"
+    private static let modelDownloadedKey = "ai_model_downloaded"
+    private static let downloadedModelIdKey = "ai_downloaded_model_id"
 
     @Published var providerType: LLMProviderType {
         didSet { UserDefaults.standard.set(providerType.rawValue, forKey: Self.providerKey) }
@@ -33,7 +35,14 @@ class AISettings: ObservableObject {
         didSet { UserDefaults.standard.set(openAIModel, forKey: Self.openAIModelKey) }
     }
 
-    @Published var isModelDownloaded = false
+    @Published var isModelDownloaded: Bool {
+        didSet {
+            UserDefaults.standard.set(isModelDownloaded, forKey: Self.modelDownloadedKey)
+            if isModelDownloaded {
+                UserDefaults.standard.set(localModelName, forKey: Self.downloadedModelIdKey)
+            }
+        }
+    }
     @Published var downloadProgress: Double = 0
     @Published var isDownloading = false
 
@@ -74,9 +83,19 @@ class AISettings: ObservableObject {
         }
 
         self.localModelName = UserDefaults.standard.string(forKey: Self.localModelKey)
-            ?? "Phi-3.5-mini-instruct-4bit"
+            ?? "Qwen2.5-0.5B-Instruct-4bit"
 
         self.openAIModel = UserDefaults.standard.string(forKey: Self.openAIModelKey)
             ?? "gpt-4o-mini"
+
+        // Must initialize before accessing self.localModelName
+        self.isModelDownloaded = false
+
+        // Restore download state, but reset if model name changed
+        let savedModelId = UserDefaults.standard.string(forKey: Self.downloadedModelIdKey)
+        if UserDefaults.standard.bool(forKey: Self.modelDownloadedKey),
+           savedModelId == localModelName {
+            self.isModelDownloaded = true
+        }
     }
 }

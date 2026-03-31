@@ -3,6 +3,7 @@ import SwiftUI
 struct SettingsView: View {
     @ObservedObject var aiSettings: AISettings
     @ObservedObject var healthManager: HealthKitManager
+    @ObservedObject var mlxProvider: MLXProvider
     var onHealthChanged: (() -> Void)?
     var onProviderChanged: (() -> Void)?
     @Environment(\.dismiss) private var dismiss
@@ -16,6 +17,7 @@ struct SettingsView: View {
     @State private var healthConnected: Bool = UserDefaults.standard.bool(forKey: "healthkit_connected")
     @State private var showingHealthError = false
     @State private var healthErrorMessage = ""
+    @State private var downloadError: String?
 
     var body: some View {
         NavigationView {
@@ -181,14 +183,14 @@ struct SettingsView: View {
                                 .font(.caption)
                                 .foregroundColor(.green)
                         }
-                    } else if aiSettings.isDownloading {
-                        ProgressView(value: aiSettings.downloadProgress)
+                    } else if mlxProvider.isDownloading {
+                        ProgressView(value: mlxProvider.downloadProgress)
                             .tint(.bobbyRed)
-                        Text("Download: \(Int(aiSettings.downloadProgress * 100))%")
+                        Text("Download: \(Int(mlxProvider.downloadProgress * 100))%")
                             .font(.caption)
                             .foregroundColor(.bobbyWarmGray)
                     } else {
-                        Text("Non scaricato (~2 GB)")
+                        Text("Non scaricato (~400 MB)")
                             .font(.caption)
                             .foregroundColor(.bobbyWarmGray)
                     }
@@ -196,9 +198,21 @@ struct SettingsView: View {
 
                 Spacer()
 
-                if !aiSettings.isModelDownloaded && !aiSettings.isDownloading {
+                if !aiSettings.isModelDownloaded && !mlxProvider.isDownloading {
                     Button("Scarica") {
-                        // MLX model download will be implemented with MLXProvider
+                        Task {
+                            aiSettings.isDownloading = true
+                            downloadError = nil
+                            do {
+                                try await mlxProvider.downloadModel()
+                                aiSettings.isModelDownloaded = true
+                                aiSettings.isDownloading = false
+                                onProviderChanged?()
+                            } catch {
+                                aiSettings.isDownloading = false
+                                downloadError = error.localizedDescription
+                            }
+                        }
                     }
                     .font(.subheadline.weight(.semibold))
                     .foregroundColor(.white)
@@ -207,6 +221,12 @@ struct SettingsView: View {
                     .background(Color.bobbyRed)
                     .clipShape(Capsule())
                 }
+            }
+
+            if let downloadError {
+                Text("Errore: \(downloadError)")
+                    .font(.caption)
+                    .foregroundColor(.red)
             }
         } header: {
             Label("Modello Locale", systemImage: "iphone")

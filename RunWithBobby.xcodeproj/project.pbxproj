@@ -24,6 +24,8 @@
 		AA00000100000006AABBCCDD /* KeychainHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA00000200000006AABBCCDD /* KeychainHelper.swift */; };
 		AA00000100000007AABBCCDD /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA00000200000007AABBCCDD /* SettingsView.swift */; };
 		AA00000100000008AABBCCDD /* HealthKitManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA00000200000008AABBCCDD /* HealthKitManager.swift */; };
+		BB00000300000001AABBCCDD /* MLXLLM in Frameworks */ = {isa = PBXBuildFile; productRef = BB00000200000001AABBCCDD /* MLXLLM */; };
+		BB00000300000002AABBCCDD /* MLXLMCommon in Frameworks */ = {isa = PBXBuildFile; productRef = BB00000200000002AABBCCDD /* MLXLMCommon */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -53,6 +55,8 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				BB00000300000001AABBCCDD /* MLXLLM in Frameworks */,
+				BB00000300000002AABBCCDD /* MLXLMCommon in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -94,6 +98,14 @@
 			path = RunWithBobby;
 			sourceTree = "<group>";
 		};
+		3D92FB2F2C8E4B2B00123456 /* Preview Content */ = {
+			isa = PBXGroup;
+			children = (
+				3D92FB302C8E4B2B00123456 /* Preview Assets.xcassets */,
+			);
+			path = "Preview Content";
+			sourceTree = "<group>";
+		};
 		AA00000300000001AABBCCDD /* LLM */ = {
 			isa = PBXGroup;
 			children = (
@@ -116,14 +128,6 @@
 			path = Settings;
 			sourceTree = "<group>";
 		};
-		3D92FB2F2C8E4B2B00123456 /* Preview Content */ = {
-			isa = PBXGroup;
-			children = (
-				3D92FB302C8E4B2B00123456 /* Preview Assets.xcassets */,
-			);
-			path = "Preview Content";
-			sourceTree = "<group>";
-		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
@@ -141,6 +145,8 @@
 			);
 			name = RunWithBobby;
 			packageProductDependencies = (
+				BB00000200000001AABBCCDD /* MLXLLM */,
+				BB00000200000002AABBCCDD /* MLXLMCommon */,
 			);
 			productName = RunWithBobby;
 			productReference = 3D92FB262C8E4B2A00123456 /* RunWithBobby.app */;
@@ -171,6 +177,9 @@
 				it,
 			);
 			mainGroup = 3D92FB1D2C8E4B2A00123456;
+			packageReferences = (
+				BB00000100000001AABBCCDD /* XCRemoteSwiftPackageReference "mlx-swift-examples" */,
+			);
 			productRefGroup = 3D92FB272C8E4B2A00123456 /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
@@ -350,11 +359,13 @@
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_NSHealthShareUsageDescription = "Run with Bobby legge i tuoi dati di salute (corse, frequenza cardiaca, VO2 Max, sonno, peso) per creare piani di allenamento personalizzati. I dati restano sul dispositivo.";
+				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "Run with Bobby salva i tuoi allenamenti pianificati in Apple Salute per tenere traccia dei progressi. I dati restano sul dispositivo.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -381,11 +392,13 @@
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_NSHealthShareUsageDescription = "Run with Bobby legge i tuoi dati di salute (corse, frequenza cardiaca, VO2 Max, sonno, peso) per creare piani di allenamento personalizzati. I dati restano sul dispositivo.";
+				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "Run with Bobby salva i tuoi allenamenti pianificati in Apple Salute per tenere traccia dei progressi. I dati restano sul dispositivo.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -421,6 +434,30 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		BB00000100000001AABBCCDD /* XCRemoteSwiftPackageReference "mlx-swift-examples" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/ml-explore/mlx-swift-examples";
+			requirement = {
+				kind = upToNextMinorVersion;
+				minimumVersion = 2.29.1;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		BB00000200000001AABBCCDD /* MLXLLM */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = BB00000100000001AABBCCDD /* XCRemoteSwiftPackageReference "mlx-swift-examples" */;
+			productName = MLXLLM;
+		};
+		BB00000200000002AABBCCDD /* MLXLMCommon */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = BB00000100000001AABBCCDD /* XCRemoteSwiftPackageReference "mlx-swift-examples" */;
+			productName = MLXLMCommon;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 3D92FB1E2C8E4B2A00123456 /* Project object */;
 }

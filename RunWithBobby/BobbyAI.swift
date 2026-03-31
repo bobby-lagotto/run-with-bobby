@@ -1,5 +1,6 @@
 import Foundation
 
+@MainActor
 class BobbyAI: ObservableObject {
     @Published var isLoading = false
     @Published var errorMessage: String?
@@ -7,12 +8,15 @@ class BobbyAI: ObservableObject {
 
     private var aiSettings: AISettings?
     private var openAIProvider: OpenAIProvider?
-    // MLXProvider will be added when mlx-swift-examples is integrated
-    // private var mlxProvider: MLXProvider?
+    private(set) var mlxProvider: MLXProvider
     private var healthManager: HealthKitManager?
 
     private let toolRouter = ToolRouter()
     private let maxToolIterations = 3
+
+    init() {
+        self.mlxProvider = MLXProvider()
+    }
 
     private let systemPrompt = """
     Sei Bobby, un coach di corsa esperto e motivante. Parli italiano. Sei specializzato nella creazione di piani di allenamento personalizzati per runner di ogni livello.
@@ -71,13 +75,13 @@ class BobbyAI: ObservableObject {
 
         switch settings.providerType {
         case .local:
-            // MLX provider will go here
-            return nil
+            return settings.isModelDownloaded ? mlxProvider : nil
         case .openai:
             return openAIProvider
         case .auto:
-            // Try local first, then OpenAI
-            // For now, only OpenAI is available
+            if settings.isModelDownloaded {
+                return mlxProvider
+            }
             return openAIProvider
         }
     }
@@ -90,21 +94,34 @@ class BobbyAI: ObservableObject {
         planManager: TrainingPlanManager,
         conversationHistory: [ChatMessage]
     ) async -> String {
-        await MainActor.run {
-            isLoading = true
-            errorMessage = nil
-        }
+        isLoading = true
+        errorMessage = nil
 
         defer {
-            Task { @MainActor in
-                self.isLoading = false
-            }
+            isLoading = false
         }
 
         guard let provider = resolveProvider() else {
             let error = LLMError.noProviderAvailable
-            await MainActor.run { self.errorMessage = error.errorDescription }
+            self.errorMessage = error.errorDescription
             return "⚙️ Per iniziare, configura il tuo assistente AI nelle impostazioni.\n\nPuoi:\n• Inserire la tua API key OpenAI\n• Scaricare un modello locale\n\nTocca il menu ⋯ in alto a destra → Impostazioni AI"
+        }
+
+        // Load local model into memory on-demand
+        let usingLocalModel = provider is MLXProvider
+        if usingLocalModel && !mlxProvider.isAvailable {
+            await mlxProvider.loadIfAvailable()
+            guard mlxProvider.isAvailable else {
+                self.errorMessage = "Impossibile caricare il modello locale."
+                return "❌ Non riesco a caricare il modello locale. Prova a riscaricarlo dalle impostazioni."
+            }
+        }
+
+        defer {
+            // Free memory after generation
+            if usingLocalModel {
+                mlxProvider.unloadModel()
+            }
         }
 
         // Build conversation messages
@@ -180,7 +197,7 @@ class BobbyAI: ObservableObject {
                     }
                 }
 
-                await MainActor.run { self.errorMessage = error.localizedDescription }
+                self.errorMessage = error.localizedDescription
                 return "Mi dispiace, ho avuto un problema tecnico. \(error.localizedDescription)"
             }
         }

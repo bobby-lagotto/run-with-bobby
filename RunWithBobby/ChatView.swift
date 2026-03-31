@@ -39,7 +39,7 @@ struct ChatView: View {
                 RunnerProfileView(appState: appState)
             }
             .sheet(isPresented: $showingSettings) {
-                SettingsView(aiSettings: aiSettings, healthManager: healthManager, onHealthChanged: {
+                SettingsView(aiSettings: aiSettings, healthManager: healthManager, mlxProvider: bobbyAI.mlxProvider, onHealthChanged: {
                     healthConnected = UserDefaults.standard.bool(forKey: "healthkit_connected")
                     bobbyAI.configure(with: aiSettings, healthManager: healthConnected ? healthManager : nil)
                 }, onProviderChanged: {
@@ -330,7 +330,7 @@ struct MessageBubbleView: View {
                     .clipShape(Circle())
 
                 VStack(alignment: .leading, spacing: 4) {
-                    Text(message.content)
+                    Text(markdownAttributedString(from: message.content))
                         .font(.body)
                         .padding(.horizontal, 14)
                         .padding(.vertical, 10)
@@ -347,6 +347,16 @@ struct MessageBubbleView: View {
                 Spacer(minLength: 60)
             }
         }
+    }
+
+    private func markdownAttributedString(from text: String) -> AttributedString {
+        let options = AttributedString.MarkdownParsingOptions(
+            interpretedSyntax: .inlineOnlyPreservingWhitespace
+        )
+        if let attributed = try? AttributedString(markdown: text, options: options) {
+            return attributed
+        }
+        return AttributedString(text)
     }
 
     private func timeString(from date: Date) -> String {

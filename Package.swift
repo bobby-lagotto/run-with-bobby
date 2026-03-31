@@ -7,15 +7,14 @@ let package = Package(
         .iOS(.v17)
     ],
     dependencies: [
-        .package(url: "https://github.com/ml-explore/mlx-swift", from: "0.16.0"),
+        .package(url: "https://github.com/ml-explore/mlx-swift-examples", from: "2.29.1"),
     ],
     targets: [
         .target(
             name: "RunWithBobby",
             dependencies: [
-                .product(name: "MLX", package: "mlx-swift"),
-                .product(name: "MLXNN", package: "mlx-swift"),
-                .product(name: "MLXRandom", package: "mlx-swift"),
+                .product(name: "MLXLLM", package: "mlx-swift-examples"),
+                .product(name: "MLXLMCommon", package: "mlx-swift-examples"),
             ],
             path: "RunWithBobby"),
     ]
