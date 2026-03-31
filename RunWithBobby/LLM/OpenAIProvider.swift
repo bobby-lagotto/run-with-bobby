@@ -131,6 +131,85 @@ class OpenAIProvider: LLMService {
         return dict
     }
 
+    // MARK: - Streaming
+
+    func generateStream(messages: [LLMMessage], toolDefinitions: [ToolDefinitionSchema]?) -> AsyncThrowingStream<StreamEvent, Error> {
+        AsyncThrowingStream { [self] continuation in
+            Task {
+                do {
+                    guard !apiKey.isEmpty else { throw LLMError.apiKeyMissing }
+
+                    var request = try self.buildRequest(messages: messages, toolDefinitions: toolDefinitions)
+                    if let body = request.httpBody,
+                       var json = try? JSONSerialization.jsonObject(with: body) as? [String: Any] {
+                        json["stream"] = true
+                        request.httpBody = try JSONSerialization.data(withJSONObject: json)
+                    }
+
+                    let (bytes, response) = try await URLSession.shared.bytes(for: request)
+
+                    guard let httpResponse = response as? HTTPURLResponse else {
+                        throw LLMError.invalidResponse
+                    }
+                    guard httpResponse.statusCode == 200 else {
+                        var errorBody = ""
+                        for try await line in bytes.lines { errorBody += line }
+                        throw LLMError.apiError("HTTP \(httpResponse.statusCode): \(errorBody)")
+                    }
+
+                    var accumulatedText = ""
+                    var toolCallsById: [Int: (id: String, name: String, args: String)] = [:]
+
+                    for try await line in bytes.lines {
+                        guard line.hasPrefix("data: ") else { continue }
+                        let jsonStr = String(line.dropFirst(6))
+                        guard jsonStr != "[DONE]" else { break }
+
+                        guard let data = jsonStr.data(using: .utf8),
+                              let event = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+                              let choices = event["choices"] as? [[String: Any]],
+                              let choice = choices.first,
+                              let delta = choice["delta"] as? [String: Any] else { continue }
+
+                        if let content = delta["content"] as? String {
+                            accumulatedText += content
+                            continuation.yield(.textDelta(content))
+                        }
+
+                        if let tcs = delta["tool_calls"] as? [[String: Any]] {
+                            for tc in tcs {
+                                let index = tc["index"] as? Int ?? 0
+                                if let id = tc["id"] as? String {
+                                    let fname = (tc["function"] as? [String: Any])?["name"] as? String ?? ""
+                                    toolCallsById[index] = (id: id, name: fname, args: "")
+                                }
+                                if let fn = tc["function"] as? [String: Any],
+                                   let args = fn["arguments"] as? String {
+                                    var existing = toolCallsById[index] ?? (id: "", name: "", args: "")
+                                    existing.args += args
+                                    toolCallsById[index] = existing
+                                }
+                            }
+                        }
+                    }
+
+                    var toolCalls: [ToolCall] = []
+                    for (_, tc) in toolCallsById.sorted(by: { $0.key < $1.key }) {
+                        if let argsDict = self.parseArguments(tc.args) {
+                            toolCalls.append(ToolCall(id: tc.id, name: tc.name, arguments: argsDict))
+                        }
+                    }
+
+                    let finalResponse = LLMResponse(text: accumulatedText, toolCalls: toolCalls)
+                    continuation.yield(.done(finalResponse))
+                    continuation.finish()
+                } catch {
+                    continuation.finish(throwing: error)
+                }
+            }
+        }
+    }
+
     // MARK: - Response Parsing
 
     private func parseResponse(_ response: OpenAIChatResponse) -> LLMResponse {

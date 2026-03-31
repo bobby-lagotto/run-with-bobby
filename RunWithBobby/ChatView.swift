@@ -5,6 +5,7 @@ struct ChatView: View {
     @StateObject private var bobbyAI = BobbyAI()
     @StateObject private var planManager = TrainingPlanManager()
     @StateObject private var healthManager = HealthKitManager()
+    @StateObject private var nutritionManager = NutritionPlanManager()
     @EnvironmentObject var aiSettings: AISettings
     @Environment(\.colorScheme) var colorScheme
 
@@ -12,6 +13,8 @@ struct ChatView: View {
     @State private var showingPlansArchive = false
     @State private var showingProfileSetup = false
     @State private var showingSettings = false
+    @State private var showingConversationHistory = false
+    @State private var showingNutritionPlan = false
     @State private var planToDiscuss: TrainingPlan?
     @State private var healthConnected = UserDefaults.standard.bool(forKey: "healthkit_connected")
 
@@ -46,6 +49,17 @@ struct ChatView: View {
                     bobbyAI.updateProvider()
                 })
             }
+            .sheet(isPresented: $showingConversationHistory) {
+                ConversationHistoryView(appState: appState)
+            }
+            .sheet(isPresented: $showingNutritionPlan) {
+                NutritionPlanView(nutritionManager: nutritionManager, planManager: planManager, onAskBobby: {
+                    showingNutritionPlan = false
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                        sendQuickMessage("Vorrei modificare il mio piano alimentare")
+                    }
+                })
+            }
             .onAppear {
                 bobbyAI.configure(with: aiSettings, healthManager: healthConnected ? healthManager : nil)
                 if appState.conversations.isEmpty {
@@ -72,7 +86,7 @@ struct ChatView: View {
                         .foregroundColor(BobbyTheme.primaryText(for: colorScheme))
 
                     if bobbyAI.isLoading {
-                        Text("Sta pensando...")
+                        Text(bobbyAI.streamingText.isEmpty ? "Sta pensando..." : "Sta scrivendo...")
                             .font(.caption)
                             .foregroundColor(.bobbyWarmGray)
                     } else {
@@ -101,6 +115,12 @@ struct ChatView: View {
                     Button(action: { showingPlansArchive = true }) {
                         Label("Archivio Piani", systemImage: "list.clipboard")
                     }
+                    Button(action: { showingNutritionPlan = true }) {
+                        Label("Piano Alimentare", systemImage: "fork.knife")
+                    }
+                    Button(action: { showingConversationHistory = true }) {
+                        Label("Storico Chat", systemImage: "clock.arrow.circlepath")
+                    }
                     Button(action: { showingProfileSetup = true }) {
                         Label("Profilo Runner", systemImage: "person.crop.circle")
                     }
@@ -126,20 +146,37 @@ struct ChatView: View {
                 }
             }
 
-            // Active plan pill
-            if let activePlan = planManager.currentActivePlan {
-                HStack(spacing: 6) {
-                    Image(systemName: "list.clipboard.fill")
-                        .font(.caption)
-                    Text(activePlan.title)
-                        .font(.caption.weight(.medium))
-                        .lineLimit(1)
+            // Active plan pills
+            HStack(spacing: 8) {
+                if let activePlan = planManager.currentActivePlan {
+                    HStack(spacing: 6) {
+                        Image(systemName: "list.clipboard.fill")
+                            .font(.caption)
+                        Text(activePlan.title)
+                            .font(.caption.weight(.medium))
+                            .lineLimit(1)
+                    }
+                    .foregroundColor(.bobbyRed)
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 6)
+                    .background(Color.bobbyRed.opacity(0.08))
+                    .clipShape(Capsule())
                 }
-                .foregroundColor(.bobbyRed)
-                .padding(.horizontal, 12)
-                .padding(.vertical, 6)
-                .background(Color.bobbyRed.opacity(0.08))
-                .clipShape(Capsule())
+
+                if nutritionManager.currentNutritionPlan != nil {
+                    HStack(spacing: 6) {
+                        Image(systemName: "fork.knife")
+                            .font(.caption)
+                        Text("Alimentare")
+                            .font(.caption.weight(.medium))
+                    }
+                    .foregroundColor(.bobbyCaramel)
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 6)
+                    .background(Color.bobbyCaramel.opacity(0.08))
+                    .clipShape(Capsule())
+                    .onTapGesture { showingNutritionPlan = true }
+                }
             }
         }
         .padding(.horizontal, 16)
@@ -158,12 +195,41 @@ struct ChatView: View {
                                 .id(message.id)
                         }
                     }
+
+                    // Streaming response bubble
+                    if !bobbyAI.streamingText.isEmpty {
+                        MessageBubbleView(message: ChatMessage(content: bobbyAI.streamingText, isFromUser: false))
+                            .id("streaming")
+                    }
+
+                    // Typing indicator while waiting for response
+                    if bobbyAI.isLoading && bobbyAI.streamingText.isEmpty {
+                        TypingIndicatorView()
+                            .id("typing")
+                    }
+
+                    Color.clear.frame(height: 1).id("bottom")
                 }
                 .padding(.horizontal, 16)
                 .padding(.vertical, 12)
             }
             .onTapGesture {
                 UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
+            }
+            .onChange(of: appState.currentConversation?.messages.count) { _, _ in
+                withAnimation(.easeOut(duration: 0.3)) {
+                    proxy.scrollTo("bottom")
+                }
+            }
+            .onChange(of: bobbyAI.streamingText) { _, _ in
+                proxy.scrollTo("bottom")
+            }
+            .onChange(of: bobbyAI.isLoading) { _, isLoading in
+                if isLoading {
+                    withAnimation(.easeOut(duration: 0.3)) {
+                        proxy.scrollTo("bottom")
+                    }
+                }
             }
         }
     }
@@ -228,6 +294,7 @@ struct ChatView: View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: 8) {
                 QuickButton("Nuovo piano") { sendQuickMessage("Crea un nuovo piano di allenamento per me") }
+                QuickButton("Piano alimentare") { sendQuickMessage("Crea un piano alimentare basato sul mio allenamento") }
                 QuickButton("Come sto?") { sendQuickMessage("Analizza i miei dati di salute e dimmi come sto. Sono affaticato? Fammi un riassunto completo.") }
                 QuickButton("Ottimizza piano") { sendQuickMessage("Vorrei ottimizzare il mio piano attuale") }
                 QuickButton("Consigli recupero") { sendQuickMessage("Dammi consigli per il recupero") }
@@ -268,6 +335,7 @@ struct ChatView: View {
                 to: text,
                 userProfile: appState.userProfile,
                 planManager: planManager,
+                nutritionManager: nutritionManager,
                 conversationHistory: appState.currentConversation?.messages ?? []
             )
 
@@ -366,6 +434,45 @@ struct MessageBubbleView: View {
         let formatter = DateFormatter()
         formatter.timeStyle = .short
         return formatter.string(from: date)
+    }
+}
+
+// MARK: - Typing Indicator View
+struct TypingIndicatorView: View {
+    @State private var animating = false
+    @Environment(\.colorScheme) var colorScheme
+
+    var body: some View {
+        HStack(alignment: .bottom, spacing: 8) {
+            Image("BobbyLogo")
+                .resizable()
+                .scaledToFill()
+                .frame(width: 28, height: 28)
+                .clipShape(Circle())
+
+            HStack(spacing: 4) {
+                ForEach(0..<3, id: \.self) { i in
+                    Circle()
+                        .fill(Color.bobbyWarmGray)
+                        .frame(width: 8, height: 8)
+                        .scaleEffect(animating ? 1.0 : 0.5)
+                        .opacity(animating ? 1.0 : 0.4)
+                        .animation(
+                            .easeInOut(duration: 0.6)
+                            .repeatForever(autoreverses: true)
+                            .delay(Double(i) * 0.2),
+                            value: animating
+                        )
+                }
+            }
+            .padding(.horizontal, 14)
+            .padding(.vertical, 12)
+            .background(BobbyTheme.aiBubble(for: colorScheme))
+            .clipShape(BubbleShape(isFromUser: false))
+
+            Spacer(minLength: 60)
+        }
+        .onAppear { animating = true }
     }
 }
 
@@ -853,6 +960,18 @@ struct RunnerProfileView: View {
                         TextField("5:30", text: $appState.userProfile.currentPace)
                             .textFieldStyle(.roundedBorder)
                             .frame(width: 80)
+                    }
+
+                    HStack(spacing: 12) {
+                        Image(systemName: "scalemass.fill")
+                            .foregroundColor(.bobbyCaramel)
+                            .frame(width: 28)
+                        Text("Peso (kg)")
+                        Spacer()
+                        TextField("70", value: $appState.userProfile.weight, format: .number)
+                            .textFieldStyle(.roundedBorder)
+                            .frame(width: 80)
+                            .keyboardType(.decimalPad)
                     }
                 } header: {
                     Label("Allenamento Attuale", systemImage: "figure.run")

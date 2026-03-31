@@ -65,6 +65,20 @@ class ToolRouter {
                 required: []
             )
         ),
+        ToolDefinitionSchema(
+            name: "calculate_nutrition_plan",
+            description: "Calcola un piano alimentare settimanale con grammi di proteine, carboidrati, verdure/frutta e dolci per ogni giorno, basato sul piano di allenamento attivo e sul peso dell'utente. Adatta le quantità all'intensità dell'allenamento di ogni giorno (giorni intensi = più carboidrati, giorni di riposo = meno). Chiama SEMPRE questo tool quando l'utente chiede un piano alimentare.",
+            parameters: ToolParametersSchema(
+                type: "object",
+                properties: [:],
+                required: []
+            )
+        ),
+        ToolDefinitionSchema(
+            name: "get_nutrition_plan",
+            description: "Ottieni il piano alimentare attivo corrente con i grammi giornalieri di macronutrienti.",
+            parameters: ToolParametersSchema(type: "object", properties: [:], required: [])
+        ),
     ]
 
     // MARK: - Tool descriptions for system prompt (used by local models that don't support native function calling)
@@ -95,6 +109,7 @@ class ToolRouter {
         _ toolCall: ToolCall,
         userProfile: RunnerProfile,
         planManager: TrainingPlanManager,
+        nutritionManager: NutritionPlanManager? = nil,
         healthManager: HealthKitManager? = nil
     ) async -> ToolResult {
         switch toolCall.name {
@@ -105,11 +120,15 @@ class ToolRouter {
         case "get_active_plan":
             return getActivePlan(planManager: planManager, toolCallId: toolCall.id)
         case "optimize_plan":
-            return optimizePlan(arguments: toolCall.arguments, planManager: planManager, toolCallId: toolCall.id)
+            return optimizePlan(arguments: toolCall.arguments, planManager: planManager, nutritionManager: nutritionManager, userProfile: userProfile, toolCallId: toolCall.id)
         case "save_training_plan":
-            return saveTrainingPlan(arguments: toolCall.arguments, userProfile: userProfile, planManager: planManager, toolCallId: toolCall.id)
+            return saveTrainingPlan(arguments: toolCall.arguments, userProfile: userProfile, planManager: planManager, nutritionManager: nutritionManager, toolCallId: toolCall.id)
         case "get_health_summary":
             return await getHealthSummary(arguments: toolCall.arguments, healthManager: healthManager, toolCallId: toolCall.id)
+        case "calculate_nutrition_plan":
+            return calculateNutritionPlan(userProfile: userProfile, planManager: planManager, nutritionManager: nutritionManager, toolCallId: toolCall.id)
+        case "get_nutrition_plan":
+            return getNutritionPlan(nutritionManager: nutritionManager, toolCallId: toolCall.id)
         default:
             return ToolResult(toolCallId: toolCall.id, name: toolCall.name, content: "{\"error\": \"Tool sconosciuto: \(toolCall.name)\"}")
         }
@@ -192,7 +211,7 @@ class ToolRouter {
         return ToolResult(toolCallId: toolCallId, name: "get_active_plan", content: serializeJSON(result))
     }
 
-    private func optimizePlan(arguments: [String: JSONValue], planManager: TrainingPlanManager, toolCallId: String) -> ToolResult {
+    private func optimizePlan(arguments: [String: JSONValue], planManager: TrainingPlanManager, nutritionManager: NutritionPlanManager?, userProfile: RunnerProfile, toolCallId: String) -> ToolResult {
         guard let plan = planManager.currentActivePlan else {
             return ToolResult(toolCallId: toolCallId, name: "optimize_plan", content: "{\"errore\": \"Nessun piano attivo da ottimizzare.\"}")
         }
@@ -246,17 +265,27 @@ class ToolRouter {
         planManager.savePlan(optimized)
         planManager.setActivePlan(optimized)
 
+        // Auto-update nutrition plan if one exists
+        var nutritionUpdated = false
+        if let nm = nutritionManager, nm.currentNutritionPlan != nil {
+            autoUpdateNutritionPlan(trainingPlan: optimized, userProfile: userProfile, nutritionManager: nm)
+            nutritionUpdated = true
+        }
+
         let stats = planManager.getWeeklyStats(for: optimized)
-        let result: [String: Any] = [
+        var result: [String: Any] = [
             "titolo": optimized.title,
             "km_totali": Int(stats.totalDistance),
             "allenamenti": stats.workoutCount,
             "messaggio": "Piano ottimizzato con successo!"
         ]
+        if nutritionUpdated {
+            result["piano_alimentare"] = "Aggiornato automaticamente in base al nuovo piano di allenamento."
+        }
         return ToolResult(toolCallId: toolCallId, name: "optimize_plan", content: serializeJSON(result))
     }
 
-    private func saveTrainingPlan(arguments: [String: JSONValue], userProfile: RunnerProfile, planManager: TrainingPlanManager, toolCallId: String) -> ToolResult {
+    private func saveTrainingPlan(arguments: [String: JSONValue], userProfile: RunnerProfile, planManager: TrainingPlanManager, nutritionManager: NutritionPlanManager?, toolCallId: String) -> ToolResult {
         guard let weeklyPlan = lastCalculatedPlan else {
             return ToolResult(toolCallId: toolCallId, name: "save_training_plan", content: "{\"errore\": \"Nessun piano calcolato da salvare. Chiama prima calculate_training_plan.\"}")
         }
@@ -268,10 +297,20 @@ class ToolRouter {
         planManager.setActivePlan(plan)
         lastCalculatedPlan = nil
 
-        let result: [String: Any] = [
+        // Auto-update nutrition plan if one exists
+        var nutritionUpdated = false
+        if let nm = nutritionManager, nm.currentNutritionPlan != nil {
+            autoUpdateNutritionPlan(trainingPlan: plan, userProfile: userProfile, nutritionManager: nm)
+            nutritionUpdated = true
+        }
+
+        var result: [String: Any] = [
             "messaggio": "Piano '\(title)' salvato e attivato con successo!",
             "id": plan.id.uuidString
         ]
+        if nutritionUpdated {
+            result["piano_alimentare"] = "Aggiornato automaticamente in base al nuovo piano di allenamento."
+        }
         return ToolResult(toolCallId: toolCallId, name: "save_training_plan", content: serializeJSON(result))
     }
 
@@ -465,6 +504,215 @@ class ToolRouter {
         let days = arguments["days"]?.intValue ?? 7
         let summary = await manager.fetchHealthSummary(days: days)
         return ToolResult(toolCallId: toolCallId, name: "get_health_summary", content: serializeJSON(summary))
+    }
+
+    // MARK: - Nutrition Plan Tools
+
+    private func calculateNutritionPlan(userProfile: RunnerProfile, planManager: TrainingPlanManager, nutritionManager: NutritionPlanManager?, toolCallId: String) -> ToolResult {
+        guard let nm = nutritionManager else {
+            return ToolResult(toolCallId: toolCallId, name: "calculate_nutrition_plan", content: "{\"errore\": \"NutritionManager non disponibile.\"}")
+        }
+
+        guard let trainingPlan = planManager.currentActivePlan else {
+            return ToolResult(toolCallId: toolCallId, name: "calculate_nutrition_plan", content: "{\"errore\": \"Nessun piano di allenamento attivo. Crea prima un piano di allenamento.\"}")
+        }
+
+        let weight = userProfile.effectiveWeight
+        var weeklyNutrition: [DayNutrition] = []
+
+        for day in trainingPlan.weeklyPlan {
+            let intensity = trainingIntensity(for: day.workoutType)
+            let multiplier = intensityMultiplier(for: intensity)
+
+            let proteine = Int(weight * (1.4 + 0.4 * multiplier))
+            let carboidrati = Int(weight * (3.0 + 4.0 * multiplier))
+            let verdure = Int(300 + 200 * multiplier)
+            let dolci = intensity == "riposo" ? 0 : (intensity == "intenso" ? 30 : (intensity == "moderato" ? 20 : 10))
+
+            let examples = foodExamplesForDay(intensity: intensity, proteine: proteine, carboidrati: carboidrati, verdure: verdure)
+            let note = noteForDay(intensity: intensity, workoutType: day.workoutType)
+
+            weeklyNutrition.append(DayNutrition(
+                dayOfWeek: day.dayOfWeek,
+                trainingIntensity: intensity,
+                proteine_g: proteine,
+                carboidrati_g: carboidrati,
+                verdure_frutta_g: verdure,
+                dolci_g: dolci,
+                note: note,
+                foodExamples: examples
+            ))
+        }
+
+        let nutritionPlan = NutritionPlan(
+            title: "Piano Alimentare - \(trainingPlan.title)",
+            linkedTrainingPlanId: trainingPlan.id,
+            weeklyNutrition: weeklyNutrition
+        )
+
+        nm.savePlan(nutritionPlan)
+        nm.setActivePlan(nutritionPlan)
+
+        // Build result JSON
+        let planData = weeklyNutrition.map { day -> [String: Any] in
+            [
+                "giorno": day.dayOfWeek,
+                "intensita": day.trainingIntensity,
+                "proteine_g": day.proteine_g,
+                "carboidrati_g": day.carboidrati_g,
+                "verdure_frutta_g": day.verdure_frutta_g,
+                "dolci_g": day.dolci_g,
+                "note": day.note
+            ]
+        }
+
+        let totalProteine = weeklyNutrition.reduce(0) { $0 + $1.proteine_g }
+        let totalCarbo = weeklyNutrition.reduce(0) { $0 + $1.carboidrati_g }
+        let totalVerdure = weeklyNutrition.reduce(0) { $0 + $1.verdure_frutta_g }
+
+        let result: [String: Any] = [
+            "piano_alimentare": planData,
+            "riepilogo_settimanale": [
+                "proteine_totali_g": totalProteine,
+                "carboidrati_totali_g": totalCarbo,
+                "verdure_frutta_totali_g": totalVerdure,
+                "peso_utente_kg": weight
+            ],
+            "messaggio": "Piano alimentare calcolato e salvato! Collegato al piano '\(trainingPlan.title)'."
+        ]
+
+        return ToolResult(toolCallId: toolCallId, name: "calculate_nutrition_plan", content: serializeJSON(result))
+    }
+
+    private func getNutritionPlan(nutritionManager: NutritionPlanManager?, toolCallId: String) -> ToolResult {
+        guard let nm = nutritionManager, let plan = nm.currentNutritionPlan else {
+            return ToolResult(toolCallId: toolCallId, name: "get_nutrition_plan", content: "{\"messaggio\": \"Nessun piano alimentare attivo.\"}")
+        }
+
+        let planData = plan.weeklyNutrition.map { day -> [String: Any] in
+            [
+                "giorno": day.dayOfWeek,
+                "intensita": day.trainingIntensity,
+                "proteine_g": day.proteine_g,
+                "carboidrati_g": day.carboidrati_g,
+                "verdure_frutta_g": day.verdure_frutta_g,
+                "dolci_g": day.dolci_g,
+                "note": day.note
+            ]
+        }
+
+        let result: [String: Any] = [
+            "titolo": plan.title,
+            "piano_alimentare": planData
+        ]
+        return ToolResult(toolCallId: toolCallId, name: "get_nutrition_plan", content: serializeJSON(result))
+    }
+
+    // MARK: - Nutrition Auto-Update
+
+    private func autoUpdateNutritionPlan(trainingPlan: TrainingPlan, userProfile: RunnerProfile, nutritionManager: NutritionPlanManager) {
+        let weight = userProfile.effectiveWeight
+        var weeklyNutrition: [DayNutrition] = []
+
+        for day in trainingPlan.weeklyPlan {
+            let intensity = trainingIntensity(for: day.workoutType)
+            let multiplier = intensityMultiplier(for: intensity)
+
+            let proteine = Int(weight * (1.4 + 0.4 * multiplier))
+            let carboidrati = Int(weight * (3.0 + 4.0 * multiplier))
+            let verdure = Int(300 + 200 * multiplier)
+            let dolci = intensity == "riposo" ? 0 : (intensity == "intenso" ? 30 : (intensity == "moderato" ? 20 : 10))
+
+            let examples = foodExamplesForDay(intensity: intensity, proteine: proteine, carboidrati: carboidrati, verdure: verdure)
+            let note = noteForDay(intensity: intensity, workoutType: day.workoutType)
+
+            weeklyNutrition.append(DayNutrition(
+                dayOfWeek: day.dayOfWeek,
+                trainingIntensity: intensity,
+                proteine_g: proteine,
+                carboidrati_g: carboidrati,
+                verdure_frutta_g: verdure,
+                dolci_g: dolci,
+                note: note,
+                foodExamples: examples
+            ))
+        }
+
+        var updated = nutritionManager.currentNutritionPlan ?? NutritionPlan(
+            title: "Piano Alimentare - \(trainingPlan.title)",
+            linkedTrainingPlanId: trainingPlan.id,
+            weeklyNutrition: weeklyNutrition
+        )
+        updated.weeklyNutrition = weeklyNutrition
+        updated.linkedTrainingPlanId = trainingPlan.id
+        updated.lastModified = Date()
+
+        nutritionManager.savePlan(updated)
+        nutritionManager.setActivePlan(updated)
+    }
+
+    // MARK: - Nutrition Helpers
+
+    private func trainingIntensity(for workoutType: WorkoutType) -> String {
+        switch workoutType {
+        case .rest: return "riposo"
+        case .recovery, .easy: return "leggero"
+        case .tempo: return "moderato"
+        case .intervals, .long: return "intenso"
+        }
+    }
+
+    private func intensityMultiplier(for intensity: String) -> Double {
+        switch intensity {
+        case "riposo": return 0.0
+        case "leggero": return 0.3
+        case "moderato": return 0.6
+        case "intenso": return 1.0
+        default: return 0.3
+        }
+    }
+
+    private func foodExamplesForDay(intensity: String, proteine: Int, carboidrati: Int, verdure: Int) -> [FoodExample] {
+        var examples: [FoodExample] = []
+
+        // Protein examples
+        if proteine > 120 {
+            examples.append(FoodExample(macroCategory: "proteine", foodName: "petto di pollo", grams: 150))
+            examples.append(FoodExample(macroCategory: "proteine", foodName: "uova", grams: 100))
+        } else {
+            examples.append(FoodExample(macroCategory: "proteine", foodName: "pesce", grams: 120))
+        }
+
+        // Carb examples
+        if carboidrati > 300 {
+            examples.append(FoodExample(macroCategory: "carboidrati", foodName: "pasta", grams: min(carboidrati / 3, 150)))
+            examples.append(FoodExample(macroCategory: "carboidrati", foodName: "riso", grams: min(carboidrati / 4, 100)))
+        } else {
+            examples.append(FoodExample(macroCategory: "carboidrati", foodName: "pane integrale", grams: min(carboidrati / 3, 80)))
+        }
+
+        // Vegetable examples
+        examples.append(FoodExample(macroCategory: "verdure_frutta", foodName: "insalata mista", grams: min(verdure / 2, 200)))
+
+        return examples
+    }
+
+    private func noteForDay(intensity: String, workoutType: WorkoutType) -> String {
+        switch intensity {
+        case "riposo":
+            return "Giorno di riposo: meno carboidrati, focus su verdure e proteine per il recupero."
+        case "leggero":
+            return "Allenamento leggero: alimentazione bilanciata con carboidrati moderati."
+        case "moderato":
+            return "Allenamento moderato: aumenta i carboidrati per sostenere lo sforzo."
+        case "intenso":
+            if workoutType == .long {
+                return "Lungo: carica di carboidrati pre-allenamento, recupera con proteine dopo."
+            }
+            return "Allenamento intenso: massimizza carboidrati prima e proteine dopo l'allenamento."
+        default:
+            return ""
+        }
     }
 
     private func serializeJSON(_ dict: [String: Any]) -> String {

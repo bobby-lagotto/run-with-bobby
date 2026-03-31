@@ -25,6 +25,9 @@
 		AA00000100000007AABBCCDD /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA00000200000007AABBCCDD /* SettingsView.swift */; };
 		AA00000100000008AABBCCDD /* HealthKitManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA00000200000008AABBCCDD /* HealthKitManager.swift */; };
 		CC0000010000000AAABBCCDD /* AnthropicProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC0000020000000AAABBCCDD /* AnthropicProvider.swift */; };
+		DD0000010000000BAABBCCDD /* NutritionPlanManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD0000020000000BAABBCCDD /* NutritionPlanManager.swift */; };
+		DD0000010000000CAABBCCDD /* ConversationHistoryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD0000020000000CAABBCCDD /* ConversationHistoryView.swift */; };
+		DD0000010000000DAABBCCDD /* NutritionPlanView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD0000020000000DAABBCCDD /* NutritionPlanView.swift */; };
 		BB00000300000001AABBCCDD /* MLXLLM in Frameworks */ = {isa = PBXBuildFile; productRef = BB00000200000001AABBCCDD /* MLXLLM */; };
 		BB00000300000002AABBCCDD /* MLXLMCommon in Frameworks */ = {isa = PBXBuildFile; productRef = BB00000200000002AABBCCDD /* MLXLMCommon */; };
 /* End PBXBuildFile section */
@@ -50,6 +53,9 @@
 		AA00000200000008AABBCCDD /* HealthKitManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HealthKitManager.swift; sourceTree = "<group>"; };
 		AA00000200000009AABBCCDD /* RunWithBobby.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = RunWithBobby.entitlements; sourceTree = "<group>"; };
 		CC0000020000000AAABBCCDD /* AnthropicProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnthropicProvider.swift; sourceTree = "<group>"; };
+		DD0000020000000BAABBCCDD /* NutritionPlanManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NutritionPlanManager.swift; sourceTree = "<group>"; };
+		DD0000020000000CAABBCCDD /* ConversationHistoryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConversationHistoryView.swift; sourceTree = "<group>"; };
+		DD0000020000000DAABBCCDD /* NutritionPlanView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NutritionPlanView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -91,6 +97,9 @@
 				3D92FB3B2C8E4B7800123456 /* Models.swift */,
 				3D92FB3D2C8E4B8900123456 /* BobbyAI.swift */,
 				3D92FB392C8E4B6700123456 /* TrainingPlanManager.swift */,
+				DD0000020000000BAABBCCDD /* NutritionPlanManager.swift */,
+				DD0000020000000CAABBCCDD /* ConversationHistoryView.swift */,
+				DD0000020000000DAABBCCDD /* NutritionPlanView.swift */,
 				3D92FB3F2C8E4B9A00123456 /* Theme.swift */,
 				AA00000300000001AABBCCDD /* LLM */,
 				AA00000300000002AABBCCDD /* Settings */,
@@ -225,6 +234,9 @@
 				AA00000100000007AABBCCDD /* SettingsView.swift in Sources */,
 				AA00000100000008AABBCCDD /* HealthKitManager.swift in Sources */,
 				CC0000010000000AAABBCCDD /* AnthropicProvider.swift in Sources */,
+				DD0000010000000BAABBCCDD /* NutritionPlanManager.swift in Sources */,
+				DD0000010000000CAABBCCDD /* ConversationHistoryView.swift in Sources */,
+				DD0000010000000DAABBCCDD /* NutritionPlanView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

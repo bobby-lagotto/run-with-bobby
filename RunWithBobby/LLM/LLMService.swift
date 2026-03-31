@@ -122,12 +122,39 @@ struct LLMResponse {
     let toolCalls: [ToolCall]
 }
 
+// MARK: - Streaming
+
+enum StreamEvent {
+    case textDelta(String)
+    case done(LLMResponse)
+}
+
 // MARK: - LLM Service Protocol
 
 protocol LLMService {
     var isAvailable: Bool { get }
     var providerName: String { get }
     func generate(messages: [LLMMessage], toolDefinitions: [ToolDefinitionSchema]?) async throws -> LLMResponse
+    func generateStream(messages: [LLMMessage], toolDefinitions: [ToolDefinitionSchema]?) -> AsyncThrowingStream<StreamEvent, Error>
+}
+
+extension LLMService {
+    func generateStream(messages: [LLMMessage], toolDefinitions: [ToolDefinitionSchema]?) -> AsyncThrowingStream<StreamEvent, Error> {
+        AsyncThrowingStream { continuation in
+            Task {
+                do {
+                    let response = try await self.generate(messages: messages, toolDefinitions: toolDefinitions)
+                    if !response.text.isEmpty {
+                        continuation.yield(.textDelta(response.text))
+                    }
+                    continuation.yield(.done(response))
+                    continuation.finish()
+                } catch {
+                    continuation.finish(throwing: error)
+                }
+            }
+        }
+    }
 }
 
 // MARK: - Tool Definition Schema (for OpenAI function calling format)

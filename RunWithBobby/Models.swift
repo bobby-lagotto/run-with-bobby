@@ -127,6 +127,54 @@ struct PaceZone: Codable {
     var description: String
 }
 
+// MARK: - Nutrition Plan Models
+struct NutritionPlan: Identifiable, Codable {
+    var id = UUID()
+    var title: String
+    var linkedTrainingPlanId: UUID?
+    var weeklyNutrition: [DayNutrition]
+    var createdAt: Date
+    var lastModified: Date
+
+    init(title: String, linkedTrainingPlanId: UUID?, weeklyNutrition: [DayNutrition]) {
+        self.title = title
+        self.linkedTrainingPlanId = linkedTrainingPlanId
+        self.weeklyNutrition = weeklyNutrition
+        self.createdAt = Date()
+        self.lastModified = Date()
+    }
+}
+
+struct DayNutrition: Identifiable, Codable {
+    var id = UUID()
+    var dayOfWeek: String
+    var trainingIntensity: String // "riposo", "leggero", "moderato", "intenso"
+    var proteine_g: Int
+    var carboidrati_g: Int
+    var verdure_frutta_g: Int
+    var dolci_g: Int
+    var note: String
+    var foodExamples: [FoodExample]
+
+    init(dayOfWeek: String, trainingIntensity: String, proteine_g: Int, carboidrati_g: Int, verdure_frutta_g: Int, dolci_g: Int, note: String = "", foodExamples: [FoodExample] = []) {
+        self.dayOfWeek = dayOfWeek
+        self.trainingIntensity = trainingIntensity
+        self.proteine_g = proteine_g
+        self.carboidrati_g = carboidrati_g
+        self.verdure_frutta_g = verdure_frutta_g
+        self.dolci_g = dolci_g
+        self.note = note
+        self.foodExamples = foodExamples
+    }
+}
+
+struct FoodExample: Identifiable, Codable {
+    var id = UUID()
+    var macroCategory: String // "proteine", "carboidrati", "verdure_frutta", "dolci"
+    var foodName: String
+    var grams: Int
+}
+
 // MARK: - Runner Profile
 struct RunnerProfile: Codable {
     var weeklyKilometers: Double
@@ -136,7 +184,8 @@ struct RunnerProfile: Codable {
     var currentPace: String // formato "5:00" (min/km)
     var raceDistance: RaceDistance?
     var experience: ExperienceLevel
-    
+    var weight: Double? // kg, opzionale
+
     init() {
         self.weeklyKilometers = 20
         self.workoutsPerWeek = 3
@@ -145,6 +194,11 @@ struct RunnerProfile: Codable {
         self.currentPace = "5:30"
         self.raceDistance = nil
         self.experience = .beginner
+        self.weight = nil
+    }
+
+    var effectiveWeight: Double {
+        weight ?? 70.0
     }
 }
 
@@ -225,6 +279,18 @@ class AppState: ObservableObject {
         conversations.insert(currentConversation!, at: 0)
     }
     
+    func switchToConversation(_ conversation: Conversation) {
+        currentConversation = conversation
+    }
+
+    func deleteConversation(_ conversation: Conversation) {
+        conversations.removeAll { $0.id == conversation.id }
+        if currentConversation?.id == conversation.id {
+            currentConversation = conversations.first
+        }
+        saveConversations()
+    }
+
     func addTrainingPlan(_ plan: TrainingPlan) {
         trainingPlans.append(plan)
         saveTrainingPlans()

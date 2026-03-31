@@ -5,6 +5,7 @@ class BobbyAI: ObservableObject {
     @Published var isLoading = false
     @Published var errorMessage: String?
     @Published var activeProviderName: String = ""
+    @Published var streamingText: String = ""
 
     private var aiSettings: AISettings?
     private var openAIProvider: OpenAIProvider?
@@ -41,6 +42,10 @@ class BobbyAI: ObservableObject {
     8. Quando l'utente chiede informazioni sulla salute, affaticamento, recupero, o vuole un'analisi del proprio stato fisico, chiama SUBITO "get_health_summary" per ottenere i dati reali da Apple Health (frequenza cardiaca, HRV, passi, sonno, allenamenti, VO2 Max, SpO2).
     9. Se i dati Health mostrano segnali di sovrallenamento (FC a riposo alta, HRV basso, scarso sonno, calo delle prestazioni), suggerisci recupero attivo e riduci l'intensità del piano.
     10. Quando analizzi i dati Health, sii specifico: cita i numeri reali e spiega cosa significano per il runner. Es: "La tua FC a riposo è 55bpm, ottimo indicatore di fitness cardiovascolare."
+    11. Quando l'utente chiede un piano alimentare o nutrizionale, chiama SUBITO "calculate_nutrition_plan" per generare un piano basato sull'allenamento attivo.
+    12. Quando presenti il piano alimentare, mostra i grammi per ogni macro per ogni giorno con esempi di cibi concreti. Formato: GIORNO (intensità) — Proteine Xg · Carboidrati Xg · Verdure/Frutta Xg · Dolci Xg
+    13. Se l'utente chiede di vedere il piano alimentare corrente, usa "get_nutrition_plan".
+    14. Il piano alimentare si aggiorna automaticamente quando il piano di allenamento viene modificato o ottimizzato.
 
     Rispondi SEMPRE in italiano. Sii conciso ma motivante.
     """
@@ -106,6 +111,7 @@ class BobbyAI: ObservableObject {
         to userMessage: String,
         userProfile: RunnerProfile,
         planManager: TrainingPlanManager,
+        nutritionManager: NutritionPlanManager? = nil,
         conversationHistory: [ChatMessage]
     ) async -> String {
         isLoading = true
@@ -113,6 +119,7 @@ class BobbyAI: ObservableObject {
 
         defer {
             isLoading = false
+            streamingText = ""
         }
 
         guard let provider = resolveProvider() else {
@@ -139,25 +146,39 @@ class BobbyAI: ObservableObject {
         }
 
         // Build conversation messages
-        var messages = buildMessages(userMessage: userMessage, userProfile: userProfile, conversationHistory: conversationHistory)
+        var messages = buildMessages(userMessage: userMessage, userProfile: userProfile, nutritionManager: nutritionManager, conversationHistory: conversationHistory)
 
-        // Agent loop: generate → tool calls → execute → re-generate
+        // Agent loop: generate (streaming) → tool calls → execute → re-generate
         for iteration in 0..<maxToolIterations {
             do {
-                let response = try await provider.generate(
-                    messages: messages,
-                    toolDefinitions: ToolRouter.toolDefinitions
-                )
+                streamingText = ""
+
+                var fullResponse: LLMResponse?
+                for try await event in provider.generateStream(messages: messages, toolDefinitions: ToolRouter.toolDefinitions) {
+                    switch event {
+                    case .textDelta(let delta):
+                        streamingText += delta
+                    case .done(let response):
+                        fullResponse = response
+                    }
+                }
+
+                guard let response = fullResponse else {
+                    return streamingText.isEmpty ? "Mi scuso, non ho ricevuto risposta." : streamingText
+                }
 
                 // If no tool calls, return the text response
                 if response.toolCalls.isEmpty {
                     return response.text.trimmingCharacters(in: .whitespacesAndNewlines)
                 }
 
+                // Tool calls detected — clear streaming text during tool processing
+                streamingText = ""
+
                 // Execute tool calls
                 var toolResults: [ToolResult] = []
                 for toolCall in response.toolCalls {
-                    let result = await toolRouter.execute(toolCall, userProfile: userProfile, planManager: planManager, healthManager: healthManager)
+                    let result = await toolRouter.execute(toolCall, userProfile: userProfile, planManager: planManager, nutritionManager: nutritionManager, healthManager: healthManager)
                     toolResults.append(result)
 
                     #if DEBUG
@@ -195,21 +216,26 @@ class BobbyAI: ObservableObject {
                 print("❌ LLM Error: \(error)")
                 #endif
 
+                streamingText = ""
+
                 // Try fallback to cloud providers if we were using local
                 if let settings = aiSettings, settings.providerType == .auto || settings.providerType == .local {
-                    // Try Anthropic first, then OpenAI
                     let candidates: [LLMService?] = [anthropicProvider, openAIProvider]
                     let fallbackProviders = candidates.compactMap { $0 }.filter { $0.isAvailable }
                     for fallback in fallbackProviders {
                         do {
-                            let fallbackResponse = try await fallback.generate(
-                                messages: messages,
-                                toolDefinitions: ToolRouter.toolDefinitions
-                            )
-                            if fallbackResponse.toolCalls.isEmpty {
-                                return fallbackResponse.text.trimmingCharacters(in: .whitespacesAndNewlines)
+                            for try await event in fallback.generateStream(messages: messages, toolDefinitions: ToolRouter.toolDefinitions) {
+                                switch event {
+                                case .textDelta(let delta):
+                                    streamingText += delta
+                                case .done(let response):
+                                    if response.toolCalls.isEmpty {
+                                        return response.text.trimmingCharacters(in: .whitespacesAndNewlines)
+                                    }
+                                }
                             }
                         } catch {
+                            streamingText = ""
                             continue // Try next fallback
                         }
                     }
@@ -225,7 +251,7 @@ class BobbyAI: ObservableObject {
 
     // MARK: - Message Building
 
-    private func buildMessages(userMessage: String, userProfile: RunnerProfile, conversationHistory: [ChatMessage]) -> [LLMMessage] {
+    private func buildMessages(userMessage: String, userProfile: RunnerProfile, nutritionManager: NutritionPlanManager?, conversationHistory: [ChatMessage]) -> [LLMMessage] {
         var messages: [LLMMessage] = []
 
         // System prompt with tool descriptions and user profile context
@@ -238,6 +264,7 @@ class BobbyAI: ObservableObject {
         - Ritmo attuale: \(userProfile.currentPace) min/km
         - Esperienza: \(userProfile.experience.rawValue)
         - Gara obiettivo: \(userProfile.raceDistance?.rawValue ?? "Nessuna")
+        - Peso: \(userProfile.weight.map { "\(Int($0))kg" } ?? "non impostato (default 70kg)")
         """
 
         var healthContext = ""
@@ -250,7 +277,14 @@ class BobbyAI: ObservableObject {
             healthContext = "\n\n    APPLE HEALTH: Non disponibile su questo dispositivo."
         }
 
-        let fullSystemPrompt = systemPrompt + profileContext + healthContext + "\n\n" + ToolRouter.toolDescriptionsForPrompt
+        var nutritionContext = ""
+        if let nm = nutritionManager, let plan = nm.currentNutritionPlan {
+            nutritionContext = "\n\n    PIANO ALIMENTARE ATTIVO: \"\(plan.title)\" — collegato al piano di allenamento. Si aggiorna automaticamente quando il piano di allenamento cambia."
+        } else {
+            nutritionContext = "\n\n    PIANO ALIMENTARE: Nessun piano alimentare attivo. L'utente può chiedertene uno."
+        }
+
+        let fullSystemPrompt = systemPrompt + profileContext + healthContext + nutritionContext + "\n\n" + ToolRouter.toolDescriptionsForPrompt
         messages.append(LLMMessage(role: .system, content: fullSystemPrompt))
 
         // Conversation history (last 20 messages to stay within context)

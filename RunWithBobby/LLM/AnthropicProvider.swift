@@ -169,6 +169,94 @@ class AnthropicProvider: LLMService {
         return dict
     }
 
+    // MARK: - Streaming
+
+    func generateStream(messages: [LLMMessage], toolDefinitions: [ToolDefinitionSchema]?) -> AsyncThrowingStream<StreamEvent, Error> {
+        AsyncThrowingStream { [self] continuation in
+            Task {
+                do {
+                    guard !apiKey.isEmpty else { throw LLMError.apiKeyMissing }
+
+                    var request = try self.buildRequest(messages: messages, toolDefinitions: toolDefinitions)
+                    // Enable streaming
+                    if let body = request.httpBody,
+                       var json = try? JSONSerialization.jsonObject(with: body) as? [String: Any] {
+                        json["stream"] = true
+                        request.httpBody = try JSONSerialization.data(withJSONObject: json)
+                    }
+
+                    let (bytes, response) = try await URLSession.shared.bytes(for: request)
+
+                    guard let httpResponse = response as? HTTPURLResponse else {
+                        throw LLMError.invalidResponse
+                    }
+                    guard httpResponse.statusCode == 200 else {
+                        var errorBody = ""
+                        for try await line in bytes.lines { errorBody += line }
+                        throw LLMError.apiError("HTTP \(httpResponse.statusCode): \(errorBody)")
+                    }
+
+                    var accumulatedText = ""
+                    var toolCalls: [ToolCall] = []
+                    var currentToolId = ""
+                    var currentToolName = ""
+                    var currentToolArgs = ""
+
+                    for try await line in bytes.lines {
+                        guard line.hasPrefix("data: ") else { continue }
+                        let jsonStr = String(line.dropFirst(6))
+
+                        guard let data = jsonStr.data(using: .utf8),
+                              let event = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+                              let type = event["type"] as? String else { continue }
+
+                        switch type {
+                        case "content_block_start":
+                            if let block = event["content_block"] as? [String: Any],
+                               let blockType = block["type"] as? String,
+                               blockType == "tool_use" {
+                                currentToolId = block["id"] as? String ?? ""
+                                currentToolName = block["name"] as? String ?? ""
+                                currentToolArgs = ""
+                            }
+
+                        case "content_block_delta":
+                            if let delta = event["delta"] as? [String: Any],
+                               let deltaType = delta["type"] as? String {
+                                if deltaType == "text_delta", let text = delta["text"] as? String {
+                                    accumulatedText += text
+                                    continuation.yield(.textDelta(text))
+                                } else if deltaType == "input_json_delta", let json = delta["partial_json"] as? String {
+                                    currentToolArgs += json
+                                }
+                            }
+
+                        case "content_block_stop":
+                            if !currentToolName.isEmpty {
+                                if let argsData = currentToolArgs.data(using: .utf8),
+                                   let argsDict = try? JSONDecoder().decode([String: JSONValue].self, from: argsData) {
+                                    toolCalls.append(ToolCall(id: currentToolId, name: currentToolName, arguments: argsDict))
+                                }
+                                currentToolName = ""
+                                currentToolId = ""
+                                currentToolArgs = ""
+                            }
+
+                        default:
+                            break
+                        }
+                    }
+
+                    let finalResponse = LLMResponse(text: accumulatedText, toolCalls: toolCalls)
+                    continuation.yield(.done(finalResponse))
+                    continuation.finish()
+                } catch {
+                    continuation.finish(throwing: error)
+                }
+            }
+        }
+    }
+
     // MARK: - Response Parsing
 
     private func parseResponse(_ response: AnthropicMessageResponse) -> LLMResponse {
