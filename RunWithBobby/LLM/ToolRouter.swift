@@ -79,6 +79,17 @@ class ToolRouter {
             description: "Ottieni il piano alimentare attivo corrente con i grammi giornalieri di macronutrienti.",
             parameters: ToolParametersSchema(type: "object", properties: [:], required: [])
         ),
+        ToolDefinitionSchema(
+            name: "save_nutrition_plan",
+            description: "Salva il piano alimentare calcolato e impostalo come attivo. Chiama questo SOLO dopo che l'utente ha confermato il piano alimentare proposto.",
+            parameters: ToolParametersSchema(
+                type: "object",
+                properties: [
+                    "title": ToolPropertySchema(type: "string", description: "Titolo del piano alimentare"),
+                ],
+                required: []
+            )
+        ),
     ]
 
     // MARK: - Tool descriptions for system prompt (used by local models that don't support native function calling)
@@ -102,6 +113,7 @@ class ToolRouter {
     // MARK: - State for multi-turn tool execution
 
     private var lastCalculatedPlan: [DayTraining]?
+    private var lastCalculatedNutritionPlan: NutritionPlan?
 
     // MARK: - Execute Tool Call
 
@@ -129,6 +141,8 @@ class ToolRouter {
             return calculateNutritionPlan(userProfile: userProfile, planManager: planManager, nutritionManager: nutritionManager, toolCallId: toolCall.id)
         case "get_nutrition_plan":
             return getNutritionPlan(nutritionManager: nutritionManager, toolCallId: toolCall.id)
+        case "save_nutrition_plan":
+            return saveNutritionPlan(arguments: toolCall.arguments, nutritionManager: nutritionManager, toolCallId: toolCall.id)
         default:
             return ToolResult(toolCallId: toolCall.id, name: toolCall.name, content: "{\"error\": \"Tool sconosciuto: \(toolCall.name)\"}")
         }
@@ -265,13 +279,6 @@ class ToolRouter {
         planManager.savePlan(optimized)
         planManager.setActivePlan(optimized)
 
-        // Auto-update nutrition plan if one exists
-        var nutritionUpdated = false
-        if let nm = nutritionManager, nm.currentNutritionPlan != nil {
-            autoUpdateNutritionPlan(trainingPlan: optimized, userProfile: userProfile, nutritionManager: nm)
-            nutritionUpdated = true
-        }
-
         let stats = planManager.getWeeklyStats(for: optimized)
         var result: [String: Any] = [
             "titolo": optimized.title,
@@ -279,8 +286,8 @@ class ToolRouter {
             "allenamenti": stats.workoutCount,
             "messaggio": "Piano ottimizzato con successo!"
         ]
-        if nutritionUpdated {
-            result["piano_alimentare"] = "Aggiornato automaticamente in base al nuovo piano di allenamento."
+        if let nm = nutritionManager, nm.currentNutritionPlan != nil {
+            result["nota_piano_alimentare"] = "Il piano di allenamento è cambiato. Chiedi all'utente se vuole aggiornare anche il piano alimentare."
         }
         return ToolResult(toolCallId: toolCallId, name: "optimize_plan", content: serializeJSON(result))
     }
@@ -297,19 +304,12 @@ class ToolRouter {
         planManager.setActivePlan(plan)
         lastCalculatedPlan = nil
 
-        // Auto-update nutrition plan if one exists
-        var nutritionUpdated = false
-        if let nm = nutritionManager, nm.currentNutritionPlan != nil {
-            autoUpdateNutritionPlan(trainingPlan: plan, userProfile: userProfile, nutritionManager: nm)
-            nutritionUpdated = true
-        }
-
         var result: [String: Any] = [
             "messaggio": "Piano '\(title)' salvato e attivato con successo!",
             "id": plan.id.uuidString
         ]
-        if nutritionUpdated {
-            result["piano_alimentare"] = "Aggiornato automaticamente in base al nuovo piano di allenamento."
+        if let nm = nutritionManager, nm.currentNutritionPlan != nil {
+            result["nota_piano_alimentare"] = "Il piano di allenamento è cambiato. Chiedi all'utente se vuole aggiornare anche il piano alimentare."
         }
         return ToolResult(toolCallId: toolCallId, name: "save_training_plan", content: serializeJSON(result))
     }
@@ -550,8 +550,8 @@ class ToolRouter {
             weeklyNutrition: weeklyNutrition
         )
 
-        nm.savePlan(nutritionPlan)
-        nm.setActivePlan(nutritionPlan)
+        // Store temporarily — NOT saved until user confirms via save_nutrition_plan
+        self.lastCalculatedNutritionPlan = nutritionPlan
 
         // Build result JSON
         let planData = weeklyNutrition.map { day -> [String: Any] in
@@ -578,7 +578,7 @@ class ToolRouter {
                 "verdure_frutta_totali_g": totalVerdure,
                 "peso_utente_kg": weight
             ],
-            "messaggio": "Piano alimentare calcolato e salvato! Collegato al piano '\(trainingPlan.title)'."
+            "messaggio": "Piano alimentare calcolato. Presenta il piano all'utente e chiedi conferma prima di salvarlo."
         ]
 
         return ToolResult(toolCallId: toolCallId, name: "calculate_nutrition_plan", content: serializeJSON(result))
@@ -606,6 +606,29 @@ class ToolRouter {
             "piano_alimentare": planData
         ]
         return ToolResult(toolCallId: toolCallId, name: "get_nutrition_plan", content: serializeJSON(result))
+    }
+
+    private func saveNutritionPlan(arguments: [String: JSONValue], nutritionManager: NutritionPlanManager?, toolCallId: String) -> ToolResult {
+        guard let nm = nutritionManager else {
+            return ToolResult(toolCallId: toolCallId, name: "save_nutrition_plan", content: "{\"errore\": \"NutritionManager non disponibile.\"}")
+        }
+
+        guard var plan = lastCalculatedNutritionPlan else {
+            return ToolResult(toolCallId: toolCallId, name: "save_nutrition_plan", content: "{\"errore\": \"Nessun piano alimentare calcolato da salvare. Chiama prima calculate_nutrition_plan.\"}")
+        }
+
+        if let title = arguments["title"]?.stringValue {
+            plan.title = title
+        }
+
+        nm.savePlan(plan)
+        nm.setActivePlan(plan)
+        lastCalculatedNutritionPlan = nil
+
+        let result: [String: Any] = [
+            "messaggio": "Piano alimentare '\(plan.title)' salvato e attivato con successo!"
+        ]
+        return ToolResult(toolCallId: toolCallId, name: "save_nutrition_plan", content: serializeJSON(result))
     }
 
     // MARK: - Nutrition Auto-Update

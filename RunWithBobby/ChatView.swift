@@ -341,12 +341,6 @@ struct ChatView: View {
 
             await MainActor.run {
                 appState.addMessage(response, isFromUser: false)
-
-                // Fallback: try to extract plan from text if tool didn't save it
-                if planManager.currentActivePlan == nil,
-                   let trainingPlan = bobbyAI.extractTrainingPlan(from: response, userProfile: appState.userProfile) {
-                    planManager.savePlan(trainingPlan)
-                }
             }
         }
     }
