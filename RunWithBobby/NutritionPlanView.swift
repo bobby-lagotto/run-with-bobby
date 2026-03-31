@@ -97,6 +97,7 @@ struct NutritionPlanView: View {
                 .font(.caption)
                 .foregroundColor(.bobbyWarmGray)
         }
+        .frame(maxWidth: .infinity)
         .padding(.top, 60)
     }
 
