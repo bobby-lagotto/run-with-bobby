@@ -56,7 +56,7 @@ class ToolRouter {
         ),
         ToolDefinitionSchema(
             name: "get_health_summary",
-            description: "Ottieni un riepilogo completo dei dati di salute da Apple Health: frequenza cardiaca (media, riposo, min, max), variabilità cardiaca HRV, passi, distanza, calorie, VO2 Max, SpO2, allenamenti recenti e sonno. Usa questo tool quando l'utente chiede informazioni sulla salute, affaticamento, recupero, o per personalizzare il piano con dati reali.",
+            description: "Ottieni un riepilogo completo dei dati di salute da Apple Health: frequenza cardiaca (media, riposo, min, max), variabilità cardiaca HRV (proxy di stress e recupero), passi, distanza, calorie, VO2 Max, SpO2, allenamenti recenti e ore di sonno. Chiama SEMPRE questo tool quando l'utente chiede di salute, stress, affaticamento, recupero, sonno, prontezza alla gara, carico di allenamento, performance recente, o pone domande generiche sul proprio stato come 'come sto?' o 'come va?'.",
             parameters: ToolParametersSchema(
                 type: "object",
                 properties: [
