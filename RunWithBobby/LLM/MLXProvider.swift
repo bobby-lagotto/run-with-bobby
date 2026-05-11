@@ -2,9 +2,12 @@ import Foundation
 import MLXLLM
 import MLXLMCommon
 import MLX
+import Tokenizers
 
 @MainActor
 class MLXProvider: LLMService, ObservableObject {
+
+    nonisolated static let defaultModelId = "mlx-community/Qwen2.5-1.5B-Instruct-4bit"
 
     var isAvailable: Bool { modelContainer != nil }
     var providerName: String { "Locale (\(displayName))" }
@@ -16,67 +19,94 @@ class MLXProvider: LLMService, ObservableObject {
     @Published var downloadProgress: Double = 0
     @Published var isDownloading = false
 
-    init(modelId: String = "mlx-community/Qwen2.5-0.5B-Instruct-4bit") {
+    init(modelId: String = MLXProvider.defaultModelId) {
         self.modelId = modelId
         self.displayName = modelId.components(separatedBy: "/").last ?? modelId
+    }
+
+    nonisolated static func isDeviceSupported() -> Bool {
+        ProcessInfo.processInfo.physicalMemory >= 5_500_000_000
     }
 
     // MARK: - Generation
 
     func generate(messages: [LLMMessage], toolDefinitions: [ToolDefinitionSchema]?) async throws -> LLMResponse {
+        try await generate(messages: messages, toolDefinitions: toolDefinitions, retried: false)
+    }
+
+    private func generate(messages: [LLMMessage], toolDefinitions: [ToolDefinitionSchema]?, retried: Bool) async throws -> LLMResponse {
         guard let container = modelContainer else { throw LLMError.modelNotLoaded }
 
-        // Convert to chat message format for the tokenizer's chat template
-        let chatMessages: [[String: String]] = messages.map { msg in
-            var content = msg.content
-            // Inject tool definitions into system message so the local model knows about tools
-            if msg.role == .system, let tools = toolDefinitions, !tools.isEmpty {
-                content += "\n\nHai a disposizione questi strumenti. Per chiamarne uno, rispondi SOLO con un blocco <tool_call>{...}</tool_call>.\n"
-                for tool in tools {
-                    let params = tool.parameters.properties.map { "\($0.key): \($0.value.type) — \($0.value.description)" }.joined(separator: ", ")
-                    content += "- \(tool.name)(\(params)): \(tool.description)\n"
+        let userInput = Self.makeUserInput(messages: messages, toolDefinitions: toolDefinitions)
+        let params = GenerateParameters(maxKVSize: 2048, temperature: 0.3)
+
+        let result: (text: String, calls: [MLXLMCommon.ToolCall]) = try await container.perform { context in
+            let lmInput = try await context.processor.prepare(input: userInput)
+            var text = ""
+            var calls: [MLXLMCommon.ToolCall] = []
+            for await event in try MLXLMCommon.generate(input: lmInput, parameters: params, context: context) {
+                switch event {
+                case .chunk(let s): text += s
+                case .toolCall(let tc): calls.append(tc)
+                case .info: break
                 }
             }
-            return ["role": msg.role.rawValue, "content": content]
+            return (text, calls)
         }
 
-        let result = try await container.perform { context in
-            let input = try await context.processor.prepare(
-                input: .init(messages: chatMessages)
-            )
-            return try MLXLMCommon.generate(
-                input: input,
-                parameters: GenerateParameters(temperature: 0.7),
-                context: context
-            ) { tokens in
-                // Continue generating
-                if tokens.count >= 1024 {
-                    return .stop
-                }
-                return .more
-            }
-        }
+        let trimmed = result.text.trimmingCharacters(in: .whitespacesAndNewlines)
 
-        let text = result.output
-        let toolCalls = parseToolCalls(from: text)
-
-        // Remove tool call blocks from display text
-        var cleanText = text
-        if !toolCalls.isEmpty {
-            let pattern = #"<tool_call>\s*\{[\s\S]*?\}\s*</tool_call>"#
-            if let regex = try? NSRegularExpression(pattern: pattern, options: .dotMatchesLineSeparators) {
-                cleanText = regex.stringByReplacingMatches(
-                    in: text,
-                    range: NSRange(text.startIndex..., in: text),
-                    withTemplate: ""
-                )
-            }
+        // Retry once if model emitted <tool_call> markers but parser couldn't extract structured calls (malformed JSON).
+        if result.calls.isEmpty, trimmed.contains("<tool_call>"), !retried {
+            var retryMessages = messages
+            retryMessages.append(LLMMessage(role: .system, content: "Il tuo ultimo tool_call non era JSON valido. Riprova SOLO con un blocco <tool_call>{...}</tool_call> sintatticamente corretto."))
+            return try await generate(messages: retryMessages, toolDefinitions: toolDefinitions, retried: true)
         }
 
         return LLMResponse(
-            text: cleanText.trimmingCharacters(in: .whitespacesAndNewlines),
-            toolCalls: toolCalls
+            text: trimmed,
+            toolCalls: result.calls.map(Self.convert)
         )
+    }
+
+    func generateStream(messages: [LLMMessage], toolDefinitions: [ToolDefinitionSchema]?) -> AsyncThrowingStream<StreamEvent, Error> {
+        AsyncThrowingStream { continuation in
+            Task { @MainActor in
+                guard let container = self.modelContainer else {
+                    continuation.finish(throwing: LLMError.modelNotLoaded)
+                    return
+                }
+                let userInput = Self.makeUserInput(messages: messages, toolDefinitions: toolDefinitions)
+                let params = GenerateParameters(maxKVSize: 2048, temperature: 0.3)
+
+                do {
+                    try await container.perform { context in
+                        let lmInput = try await context.processor.prepare(input: userInput)
+                        var text = ""
+                        var calls: [MLXLMCommon.ToolCall] = []
+                        for await event in try MLXLMCommon.generate(input: lmInput, parameters: params, context: context) {
+                            switch event {
+                            case .chunk(let s):
+                                text += s
+                                continuation.yield(.textDelta(s))
+                            case .toolCall(let tc):
+                                calls.append(tc)
+                            case .info:
+                                break
+                            }
+                        }
+                        let response = LLMResponse(
+                            text: text.trimmingCharacters(in: .whitespacesAndNewlines),
+                            toolCalls: calls.map(Self.convert)
+                        )
+                        continuation.yield(.done(response))
+                        continuation.finish()
+                    }
+                } catch {
+                    continuation.finish(throwing: error)
+                }
+            }
+        }
     }
 
     // MARK: - Model Management
@@ -123,33 +153,60 @@ class MLXProvider: LLMService, ObservableObject {
         modelContainer = nil
     }
 
-    // MARK: - Tool Call Parsing
+    // MARK: - Helpers
 
-    private func parseToolCalls(from text: String) -> [ToolCall] {
-        var toolCalls: [ToolCall] = []
-
-        let pattern = #"<tool_call>\s*(\{[\s\S]*?\})\s*</tool_call>"#
-        guard let regex = try? NSRegularExpression(pattern: pattern, options: .dotMatchesLineSeparators) else {
-            return toolCalls
-        }
-
-        let matches = regex.matches(in: text, range: NSRange(text.startIndex..., in: text))
-        for match in matches {
-            if let range = Range(match.range(at: 1), in: text) {
-                let jsonStr = String(text[range])
-                if let data = jsonStr.data(using: .utf8),
-                   let json = try? JSONDecoder().decode(ToolCallJSON.self, from: data) {
-                    let args = json.arguments.mapValues { JSONValue.string($0) }
-                    toolCalls.append(ToolCall(name: json.name, arguments: args))
-                }
+    private nonisolated static func makeUserInput(messages: [LLMMessage], toolDefinitions: [ToolDefinitionSchema]?) -> UserInput {
+        let chatMessages: [Chat.Message] = messages.map { msg in
+            switch msg.role {
+            case .system:    return .system(msg.content)
+            case .user:      return .user(msg.content)
+            case .assistant: return .assistant(msg.content)
+            case .tool:      return .tool(msg.content)
             }
         }
-
-        return toolCalls
+        let toolSpecs: [ToolSpec]? = toolDefinitions?.map { toolSpec(from: $0) }
+        return UserInput(chat: chatMessages, tools: toolSpecs)
     }
 
-    private struct ToolCallJSON: Decodable {
-        let name: String
-        let arguments: [String: String]
+    private nonisolated static func toolSpec(from def: ToolDefinitionSchema) -> ToolSpec {
+        var properties: [String: Any] = [:]
+        for (k, v) in def.parameters.properties {
+            var p: [String: Any] = ["type": v.type, "description": v.description]
+            if let e = v.enumValues { p["enum"] = e }
+            properties[k] = p
+        }
+        let parameters: [String: Any] = [
+            "type": "object",
+            "properties": properties,
+            "required": def.parameters.required
+        ]
+        let function: [String: Any] = [
+            "name": def.name,
+            "description": def.description,
+            "parameters": parameters
+        ]
+        return [
+            "type": "function",
+            "function": function
+        ]
+    }
+
+    private nonisolated static func convert(_ tc: MLXLMCommon.ToolCall) -> ToolCall {
+        let args = tc.function.arguments.reduce(into: [String: JSONValue]()) { acc, kv in
+            acc[kv.key] = bridge(kv.value)
+        }
+        return ToolCall(name: tc.function.name, arguments: args)
+    }
+
+    private nonisolated static func bridge(_ v: MLXLMCommon.JSONValue) -> JSONValue {
+        switch v {
+        case .null:           return .null
+        case .bool(let b):    return .bool(b)
+        case .int(let i):     return .int(i)
+        case .double(let d):  return .number(d)
+        case .string(let s):  return .string(s)
+        case .array(let a):   return .array(a.map(bridge))
+        case .object(let o):  return .object(o.mapValues(bridge))
+        }
     }
 }

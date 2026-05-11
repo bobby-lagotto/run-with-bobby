@@ -107,7 +107,9 @@ class AISettings: ObservableObject {
 
     var isOpenAIAvailable: Bool { hasOpenAIKey }
     var isAnthropicAvailable: Bool { hasAnthropicKey }
-    var isLocalAvailable: Bool { isModelDownloaded }
+    var isLocalAvailable: Bool { isModelDownloaded && isDeviceSupported }
+
+    var isDeviceSupported: Bool { MLXProvider.isDeviceSupported() }
 
     /// Check if a string looks like a valid OpenAI API key
     static func looksLikeOpenAIKey(_ value: String) -> Bool {
@@ -128,7 +130,7 @@ class AISettings: ObservableObject {
         }
 
         self.localModelName = UserDefaults.standard.string(forKey: Self.localModelKey)
-            ?? "Qwen2.5-0.5B-Instruct-4bit"
+            ?? "Qwen2.5-1.5B-Instruct-4bit"
 
         self.openAIModel = UserDefaults.standard.string(forKey: Self.openAIModelKey)
             ?? "gpt-4o-mini"

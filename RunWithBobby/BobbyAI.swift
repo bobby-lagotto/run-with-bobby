@@ -154,7 +154,7 @@ class BobbyAI: ObservableObject {
         }
 
         // Build conversation messages
-        var messages = buildMessages(userMessage: userMessage, userProfile: userProfile, nutritionManager: nutritionManager, conversationHistory: conversationHistory)
+        var messages = buildMessages(userMessage: userMessage, userProfile: userProfile, nutritionManager: nutritionManager, conversationHistory: conversationHistory, usingMLX: usingLocalModel)
 
         // Agent loop: generate (streaming) → tool calls → execute → re-generate
         for iteration in 0..<maxToolIterations {
@@ -259,7 +259,7 @@ class BobbyAI: ObservableObject {
 
     // MARK: - Message Building
 
-    private func buildMessages(userMessage: String, userProfile: RunnerProfile, nutritionManager: NutritionPlanManager?, conversationHistory: [ChatMessage]) -> [LLMMessage] {
+    private func buildMessages(userMessage: String, userProfile: RunnerProfile, nutritionManager: NutritionPlanManager?, conversationHistory: [ChatMessage], usingMLX: Bool = false) -> [LLMMessage] {
         var messages: [LLMMessage] = []
 
         // System prompt with tool descriptions and user profile context
@@ -292,7 +292,10 @@ class BobbyAI: ObservableObject {
             nutritionContext = "\n\n    PIANO ALIMENTARE: Nessun piano alimentare attivo. L'utente può chiedertene uno."
         }
 
-        let fullSystemPrompt = systemPrompt + profileContext + healthContext + nutritionContext + "\n\n" + ToolRouter.toolDescriptionsForPrompt
+        // MLX provider injects tools natively via Qwen2.5 chat template (UserInput.tools);
+        // appending toolDescriptionsForPrompt would duplicate them and confuse the model.
+        let toolDescriptions = usingMLX ? "" : "\n\n" + ToolRouter.toolDescriptionsForPrompt
+        let fullSystemPrompt = systemPrompt + profileContext + healthContext + nutritionContext + toolDescriptions
         messages.append(LLMMessage(role: .system, content: fullSystemPrompt))
 
         // Conversation history (last 20 messages to stay within context)
