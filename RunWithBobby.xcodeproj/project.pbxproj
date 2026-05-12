@@ -20,16 +20,17 @@
 		AA00000100000002AABBCCDD /* OpenAIProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA00000200000002AABBCCDD /* OpenAIProvider.swift */; };
 		AA00000100000003AABBCCDD /* MLXProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA00000200000003AABBCCDD /* MLXProvider.swift */; };
 		AA00000100000004AABBCCDD /* ToolRouter.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA00000200000004AABBCCDD /* ToolRouter.swift */; };
+		BB0000010000001AAABBCCDD /* LocalModelCatalog.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB0000020000001AAABBCCDD /* LocalModelCatalog.swift */; };
 		AA00000100000005AABBCCDD /* AISettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA00000200000005AABBCCDD /* AISettings.swift */; };
 		AA00000100000006AABBCCDD /* KeychainHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA00000200000006AABBCCDD /* KeychainHelper.swift */; };
 		AA00000100000007AABBCCDD /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA00000200000007AABBCCDD /* SettingsView.swift */; };
 		AA00000100000008AABBCCDD /* HealthKitManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA00000200000008AABBCCDD /* HealthKitManager.swift */; };
+		BB00000300000001AABBCCDD /* MLXLLM in Frameworks */ = {isa = PBXBuildFile; productRef = BB00000200000001AABBCCDD /* MLXLLM */; };
+		BB00000300000002AABBCCDD /* MLXLMCommon in Frameworks */ = {isa = PBXBuildFile; productRef = BB00000200000002AABBCCDD /* MLXLMCommon */; };
 		CC0000010000000AAABBCCDD /* AnthropicProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC0000020000000AAABBCCDD /* AnthropicProvider.swift */; };
 		DD0000010000000BAABBCCDD /* NutritionPlanManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD0000020000000BAABBCCDD /* NutritionPlanManager.swift */; };
 		DD0000010000000CAABBCCDD /* ConversationHistoryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD0000020000000CAABBCCDD /* ConversationHistoryView.swift */; };
 		DD0000010000000DAABBCCDD /* NutritionPlanView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD0000020000000DAABBCCDD /* NutritionPlanView.swift */; };
-		BB00000300000001AABBCCDD /* MLXLLM in Frameworks */ = {isa = PBXBuildFile; productRef = BB00000200000001AABBCCDD /* MLXLLM */; };
-		BB00000300000002AABBCCDD /* MLXLMCommon in Frameworks */ = {isa = PBXBuildFile; productRef = BB00000200000002AABBCCDD /* MLXLMCommon */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -47,6 +48,7 @@
 		AA00000200000002AABBCCDD /* OpenAIProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OpenAIProvider.swift; sourceTree = "<group>"; };
 		AA00000200000003AABBCCDD /* MLXProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MLXProvider.swift; sourceTree = "<group>"; };
 		AA00000200000004AABBCCDD /* ToolRouter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ToolRouter.swift; sourceTree = "<group>"; };
+		BB0000020000001AAABBCCDD /* LocalModelCatalog.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalModelCatalog.swift; sourceTree = "<group>"; };
 		AA00000200000005AABBCCDD /* AISettings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AISettings.swift; sourceTree = "<group>"; };
 		AA00000200000006AABBCCDD /* KeychainHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeychainHelper.swift; sourceTree = "<group>"; };
 		AA00000200000007AABBCCDD /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
@@ -125,6 +127,7 @@
 				CC0000020000000AAABBCCDD /* AnthropicProvider.swift */,
 				AA00000200000003AABBCCDD /* MLXProvider.swift */,
 				AA00000200000004AABBCCDD /* ToolRouter.swift */,
+				BB0000020000001AAABBCCDD /* LocalModelCatalog.swift */,
 			);
 			path = LLM;
 			sourceTree = "<group>";
@@ -229,6 +232,7 @@
 				AA00000100000002AABBCCDD /* OpenAIProvider.swift in Sources */,
 				AA00000100000003AABBCCDD /* MLXProvider.swift in Sources */,
 				AA00000100000004AABBCCDD /* ToolRouter.swift in Sources */,
+				BB0000010000001AAABBCCDD /* LocalModelCatalog.swift in Sources */,
 				AA00000100000005AABBCCDD /* AISettings.swift in Sources */,
 				AA00000100000006AABBCCDD /* KeychainHelper.swift in Sources */,
 				AA00000100000007AABBCCDD /* SettingsView.swift in Sources */,

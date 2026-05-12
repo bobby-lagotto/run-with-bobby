@@ -1,4 +1,5 @@
 import Foundation
+import Hub
 import MLXLLM
 import MLXLMCommon
 import MLX
@@ -12,8 +13,8 @@ class MLXProvider: LLMService, ObservableObject {
     var isAvailable: Bool { modelContainer != nil }
     var providerName: String { "Locale (\(displayName))" }
 
-    private let modelId: String
-    private let displayName: String
+    @Published private(set) var modelId: String
+    private var displayName: String
     private var modelContainer: ModelContainer?
 
     @Published var downloadProgress: Double = 0
@@ -24,8 +25,24 @@ class MLXProvider: LLMService, ObservableObject {
         self.displayName = modelId.components(separatedBy: "/").last ?? modelId
     }
 
-    nonisolated static func isDeviceSupported() -> Bool {
-        ProcessInfo.processInfo.physicalMemory >= 5_500_000_000
+    /// Switch the active model. Unloads the current container so the next
+    /// generate() / loadIfAvailable() loads the new model.
+    func setModel(_ newId: String) {
+        guard newId != modelId else { return }
+        unloadModel()
+        modelId = newId
+        displayName = newId.components(separatedBy: "/").last ?? newId
+    }
+
+    /// Delete the on-disk files for a given model id (HuggingFace cache).
+    /// Safe to call on a model that isn't cached — it just no-ops.
+    func deleteModelFiles(_ id: String) {
+        let repo = Hub.Repo(id: id, type: .models)
+        let cacheDir = HubApi.shared.localRepoLocation(repo)
+        try? FileManager.default.removeItem(at: cacheDir)
+        if id == modelId {
+            unloadModel()
+        }
     }
 
     // MARK: - Generation

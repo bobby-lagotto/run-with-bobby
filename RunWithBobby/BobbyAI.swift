@@ -77,6 +77,11 @@ class BobbyAI: ObservableObject {
     func updateProvider() {
         guard let settings = aiSettings else { return }
 
+        // Sync MLX model selection with settings
+        if mlxProvider.modelId != settings.selectedModelId {
+            mlxProvider.setModel(settings.selectedModelId)
+        }
+
         // Setup OpenAI provider if API key available
         if let apiKey = settings.openAIAPIKey, !apiKey.isEmpty {
             openAIProvider = OpenAIProvider(apiKey: apiKey, model: settings.openAIModel)
@@ -104,14 +109,14 @@ class BobbyAI: ObservableObject {
 
         switch settings.providerType {
         case .local:
-            return settings.isModelDownloaded ? mlxProvider : nil
+            return settings.isLocalAvailable ? mlxProvider : nil
         case .openai:
             return openAIProvider
         case .anthropic:
             return anthropicProvider
         case .auto:
             // Priority: local -> anthropic -> openai
-            if settings.isModelDownloaded {
+            if settings.isLocalAvailable {
                 return mlxProvider
             }
             if let anthropic = anthropicProvider, anthropic.isAvailable {

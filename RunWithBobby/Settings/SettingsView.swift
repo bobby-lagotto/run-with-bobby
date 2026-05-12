@@ -357,62 +357,8 @@ struct SettingsView: View {
 
     private var localModelSection: some View {
         Section {
-            HStack(spacing: 12) {
-                Image(systemName: "internaldrive")
-                    .foregroundColor(.bobbyCaramel)
-                    .frame(width: 28)
-
-                VStack(alignment: .leading, spacing: 4) {
-                    Text(aiSettings.localModelName)
-                        .font(.body)
-
-                    if aiSettings.isModelDownloaded {
-                        HStack(spacing: 4) {
-                            Image(systemName: "checkmark.circle.fill")
-                                .foregroundColor(.green)
-                                .font(.caption)
-                            Text("Scaricato")
-                                .font(.caption)
-                                .foregroundColor(.green)
-                        }
-                    } else if mlxProvider.isDownloading {
-                        ProgressView(value: mlxProvider.downloadProgress)
-                            .tint(.bobbyRed)
-                        Text("Download: \(Int(mlxProvider.downloadProgress * 100))%")
-                            .font(.caption)
-                            .foregroundColor(.bobbyWarmGray)
-                    } else {
-                        Text("Non scaricato (~400 MB)")
-                            .font(.caption)
-                            .foregroundColor(.bobbyWarmGray)
-                    }
-                }
-
-                Spacer()
-
-                if !aiSettings.isModelDownloaded && !mlxProvider.isDownloading {
-                    Button("Scarica") {
-                        Task {
-                            aiSettings.isDownloading = true
-                            downloadError = nil
-                            do {
-                                try await mlxProvider.downloadModel()
-                                aiSettings.isModelDownloaded = true
-                                aiSettings.isDownloading = false
-                                onProviderChanged?()
-                            } catch {
-                                aiSettings.isDownloading = false
-                                downloadError = error.localizedDescription
-                            }
-                        }
-                    }
-                    .font(.subheadline.weight(.semibold))
-                    .foregroundColor(.white)
-                    .padding(.horizontal, 16)
-                    .padding(.vertical, 8)
-                    .background(Color.bobbyRed)
-                    .clipShape(Capsule())
-                }
+            ForEach(LocalModelCatalog.all) { option in
+                localModelRow(for: option)
             }
 
             if let downloadError {
@@ -424,8 +370,126 @@ struct SettingsView: View {
             Label("Modello Locale", systemImage: "iphone")
                 .foregroundColor(.bobbyRed)
         } footer: {
-            Text("Il modello locale funziona completamente offline sul dispositivo. Richiede iPhone 12 o successivo.")
+            Text("Tocca un modello per selezionarlo. I modelli funzionano completamente offline. Puoi tenerne più di uno scaricato e cambiare quando vuoi.")
                 .font(.caption)
+        }
+    }
+
+    @ViewBuilder
+    private func localModelRow(for option: LocalModelOption) -> some View {
+        let isSelected = aiSettings.selectedModelId == option.id
+        let isDownloaded = aiSettings.downloadedModelIds.contains(option.id)
+        let isSupported = option.isSupportedOnThisDevice
+        let isThisDownloading = mlxProvider.isDownloading && mlxProvider.modelId == option.id
+        let isRecommended = option.id == LocalModelCatalog.defaultId
+
+        VStack(alignment: .leading, spacing: 8) {
+            HStack(spacing: 12) {
+                Image(systemName: isSelected ? "largecircle.fill.circle" : "circle")
+                    .foregroundColor(isSelected ? .bobbyRed : .bobbyWarmGray)
+                    .font(.title3)
+
+                VStack(alignment: .leading, spacing: 2) {
+                    HStack(spacing: 6) {
+                        Text(option.tier)
+                            .font(.body.weight(.semibold))
+                            .foregroundColor(isSupported ? .primary : .secondary)
+                        Text("·")
+                            .foregroundColor(.bobbyWarmGray)
+                        Text(option.formattedSize)
+                            .font(.subheadline)
+                            .foregroundColor(.bobbyWarmGray)
+                        if isRecommended {
+                            Text("⭐ Consigliato")
+                                .font(.caption.weight(.medium))
+                                .foregroundColor(.bobbyCaramel)
+                        }
+                    }
+                    Text(option.shortName)
+                        .font(.caption)
+                        .foregroundColor(.bobbyWarmGray)
+                }
+
+                Spacer()
+            }
+
+            Text(option.description)
+                .font(.caption)
+                .foregroundColor(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+
+            if !isSupported {
+                Text(option.requirementText)
+                    .font(.caption2.weight(.medium))
+                    .foregroundColor(.orange)
+            } else if isThisDownloading {
+                VStack(alignment: .leading, spacing: 4) {
+                    ProgressView(value: mlxProvider.downloadProgress)
+                        .tint(.bobbyRed)
+                    Text("Download: \(Int(mlxProvider.downloadProgress * 100))%")
+                        .font(.caption)
+                        .foregroundColor(.bobbyWarmGray)
+                }
+            } else {
+                HStack(spacing: 8) {
+                    if isDownloaded {
+                        HStack(spacing: 4) {
+                            Image(systemName: "checkmark.circle.fill")
+                                .foregroundColor(.green)
+                                .font(.caption)
+                            Text(isSelected ? "Scaricato · Attivo" : "Scaricato")
+                                .font(.caption.weight(.medium))
+                                .foregroundColor(.green)
+                        }
+                        Spacer()
+                        if !isSelected {
+                            Button("Elimina") {
+                                mlxProvider.deleteModelFiles(option.id)
+                                aiSettings.markDeleted(option.id)
+                            }
+                            .font(.caption.weight(.semibold))
+                            .foregroundColor(.bobbyRed)
+                        }
+                    } else {
+                        Spacer()
+                        Button("Scarica") {
+                            downloadModel(option)
+                        }
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundColor(.white)
+                        .padding(.horizontal, 16)
+                        .padding(.vertical, 6)
+                        .background(Color.bobbyRed)
+                        .clipShape(Capsule())
+                        .disabled(mlxProvider.isDownloading)
+                    }
+                }
+            }
+        }
+        .contentShape(Rectangle())
+        .opacity(isSupported ? 1.0 : 0.55)
+        .onTapGesture {
+            guard isSupported, isDownloaded, !mlxProvider.isDownloading else { return }
+            aiSettings.selectedModelId = option.id
+            onProviderChanged?()
+        }
+    }
+
+    private func downloadModel(_ option: LocalModelOption) {
+        downloadError = nil
+        mlxProvider.setModel(option.id)
+        Task {
+            aiSettings.isDownloading = true
+            do {
+                try await mlxProvider.downloadModel()
+                aiSettings.markDownloaded(option.id)
+                aiSettings.selectedModelId = option.id
+                aiSettings.isDownloading = false
+                onProviderChanged?()
+            } catch {
+                aiSettings.isDownloading = false
+                downloadError = error.localizedDescription
+            }
         }
     }
 
@@ -557,13 +621,13 @@ struct SettingsView: View {
     private var currentProviderDescription: String {
         switch aiSettings.providerType {
         case .local:
-            return aiSettings.isModelDownloaded ? "Modello locale attivo" : "Modello locale non disponibile"
+            return aiSettings.isLocalAvailable ? "Modello locale attivo" : "Modello locale non disponibile"
         case .openai:
             return aiSettings.hasOpenAIKey ? "OpenAI \(aiSettings.openAIModel)" : "API Key mancante"
         case .anthropic:
             return aiSettings.hasAnthropicKey ? "Anthropic \(aiSettings.anthropicModel)" : "API Key mancante"
         case .auto:
-            if aiSettings.isModelDownloaded {
+            if aiSettings.isLocalAvailable {
                 return "Locale (con fallback cloud)"
             } else if aiSettings.hasAnthropicKey {
                 return "Anthropic \(aiSettings.anthropicModel)"

@@ -19,20 +19,33 @@ enum LLMProviderType: String, Codable, CaseIterable {
 
 class AISettings: ObservableObject {
     private static let providerKey = "ai_provider_type"
-    private static let localModelKey = "ai_local_model"
+    private static let selectedModelIdKey = "ai_selected_model_id"
+    private static let downloadedModelIdsKey = "ai_downloaded_model_ids"
     private static let openAIModelKey = "ai_openai_model"
     private static let anthropicModelKey = "ai_anthropic_model"
     private static let apiKeyKeychainKey = "openai_api_key"
     private static let anthropicApiKeyKeychainKey = "anthropic_api_key"
-    private static let modelDownloadedKey = "ai_model_downloaded"
-    private static let downloadedModelIdKey = "ai_downloaded_model_id"
+
+    // Legacy keys for one-time migration
+    private static let legacyLocalModelKey = "ai_local_model"
+    private static let legacyModelDownloadedKey = "ai_model_downloaded"
+    private static let legacyDownloadedModelIdKey = "ai_downloaded_model_id"
 
     @Published var providerType: LLMProviderType {
         didSet { UserDefaults.standard.set(providerType.rawValue, forKey: Self.providerKey) }
     }
 
-    @Published var localModelName: String {
-        didSet { UserDefaults.standard.set(localModelName, forKey: Self.localModelKey) }
+    @Published var selectedModelId: String {
+        didSet { UserDefaults.standard.set(selectedModelId, forKey: Self.selectedModelIdKey) }
+    }
+
+    @Published var downloadedModelIds: Set<String> {
+        didSet {
+            let array = Array(downloadedModelIds)
+            if let data = try? JSONEncoder().encode(array) {
+                UserDefaults.standard.set(data, forKey: Self.downloadedModelIdsKey)
+            }
+        }
     }
 
     @Published var openAIModel: String {
@@ -43,14 +56,6 @@ class AISettings: ObservableObject {
         didSet { UserDefaults.standard.set(anthropicModel, forKey: Self.anthropicModelKey) }
     }
 
-    @Published var isModelDownloaded: Bool {
-        didSet {
-            UserDefaults.standard.set(isModelDownloaded, forKey: Self.modelDownloadedKey)
-            if isModelDownloaded {
-                UserDefaults.standard.set(localModelName, forKey: Self.downloadedModelIdKey)
-            }
-        }
-    }
     @Published var downloadProgress: Double = 0
     @Published var isDownloading = false
 
@@ -107,9 +112,20 @@ class AISettings: ObservableObject {
 
     var isOpenAIAvailable: Bool { hasOpenAIKey }
     var isAnthropicAvailable: Bool { hasAnthropicKey }
-    var isLocalAvailable: Bool { isModelDownloaded && isDeviceSupported }
 
-    var isDeviceSupported: Bool { MLXProvider.isDeviceSupported() }
+    var selectedModel: LocalModelOption? { LocalModelCatalog.find(selectedModelId) }
+    var isSelectedModelDownloaded: Bool { downloadedModelIds.contains(selectedModelId) }
+    var isLocalAvailable: Bool {
+        isSelectedModelDownloaded && (selectedModel?.isSupportedOnThisDevice ?? false)
+    }
+
+    func markDownloaded(_ id: String) {
+        downloadedModelIds.insert(id)
+    }
+
+    func markDeleted(_ id: String) {
+        downloadedModelIds.remove(id)
+    }
 
     /// Check if a string looks like a valid OpenAI API key
     static func looksLikeOpenAIKey(_ value: String) -> Bool {
@@ -129,8 +145,8 @@ class AISettings: ObservableObject {
             self.providerType = .auto
         }
 
-        self.localModelName = UserDefaults.standard.string(forKey: Self.localModelKey)
-            ?? "Qwen2.5-1.5B-Instruct-4bit"
+        self.selectedModelId = UserDefaults.standard.string(forKey: Self.selectedModelIdKey)
+            ?? LocalModelCatalog.defaultId
 
         self.openAIModel = UserDefaults.standard.string(forKey: Self.openAIModelKey)
             ?? "gpt-4o-mini"
@@ -138,14 +154,23 @@ class AISettings: ObservableObject {
         self.anthropicModel = UserDefaults.standard.string(forKey: Self.anthropicModelKey)
             ?? "claude-sonnet-4-20250514"
 
-        // Must initialize before accessing self.localModelName
-        self.isModelDownloaded = false
+        // Decode downloaded model IDs from JSON-encoded array
+        if let data = UserDefaults.standard.data(forKey: Self.downloadedModelIdsKey),
+           let ids = try? JSONDecoder().decode([String].self, from: data) {
+            self.downloadedModelIds = Set(ids)
+        } else {
+            self.downloadedModelIds = []
+        }
 
-        // Restore download state, but reset if model name changed
-        let savedModelId = UserDefaults.standard.string(forKey: Self.downloadedModelIdKey)
-        if UserDefaults.standard.bool(forKey: Self.modelDownloadedKey),
-           savedModelId == localModelName {
-            self.isModelDownloaded = true
+        // One-time migration from legacy state (single isModelDownloaded:Bool + localModelName:String)
+        if downloadedModelIds.isEmpty,
+           UserDefaults.standard.bool(forKey: Self.legacyModelDownloadedKey),
+           let legacyName = UserDefaults.standard.string(forKey: Self.legacyLocalModelKey) {
+            let legacyId = legacyName.contains("/") ? legacyName : "mlx-community/\(legacyName)"
+            downloadedModelIds.insert(legacyId)
+            UserDefaults.standard.removeObject(forKey: Self.legacyModelDownloadedKey)
+            UserDefaults.standard.removeObject(forKey: Self.legacyLocalModelKey)
+            UserDefaults.standard.removeObject(forKey: Self.legacyDownloadedModelIdKey)
         }
     }
 }
