@@ -6,7 +6,7 @@ import MLX
 import Tokenizers
 
 @MainActor
-class MLXProvider: LLMService, ObservableObject {
+class MLXProvider: @MainActor LLMService, ObservableObject {
 
     nonisolated static let defaultModelId = "mlx-community/Qwen2.5-1.5B-Instruct-4bit"
 

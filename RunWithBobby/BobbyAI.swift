@@ -10,10 +10,12 @@ class BobbyAI: ObservableObject {
     private var aiSettings: AISettings?
     private var openAIProvider: OpenAIProvider?
     private var anthropicProvider: AnthropicProvider?
+    private var openRouterProvider: OpenRouterProvider?
     private(set) var mlxProvider: MLXProvider
     private var healthManager: HealthKitManager?
 
     private let toolRouter = ToolRouter()
+    private let offlineFallback = OfflineCoachFallback()
     private let maxToolIterations = 3
 
     init() {
@@ -110,16 +112,23 @@ class BobbyAI: ObservableObject {
             anthropicProvider = nil
         }
 
+        // Setup OpenRouter provider if API key available
+        if let apiKey = settings.openRouterAPIKey, !apiKey.isEmpty {
+            openRouterProvider = OpenRouterProvider(apiKey: apiKey, model: settings.openRouterModel)
+        } else {
+            openRouterProvider = nil
+        }
+
         // Update active provider name
         if let provider = resolveProvider() {
             activeProviderName = provider.providerName
         } else {
-            activeProviderName = "Nessun provider"
+            activeProviderName = "Locale fallback gratuito"
         }
     }
 
     private func resolveProvider() -> LLMService? {
-        guard let settings = aiSettings else { return openAIProvider ?? anthropicProvider }
+        guard let settings = aiSettings else { return openAIProvider ?? anthropicProvider ?? openRouterProvider }
 
         switch settings.providerType {
         case .local:
@@ -128,15 +137,20 @@ class BobbyAI: ObservableObject {
             return openAIProvider
         case .anthropic:
             return anthropicProvider
+        case .openrouter:
+            return openRouterProvider
         case .auto:
-            // Priority: local -> anthropic -> openai
+            // Priority: local -> anthropic -> openai -> openrouter
             if settings.isLocalAvailable {
                 return mlxProvider
             }
             if let anthropic = anthropicProvider, anthropic.isAvailable {
                 return anthropic
             }
-            return openAIProvider
+            if let openAI = openAIProvider, openAI.isAvailable {
+                return openAI
+            }
+            return openRouterProvider
         }
     }
 
@@ -158,9 +172,14 @@ class BobbyAI: ObservableObject {
         }
 
         guard let provider = resolveProvider() else {
-            let error = LLMError.noProviderAvailable
-            self.errorMessage = error.errorDescription
-            return "⚙️ Per iniziare, configura il tuo assistente AI nelle impostazioni.\n\nPuoi:\n• Inserire la tua API key OpenAI o Anthropic\n• Scaricare un modello locale\n\nTocca il menu ⋯ in alto a destra → Impostazioni AI"
+            activeProviderName = "Locale fallback gratuito"
+            return offlineFallback.response(
+                to: userMessage,
+                userProfile: userProfile,
+                activePlan: planManager.currentActivePlan,
+                nutritionPlan: nutritionManager?.currentNutritionPlan,
+                reason: .noProviderConfigured
+            )
         }
 
         // Load local model into memory on-demand
@@ -168,8 +187,14 @@ class BobbyAI: ObservableObject {
         if usingLocalModel && !mlxProvider.isAvailable {
             await mlxProvider.loadIfAvailable()
             guard mlxProvider.isAvailable else {
-                self.errorMessage = "Impossibile caricare il modello locale."
-                return "❌ Non riesco a caricare il modello locale. Prova a riscaricarlo dalle impostazioni."
+                activeProviderName = "Locale fallback gratuito"
+                return offlineFallback.response(
+                    to: userMessage,
+                    userProfile: userProfile,
+                    activePlan: planManager.currentActivePlan,
+                    nutritionPlan: nutritionManager?.currentNutritionPlan,
+                    reason: .localModelUnavailable
+                )
             }
         }
 
@@ -199,7 +224,17 @@ class BobbyAI: ObservableObject {
                 }
 
                 guard let response = fullResponse else {
-                    return streamingText.isEmpty ? "Mi scuso, non ho ricevuto risposta." : streamingText
+                    if !streamingText.isEmpty {
+                        return streamingText
+                    }
+                    activeProviderName = "Locale fallback gratuito"
+                    return offlineFallback.response(
+                        to: userMessage,
+                        userProfile: userProfile,
+                        activePlan: planManager.currentActivePlan,
+                        nutritionPlan: nutritionManager?.currentNutritionPlan,
+                        reason: .providerDidNotAnswer
+                    )
                 }
 
                 // If no tool calls, return the text response
@@ -255,7 +290,7 @@ class BobbyAI: ObservableObject {
 
                 // Try fallback to cloud providers if we were using local
                 if let settings = aiSettings, settings.providerType == .auto || settings.providerType == .local {
-                    let candidates: [LLMService?] = [anthropicProvider, openAIProvider]
+                    let candidates: [LLMService?] = [anthropicProvider, openAIProvider, openRouterProvider]
                     let fallbackProviders = candidates.compactMap { $0 }.filter { $0.isAvailable }
                     for fallback in fallbackProviders {
                         do {
@@ -276,12 +311,25 @@ class BobbyAI: ObservableObject {
                     }
                 }
 
-                self.errorMessage = error.localizedDescription
-                return "Mi dispiace, ho avuto un problema tecnico. \(error.localizedDescription)"
+                activeProviderName = "Locale fallback gratuito"
+                return offlineFallback.response(
+                    to: userMessage,
+                    userProfile: userProfile,
+                    activePlan: planManager.currentActivePlan,
+                    nutritionPlan: nutritionManager?.currentNutritionPlan,
+                    reason: .providerError
+                )
             }
         }
 
-        return "Mi scuso, non sono riuscito a completare la richiesta. Riprova!"
+        activeProviderName = "Locale fallback gratuito"
+        return offlineFallback.response(
+            to: userMessage,
+            userProfile: userProfile,
+            activePlan: planManager.currentActivePlan,
+            nutritionPlan: nutritionManager?.currentNutritionPlan,
+            reason: .providerDidNotAnswer
+        )
     }
 
     // MARK: - Message Building
@@ -433,5 +481,222 @@ class BobbyAI: ObservableObject {
             }
         }
         return "Piano Personalizzato - \(DateFormatter.localizedString(from: Date(), dateStyle: .short, timeStyle: .none))"
+    }
+}
+
+private struct OfflineCoachFallback {
+    enum Reason {
+        case noProviderConfigured
+        case localModelUnavailable
+        case providerDidNotAnswer
+        case providerError
+
+        var intro: String {
+            switch self {
+            case .noProviderConfigured:
+                return "Modalità gratuita locale fallback: rispondo senza cloud perché non c'è un provider pronto."
+            case .localModelUnavailable:
+                return "Modalità gratuita locale fallback: il modello MLX non è pronto, quindi uso coaching deterministico sul dispositivo."
+            case .providerDidNotAnswer:
+                return "Modalità gratuita locale fallback: il provider selezionato non ha completato la risposta."
+            case .providerError:
+                return "Modalità gratuita locale fallback: il provider selezionato ha avuto un errore, quindi resto sul dispositivo."
+            }
+        }
+    }
+
+    func response(
+        to userMessage: String,
+        userProfile: RunnerProfile,
+        activePlan: TrainingPlan?,
+        nutritionPlan: NutritionPlan?,
+        reason: Reason
+    ) -> String {
+        let normalized = normalize(userMessage)
+        var sections: [String] = [reason.intro]
+
+        if containsRedFlag(normalized) {
+            sections.append(redFlagAdvice())
+        } else if isNutritionRequest(normalized) {
+            sections.append(nutritionAdvice(for: userProfile, activePlan: activePlan, nutritionPlan: nutritionPlan))
+        } else if isRecoveryRequest(normalized) {
+            sections.append(recoveryAdvice(for: userProfile, activePlan: activePlan))
+        } else if isTrainingRequest(normalized) {
+            sections.append(trainingAdvice(for: userProfile, activePlan: activePlan))
+        } else {
+            sections.append(defaultAdvice(for: userProfile, activePlan: activePlan))
+        }
+
+        sections.append("Non salvo e non modifico piani senza una tua conferma esplicita.")
+        return sections.joined(separator: "\n\n")
+    }
+
+    private func trainingAdvice(for profile: RunnerProfile, activePlan: TrainingPlan?) -> String {
+        if let activePlan {
+            let totalKm = activePlan.weeklyPlan.reduce(0.0) { $0 + $1.distance }
+            let workouts = activePlan.weeklyPlan.filter { $0.workoutType != .rest }.count
+            let nextWorkout = activePlan.weeklyPlan.first { $0.workoutType != .rest }
+            var text = "Hai un piano attivo: \(activePlan.title). Volume indicativo: \(formatKm(totalKm)) km su \(workouts) sedute."
+            if let nextWorkout {
+                text += "\nProssima seduta utile: \(nextWorkout.dayOfWeek) - \(nextWorkout.workoutType.rawValue), \(formatKm(nextWorkout.distance)) km. Tienila a RPE 3-4 se sei affaticato."
+            }
+            text += "\nSe vuoi cambiarlo, dimmi obiettivo, giorni disponibili e cosa vuoi modificare; ti propongo prima la modifica e poi chiedo conferma."
+            return text
+        }
+
+        let weeklyKm = max(profile.weeklyKilometers, 6)
+        let workouts = min(max(profile.workoutsPerWeek, 2), 5)
+        let days = scheduleDays(for: workouts)
+        let shares = distanceShares(for: workouts)
+        let labels = workoutLabels(for: profile, workouts: workouts)
+
+        var lines = [
+            "Bozza minima sicura basata sul tuo profilo: \(Int(weeklyKm)) km/settimana, \(profile.experience.rawValue.lowercased()), obiettivo \(profile.primaryGoal.rawValue.lowercased())."
+        ]
+
+        for index in 0..<workouts {
+            let km = max(2, weeklyKm * shares[index])
+            lines.append("- \(days[index]): \(labels[index]) - \(formatKm(km)) km.")
+        }
+
+        lines.append("Mantieni almeno 1 giorno facile dopo qualità o lungo. Se dolore acuto o fatica insolita: riduci del 20-30% o riposa.")
+        lines.append("Questa è una proposta non salvata; posso trasformarla in piano solo dopo tua conferma.")
+        return lines.joined(separator: "\n")
+    }
+
+    private func nutritionAdvice(for profile: RunnerProfile, activePlan: TrainingPlan?, nutritionPlan: NutritionPlan?) -> String {
+        let weight = profile.effectiveWeight
+        let proteinMin = Int((weight * 1.6).rounded())
+        let proteinMax = Int((weight * 1.8).rounded())
+        let carbsEasy = Int((weight * 3.0).rounded())
+        let carbsTraining = Int((weight * 5.0).rounded())
+
+        var lines = [
+            "Indicazione food-first non clinica, calcolata localmente su \(Int(weight)) kg.",
+            "- Proteine: \(proteinMin)-\(proteinMax) g/die.",
+            "- Carboidrati: circa \(carbsEasy) g nei giorni leggeri, fino a \(carbsTraining) g nei giorni con qualità o lungo.",
+            "- Pre allenamento: carboidrati semplici/digeribili 1-3 ore prima. Post: 20-35 g proteine + carboidrati entro 2 ore.",
+            "- Idratazione: acqua regolare; nelle sedute lunghe o calde aggiungi sali."
+        ]
+
+        if let activePlan {
+            let totalKm = activePlan.weeklyPlan.reduce(0.0) { $0 + $1.distance }
+            lines.append("Piano corsa attivo rilevato: \(activePlan.title), \(formatKm(totalKm)) km/settimana; concentra più carboidrati attorno a lungo e lavori intensi.")
+        }
+
+        if let nutritionPlan {
+            lines.append("Piano alimentare attivo: \(nutritionPlan.title). Non lo aggiorno senza conferma.")
+        } else {
+            lines.append("Per un piano completo mi servono preferenze alimentari, allergie/intolleranze e orari degli allenamenti.")
+        }
+
+        return lines.joined(separator: "\n")
+    }
+
+    private func recoveryAdvice(for profile: RunnerProfile, activePlan: TrainingPlan?) -> String {
+        var lines = [
+            "Senza dati Health live in questa modalità, usa una regola conservativa: se sonno scarso, FC a riposo più alta del solito o gambe pesanti, trasforma la seduta in facile.",
+            "Oggi scegli RPE 2-4, niente qualità, e chiudi con 5-10 minuti di mobilità leggera."
+        ]
+
+        if let activePlan {
+            let hardDays = activePlan.weeklyPlan.filter { $0.workoutType == .tempo || $0.workoutType == .intervals || $0.workoutType == .long }.count
+            lines.append("Nel piano attivo vedo \(hardDays) sedute impegnative: se la fatica dura oltre 48 ore, scala il prossimo lavoro del 20-30%.")
+        } else {
+            lines.append("Con il tuo profilo (\(profile.workoutsPerWeek) sedute/settimana), lascia almeno un giorno di recupero reale tra qualità e lungo.")
+        }
+
+        return lines.joined(separator: "\n")
+    }
+
+    private func defaultAdvice(for profile: RunnerProfile, activePlan: TrainingPlan?) -> String {
+        if let activePlan {
+            return "Posso aiutarti sul piano attivo \"\(activePlan.title)\". Prossimo passo utile: dimmi se vuoi analizzare una seduta, ridurre carico, preparare una gara o regolare nutrizione/recupero."
+        }
+
+        return "Per partire in modo sicuro: questa settimana resta su \(Int(max(profile.weeklyKilometers, 6))) km circa, \(min(max(profile.workoutsPerWeek, 2), 5)) sedute, ritmo facile nella maggior parte dei km. Dimmi obiettivo, giorni disponibili e eventuali dolori: ti preparo una proposta non salvata."
+    }
+
+    private func redFlagAdvice() -> String {
+        """
+        Prima la sicurezza: fermati e non forzare l'allenamento.
+        Se hai dolore/pressione al petto, svenimento, dispnea forte, sintomi neurologici, dolore acuto progressivo o malessere marcato, contatta assistenza medica urgente.
+        Se il sintomo è meno severo ma nuovo o ricorrente, sospendi qualità e lungo finché non lo valuti con un professionista.
+        """
+    }
+
+    private func isTrainingRequest(_ text: String) -> Bool {
+        containsAny(text, ["piano", "allenamento", "allenarmi", "corsa", "correre", "gara", "10k", "5k", "mezza", "maratona", "velocita", "resistenza", "lungo"])
+    }
+
+    private func isNutritionRequest(_ text: String) -> Bool {
+        containsAny(text, ["nutriz", "aliment", "mangiare", "mangio", "dieta", "proteine", "carbo", "idrata", "colazione", "pranzo", "cena"])
+    }
+
+    private func isRecoveryRequest(_ text: String) -> Bool {
+        containsAny(text, ["recuper", "stanco", "fatica", "sonno", "hrv", "battiti", "frequenza", "stress", "riposo", "dolori muscolari"])
+    }
+
+    private func containsRedFlag(_ text: String) -> Bool {
+        containsAny(text, [
+            "dolore al petto", "pressione al petto", "sven", "svengo", "dispnea", "fiato corto forte",
+            "capogiri", "vertigini", "dolore acuto", "dolore forte", "neurolog", "nausea marcata"
+        ])
+    }
+
+    private func scheduleDays(for workouts: Int) -> [String] {
+        switch workouts {
+        case 2:
+            return ["Martedì", "Sabato"]
+        case 3:
+            return ["Martedì", "Giovedì", "Sabato"]
+        case 4:
+            return ["Lunedì", "Mercoledì", "Venerdì", "Domenica"]
+        default:
+            return ["Lunedì", "Martedì", "Giovedì", "Sabato", "Domenica"]
+        }
+    }
+
+    private func distanceShares(for workouts: Int) -> [Double] {
+        switch workouts {
+        case 2:
+            return [0.45, 0.55]
+        case 3:
+            return [0.30, 0.25, 0.45]
+        case 4:
+            return [0.20, 0.25, 0.20, 0.35]
+        default:
+            return [0.18, 0.22, 0.16, 0.18, 0.26]
+        }
+    }
+
+    private func workoutLabels(for profile: RunnerProfile, workouts: Int) -> [String] {
+        let quality = profile.experience == .beginner ? "Facile + 4 allunghi controllati" : "Qualità controllata RPE 6-7"
+        switch workouts {
+        case 2:
+            return ["Facile RPE 3-4", "Lungo facile RPE 3-4"]
+        case 3:
+            return ["Facile RPE 3-4", quality, "Lungo facile RPE 3-4"]
+        case 4:
+            return ["Facile RPE 3-4", quality, "Recupero RPE 2-3", "Lungo facile RPE 3-4"]
+        default:
+            return ["Facile RPE 3-4", quality, "Recupero RPE 2-3", "Facile + tecnica", "Lungo facile RPE 3-4"]
+        }
+    }
+
+    private func normalize(_ text: String) -> String {
+        text.folding(options: [.diacriticInsensitive, .caseInsensitive], locale: .current).lowercased()
+    }
+
+    private func containsAny(_ text: String, _ needles: [String]) -> Bool {
+        needles.contains { text.contains(normalize($0)) }
+    }
+
+    private func formatKm(_ value: Double) -> String {
+        let rounded = (value * 10).rounded() / 10
+        if rounded.truncatingRemainder(dividingBy: 1) == 0 {
+            return "\(Int(rounded))"
+        }
+        return String(format: "%.1f", rounded)
     }
 }

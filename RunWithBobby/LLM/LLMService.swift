@@ -195,7 +195,7 @@ enum LLMError: LocalizedError {
     var errorDescription: String? {
         switch self {
         case .noProviderAvailable:
-            return "Nessun provider AI disponibile. Configura un modello locale o inserisci una API key (OpenAI o Anthropic) nelle impostazioni."
+            return "Nessun provider AI disponibile. Configura un modello locale o inserisci una API key (OpenAI, Anthropic o OpenRouter) nelle impostazioni."
         case .apiKeyMissing:
             return "API key mancante. Inseriscila nelle impostazioni."
         case .apiError(let msg):

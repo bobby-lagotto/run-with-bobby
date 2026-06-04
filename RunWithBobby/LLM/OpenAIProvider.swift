@@ -1,17 +1,27 @@
 import Foundation
 
-class OpenAIProvider: LLMService {
-
-    private let apiKey: String
-    private let model: String
-    private let baseURL = "https://api.openai.com/v1/chat/completions"
+class OpenAICompatibleProvider: LLMService {
+    let apiKey: String
+    let model: String
+    let baseURL: String
+    let displayName: String
+    let additionalHeaders: [String: String]
 
     var isAvailable: Bool { !apiKey.isEmpty }
-    var providerName: String { "OpenAI (\(model))" }
+    var providerName: String { "\(displayName) (\(model))" }
 
-    init(apiKey: String, model: String = "gpt-4o-mini") {
+    init(
+        apiKey: String,
+        model: String,
+        baseURL: String,
+        displayName: String,
+        additionalHeaders: [String: String] = [:]
+    ) {
         self.apiKey = apiKey
         self.model = model
+        self.baseURL = baseURL
+        self.displayName = displayName
+        self.additionalHeaders = additionalHeaders
     }
 
     func generate(messages: [LLMMessage], toolDefinitions: [ToolDefinitionSchema]?) async throws -> LLMResponse {
@@ -40,6 +50,9 @@ class OpenAIProvider: LLMService {
         request.httpMethod = "POST"
         request.addValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
         request.addValue("application/json", forHTTPHeaderField: "Content-Type")
+        for (header, value) in additionalHeaders {
+            request.addValue(value, forHTTPHeaderField: header)
+        }
         request.timeoutInterval = 60
 
         var body: [String: Any] = [
@@ -241,6 +254,45 @@ class OpenAIProvider: LLMService {
             return nil
         }
         return dict
+    }
+}
+
+class OpenAIProvider: OpenAICompatibleProvider {
+    init(apiKey: String, model: String = "gpt-4o-mini") {
+        super.init(
+            apiKey: apiKey,
+            model: model,
+            baseURL: "https://api.openai.com/v1/chat/completions",
+            displayName: "OpenAI"
+        )
+    }
+}
+
+class OpenRouterProvider: OpenAICompatibleProvider {
+    init(apiKey: String, model: String = "openai/gpt-4o-mini") {
+        super.init(
+            apiKey: apiKey,
+            model: model,
+            baseURL: "https://openrouter.ai/api/v1/chat/completions",
+            displayName: "OpenRouter"
+        )
+    }
+
+    func validateKey() async throws {
+        guard !apiKey.isEmpty else { throw LLMError.apiKeyMissing }
+        var request = URLRequest(url: URL(string: "https://openrouter.ai/api/v1/key")!)
+        request.httpMethod = "GET"
+        request.addValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
+        request.timeoutInterval = 30
+
+        let (data, response) = try await URLSession.shared.data(for: request)
+        guard let httpResponse = response as? HTTPURLResponse else {
+            throw LLMError.invalidResponse
+        }
+        guard httpResponse.statusCode == 200 else {
+            let body = String(data: data, encoding: .utf8) ?? "Unknown error"
+            throw LLMError.apiError("HTTP \(httpResponse.statusCode): \(body)")
+        }
     }
 }
 

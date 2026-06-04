@@ -509,7 +509,7 @@ class ToolRouter {
     // MARK: - Nutrition Plan Tools
 
     private func calculateNutritionPlan(userProfile: RunnerProfile, planManager: TrainingPlanManager, nutritionManager: NutritionPlanManager?, toolCallId: String) -> ToolResult {
-        guard let nm = nutritionManager else {
+        guard nutritionManager != nil else {
             return ToolResult(toolCallId: toolCallId, name: "calculate_nutrition_plan", content: "{\"errore\": \"NutritionManager non disponibile.\"}")
         }
 

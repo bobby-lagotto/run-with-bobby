@@ -11,6 +11,7 @@
 		3D92FB2C2C8E4B2A00123456 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D92FB2B2C8E4B2A00123456 /* ContentView.swift */; };
 		3D92FB2E2C8E4B2B00123456 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 3D92FB2D2C8E4B2B00123456 /* Assets.xcassets */; };
 		3D92FB312C8E4B2B00123456 /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 3D92FB302C8E4B2B00123456 /* Preview Assets.xcassets */; };
+		EE15000100000001AABBCCDD /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = EE15000200000001AABBCCDD /* PrivacyInfo.xcprivacy */; };
 		3D92FB382C8E4B5600123456 /* ChatView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D92FB372C8E4B5600123456 /* ChatView.swift */; };
 		3D92FB3A2C8E4B6700123456 /* TrainingPlanManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D92FB392C8E4B6700123456 /* TrainingPlanManager.swift */; };
 		3D92FB3C2C8E4B7800123456 /* Models.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D92FB3B2C8E4B7800123456 /* Models.swift */; };
@@ -39,6 +40,7 @@
 		3D92FB2B2C8E4B2A00123456 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		3D92FB2D2C8E4B2B00123456 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		3D92FB302C8E4B2B00123456 /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
+		EE15000200000001AABBCCDD /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		3D92FB372C8E4B5600123456 /* ChatView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatView.swift; sourceTree = "<group>"; };
 		3D92FB392C8E4B6700123456 /* TrainingPlanManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrainingPlanManager.swift; sourceTree = "<group>"; };
 		3D92FB3B2C8E4B7800123456 /* Models.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Models.swift; sourceTree = "<group>"; };
@@ -93,6 +95,7 @@
 			isa = PBXGroup;
 			children = (
 				AA00000200000009AABBCCDD /* RunWithBobby.entitlements */,
+				EE15000200000001AABBCCDD /* PrivacyInfo.xcprivacy */,
 				3D92FB292C8E4B2A00123456 /* RunWithBobbyApp.swift */,
 				3D92FB2B2C8E4B2A00123456 /* ContentView.swift */,
 				3D92FB372C8E4B5600123456 /* ChatView.swift */,
@@ -209,6 +212,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				EE15000100000001AABBCCDD /* PrivacyInfo.xcprivacy in Resources */,
 				3D92FB312C8E4B2B00123456 /* Preview Assets.xcassets in Resources */,
 				3D92FB2E2C8E4B2B00123456 /* Assets.xcassets in Resources */,
 			);
@@ -373,13 +377,13 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = RunWithBobby/RunWithBobby.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 2;
 				DEVELOPMENT_ASSET_PATHS = "\"RunWithBobby/Preview Content\"";
 				DEVELOPMENT_TEAM = 4YW6S35MTZ;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_KEY_NSHealthShareUsageDescription = "Run with Bobby legge i tuoi dati di salute (corse, frequenza cardiaca, VO2 Max, sonno, peso) per creare piani di allenamento personalizzati. I dati restano sul dispositivo.";
-				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "Run with Bobby salva i tuoi allenamenti pianificati in Apple Salute per tenere traccia dei progressi. I dati restano sul dispositivo.";
+				INFOPLIST_KEY_NSHealthShareUsageDescription = "Run with Bobby legge in sola lettura dati di salute e allenamento per personalizzare coaching, recupero e piani. Puoi revocare l'accesso in Impostazioni > Salute.";
+				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "Run with Bobby puo' registrare in Apple Salute solo gli allenamenti che confermi esplicitamente, per tenere traccia dei progressi e mantenere coerente il tuo piano.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -390,7 +394,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.4.0;
+				MARKETING_VERSION = 1.5.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.runwithbobby.app;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
@@ -406,13 +410,13 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = RunWithBobby/RunWithBobby.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 2;
 				DEVELOPMENT_ASSET_PATHS = "\"RunWithBobby/Preview Content\"";
 				DEVELOPMENT_TEAM = 4YW6S35MTZ;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_KEY_NSHealthShareUsageDescription = "Run with Bobby legge i tuoi dati di salute (corse, frequenza cardiaca, VO2 Max, sonno, peso) per creare piani di allenamento personalizzati. I dati restano sul dispositivo.";
-				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "Run with Bobby salva i tuoi allenamenti pianificati in Apple Salute per tenere traccia dei progressi. I dati restano sul dispositivo.";
+				INFOPLIST_KEY_NSHealthShareUsageDescription = "Run with Bobby legge in sola lettura dati di salute e allenamento per personalizzare coaching, recupero e piani. Puoi revocare l'accesso in Impostazioni > Salute.";
+				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "Run with Bobby puo' registrare in Apple Salute solo gli allenamenti che confermi esplicitamente, per tenere traccia dei progressi e mantenere coerente il tuo piano.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -423,7 +427,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.4.0;
+				MARKETING_VERSION = 1.5.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.runwithbobby.app;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
