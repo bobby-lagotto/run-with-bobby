@@ -11,7 +11,7 @@
 ### Quick Start
 ```bash
 # Clona e apri il progetto
-git clone [repository] 
+git clone https://github.com/bobby-lagotto/run-with-bobby.git
 cd run-with-bobby
 chmod +x build.sh
 ./build.sh
@@ -247,7 +247,7 @@ Fix: Imposta SWIFT_VERSION = 5.0 nel progetto
 - Naming convention: `camelCase` per properties, `PascalCase` per types
 
 ### Pull Request Process
-1. Fork repository
+1. Fork https://github.com/bobby-lagotto/run-with-bobby
 2. Create feature branch: `feature/[nome-funzionalita]`
 3. Test su dispositivo fisico
 4. Update documentation se necessario

@@ -6,8 +6,9 @@ Campi da impostare in App Store Connect prima della submission pubblica:
 - Build: 2
 - Distribuzione iniziale: TestFlight
 - Prezzo: Gratis
-- Privacy Policy URL: impostare l'URL ufficiale del progetto
-- Support URL: impostare l'URL ufficiale di supporto
+- Privacy Policy URL: https://github.com/bobby-lagotto/run-with-bobby/blob/master/PRIVACY_AND_SECURITY.md
+- Support URL: https://github.com/bobby-lagotto/run-with-bobby/issues
+- Repository (open source, GPL-3.0): https://github.com/bobby-lagotto/run-with-bobby
 
 Note review suggerite:
 

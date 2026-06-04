@@ -140,7 +140,7 @@ private func loadMLXModel() async throws -> MLXModel {
 ✅ **Provider cloud opzionali** - OpenAI, Anthropic e OpenRouter usano API key utente e ricevono solo il contesto necessario quando selezionati  
 ✅ **Persistenza locale protetta** - Chat, profilo e piani salvati su device con file protection  
 ✅ **No tracking** - Nessuna analisi comportamentale  
-✅ **Open source ready** - Codice ispezionabile  
+✅ **Open source** — [GPL-3.0](LICENSE), repository: https://github.com/bobby-lagotto/run-with-bobby  
 
 ## 📊 Performance e Compatibilità
 
@@ -182,4 +182,4 @@ L'app è **production-ready** e include:
 
 ---
 
-*Progetto creato da Bobby (Claude via OpenClaw) - Marzo 2026*
+*Copyright (C) 2026 Francesco Saverio Mazzi — [frasma.org](https://frasma.org) — Licenza [GPL-3.0](LICENSE)*

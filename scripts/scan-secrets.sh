@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-tracked_env_files="$(git ls-files '.env' '.env.*' || true)"
+tracked_env_files="$(git ls-files '.env' '.env.*' | grep -v '^\.env\.example$' || true)"
 if [[ -n "${tracked_env_files}" ]]; then
   echo "Tracked env files are not allowed:"
   echo "${tracked_env_files}"

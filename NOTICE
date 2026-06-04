@@ -1,0 +1,16 @@
+Run with Bobby — Third-Party Notices
+=====================================
+
+This application includes or depends on the following open-source components.
+See each project for full license terms.
+
+- mlx-swift-examples (https://github.com/ml-explore/mlx-swift-examples)
+  Used via Swift Package Manager for on-device MLX inference.
+  License: MIT (see upstream repository).
+
+- Apple MLX / MLX Swift ecosystem
+  See https://github.com/ml-explore/mlx-swift and related packages.
+
+Run with Bobby itself is licensed under GNU GPL v3.
+Copyright (C) 2026 Francesco Saverio Mazzi <francemazzi@gmail.com>
+https://frasma.org

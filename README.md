@@ -6,6 +6,11 @@
 
 **Il tuo personal trainer di corsa con AI locale su iPhone**
 
+[![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](LICENSE)
+[![Repository](https://img.shields.io/badge/GitHub-run--with--bobby-181717?logo=github)](https://github.com/bobby-lagotto/run-with-bobby)
+
+Progetto open source di [Francesco Saverio Mazzi](https://frasma.org) — [francemazzi@gmail.com](mailto:francemazzi@gmail.com)
+
 ## 🎯 Caratteristiche Principali
 
 - **Chat conversazionale** con Bobby, il tuo coach AI specializzato nella corsa
@@ -110,10 +115,13 @@ RunWithBobby/
 
 ### Installazione
 ```bash
-git clone [repository]
+git clone https://github.com/bobby-lagotto/run-with-bobby.git
 cd run-with-bobby
 open RunWithBobby.xcodeproj
 ```
+
+Repository: https://github.com/bobby-lagotto/run-with-bobby  
+Supporto: https://github.com/bobby-lagotto/run-with-bobby/issues
 
 ### Dipendenze
 - **MLX Swift**: Framework per AI locale
@@ -133,7 +141,7 @@ open RunWithBobby.xcodeproj
 
 ## 🤝 Contributi
 
-Questo progetto è creato come dimostrazione delle capacità di OpenClaw/Claude Code. 
+Run with Bobby è software libero (GPL-3.0). Pull request e issue sono benvenuti su GitHub.
 
 ### Possibili Miglioramenti
 - [ ] Integrazione HealthKit per dati reali di corsa
@@ -161,10 +169,12 @@ Questo progetto è creato come dimostrazione delle capacità di OpenClaw/Claude 
 
 ## 📄 Licenza
 
-Progetto dimostrativo creato con OpenClaw. Usa responsabilmente e rispetta i termini di utilizzo di MLX Swift.
+Copyright (C) 2026 [Francesco Saverio Mazzi](https://frasma.org) — [francemazzi@gmail.com](mailto:francemazzi@gmail.com)
+
+Distribuito sotto [GNU General Public License v3.0](LICENSE). Vedi anche [NOTICE](NOTICE) per le dipendenze di terze parti.
 
 ---
 
-**Creato con ❤️ da Bobby (Claude via OpenClaw)**
+**Run with Bobby** — [frasma.org](https://frasma.org)
 
 *Buona corsa! 🏃‍♂️💨*
