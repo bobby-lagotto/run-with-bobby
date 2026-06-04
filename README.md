@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="https://raw.githubusercontent.com/bobby-lagotto/run-with-bobby/master/run_wall_bobby.png" alt="Run with Bobby — corsa nel parco" width="100%">
+</p>
+
 # Run with Bobby 🏃‍♂️
 
 **Il tuo personal trainer di corsa con AI locale su iPhone**
