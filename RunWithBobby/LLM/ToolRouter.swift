@@ -9,7 +9,7 @@ class ToolRouter {
     static let toolDefinitions: [ToolDefinitionSchema] = [
         ToolDefinitionSchema(
             name: "calculate_training_plan",
-            description: "Calcola una distribuzione settimanale di allenamento con distanze specifiche per ogni giorno, basata sul profilo del runner e obiettivi. Usa SEMPRE questo tool per creare piani — non inventare distanze.",
+            description: "Calcola una distribuzione settimanale di allenamento con distanze specifiche per ogni giorno, basata sul profilo del runner e obiettivi. Usa questo tool per creare piani dopo aver verificato dati essenziali come km, giorni, livello e obiettivo; non inventare distanze o distribuzioni.",
             parameters: ToolParametersSchema(
                 type: "object",
                 properties: [
@@ -33,7 +33,7 @@ class ToolRouter {
         ),
         ToolDefinitionSchema(
             name: "optimize_plan",
-            description: "Modifica il piano di allenamento attivo in base al feedback dell'utente.",
+            description: "Applica una modifica al piano di allenamento attivo in base al feedback dell'utente. Chiama questo tool SOLO dopo conferma esplicita e specifica della modifica proposta; non usarlo come risposta automatica a segnali di salute o recupero senza consenso.",
             parameters: ToolParametersSchema(
                 type: "object",
                 properties: [
@@ -45,7 +45,7 @@ class ToolRouter {
         ),
         ToolDefinitionSchema(
             name: "save_training_plan",
-            description: "Salva un piano di allenamento e impostalo come attivo. Chiama questo dopo calculate_training_plan per salvare il risultato.",
+            description: "Salva un piano di allenamento calcolato e impostalo come attivo. Chiama questo tool SOLO dopo che l'utente ha confermato esplicitamente e specificamente di voler salvare il piano di allenamento appena proposto.",
             parameters: ToolParametersSchema(
                 type: "object",
                 properties: [
@@ -56,7 +56,7 @@ class ToolRouter {
         ),
         ToolDefinitionSchema(
             name: "get_health_summary",
-            description: "Ottieni un riepilogo completo dei dati di salute da Apple Health: frequenza cardiaca (media, riposo, min, max), variabilità cardiaca HRV (proxy di stress e recupero), passi, distanza, calorie, VO2 Max, SpO2, allenamenti recenti e ore di sonno. Chiama SEMPRE questo tool quando l'utente chiede di salute, stress, affaticamento, recupero, sonno, prontezza alla gara, carico di allenamento, performance recente, o pone domande generiche sul proprio stato come 'come sto?' o 'come va?'.",
+            description: "Ottieni un riepilogo dei dati Apple Health: frequenza cardiaca, FC a riposo, HRV, passi, distanza, calorie, VO2 Max, SpO2, allenamenti recenti e sonno. Usa questo tool quando serve analisi di salute, recupero, sonno, affaticamento, stress, carico, performance recente, prontezza gara o stato fisico come 'come sto?'. Non usarlo per consigli generici non sanitari. Interpreta i numeri come segnali contestuali, non diagnosi.",
             parameters: ToolParametersSchema(
                 type: "object",
                 properties: [
@@ -67,7 +67,7 @@ class ToolRouter {
         ),
         ToolDefinitionSchema(
             name: "calculate_nutrition_plan",
-            description: "Calcola un piano alimentare settimanale con grammi di proteine, carboidrati, verdure/frutta e dolci per ogni giorno, basato sul piano di allenamento attivo e sul peso dell'utente. Adatta le quantità all'intensità dell'allenamento di ogni giorno (giorni intensi = più carboidrati, giorni di riposo = meno). Chiama SEMPRE questo tool quando l'utente chiede un piano alimentare.",
+            description: "Calcola un piano alimentare settimanale con grammi di proteine, carboidrati, verdure/frutta e dolci per ogni giorno, basato sul piano di allenamento attivo e sul peso dell'utente. Adatta le quantità all'intensità di ogni giorno. Chiama questo tool quando l'utente chiede un piano alimentare completo; poi l'assistente deve aggiungere timing pre/post allenamento, idratazione, esempi food-first e chiedere preferenze/allergie se mancanti.",
             parameters: ToolParametersSchema(
                 type: "object",
                 properties: [:],
@@ -81,7 +81,7 @@ class ToolRouter {
         ),
         ToolDefinitionSchema(
             name: "save_nutrition_plan",
-            description: "Salva il piano alimentare calcolato e impostalo come attivo. Chiama questo SOLO dopo che l'utente ha confermato il piano alimentare proposto.",
+            description: "Salva il piano alimentare calcolato e impostalo come attivo. Chiama questo tool SOLO dopo che l'utente ha confermato esplicitamente e specificamente il piano alimentare appena proposto.",
             parameters: ToolParametersSchema(
                 type: "object",
                 properties: [
