@@ -6,7 +6,7 @@
 
 - **Chat conversazionale** con Bobby, il tuo coach AI specializzato nella corsa
 - **Piani di allenamento personalizzati** basati sui tuoi obiettivi e livello
-- **AI completamente locale** utilizzando MLX - i tuoi dati non lasciano mai l'iPhone
+- **AI locale con MLX** e provider cloud opzionali con API key utente
 - **Archivio piani** per salvare e ottimizzare i tuoi allenamenti
 - **Interfaccia moderna** con SwiftUI e supporto Dark Mode
 
@@ -62,7 +62,7 @@ L'app utilizza **MLX Swift** di Apple per l'inferenza locale dei modelli AI:
 
 - Modelli leggeri ottimizzati per mobile (phi-3-mini, llama-3.2-1b)
 - Zero latenza di rete
-- Privacy completa - nessun dato inviato online
+- Privacy locale quando usi il modello on-device; se abiliti OpenAI, Anthropic o OpenRouter, chat, profilo runner e riepiloghi Health necessari possono essere inviati al provider selezionato
 - Funziona anche offline
 
 ## 📁 Struttura del Progetto
@@ -120,6 +120,12 @@ open RunWithBobby.xcodeproj
 1. Assicurati di avere **Xcode 15.0+**
 2. Configura il **Team ID** nelle impostazioni di signing
 3. Build per dispositivo fisico (MLX richiede hardware reale)
+
+### Privacy e segreti
+- Consulta [`PRIVACY_AND_SECURITY.md`](PRIVACY_AND_SECURITY.md) per la mappa dei dati sensibili.
+- Le API key utente sono salvate nel Keychain; `.env` e `.env.local` restano locali e ignorati da git.
+- Prima di una release esegui `scripts/scan-secrets.sh`.
+- La modalità locale non invia dati ai provider cloud. I provider OpenAI, Anthropic e OpenRouter sono opzionali e ricevono solo il contesto necessario quando selezionati.
 
 ## 🤝 Contributi
 

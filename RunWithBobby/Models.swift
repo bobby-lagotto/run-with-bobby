@@ -1,6 +1,79 @@
 import Foundation
 import SwiftUI
 
+// MARK: - Privacy & Local Data Protection
+enum PrivacyLog {
+    static func debug(_ message: @autoclosure () -> String) {
+        #if DEBUG
+        print(message())
+        #endif
+    }
+
+    static func storageError(_ operation: String, error: Error) {
+        #if DEBUG
+        print("\(operation) failed: \(type(of: error))")
+        #endif
+    }
+}
+
+enum SensitiveDataStore {
+    static func createDirectoryIfNeeded(at url: URL, excludeFromBackup: Bool = true) {
+        guard !FileManager.default.fileExists(atPath: url.path) else {
+            protect(url, excludeFromBackup: excludeFromBackup)
+            return
+        }
+
+        do {
+            try FileManager.default.createDirectory(at: url, withIntermediateDirectories: true)
+            protect(url, excludeFromBackup: excludeFromBackup)
+        } catch {
+            PrivacyLog.storageError("Create protected directory", error: error)
+        }
+    }
+
+    static func write(_ data: Data, to url: URL, excludeFromBackup: Bool = true) throws {
+        if let parent = url.deletingLastPathComponentIfNeeded,
+           !FileManager.default.fileExists(atPath: parent.path) {
+            createDirectoryIfNeeded(at: parent, excludeFromBackup: excludeFromBackup)
+        }
+        try data.write(to: url, options: [.atomic, .completeFileProtection])
+        protect(url, excludeFromBackup: excludeFromBackup)
+    }
+
+    static func remove(_ url: URL) {
+        guard FileManager.default.fileExists(atPath: url.path) else { return }
+        do {
+            try FileManager.default.removeItem(at: url)
+        } catch {
+            PrivacyLog.storageError("Remove sensitive data", error: error)
+        }
+    }
+
+    static func protect(_ url: URL, excludeFromBackup: Bool = true) {
+        do {
+            try FileManager.default.setAttributes(
+                [.protectionKey: FileProtectionType.complete],
+                ofItemAtPath: url.path
+            )
+
+            guard excludeFromBackup else { return }
+            var protectedURL = url
+            var values = URLResourceValues()
+            values.isExcludedFromBackup = true
+            try protectedURL.setResourceValues(values)
+        } catch {
+            PrivacyLog.storageError("Protect sensitive data", error: error)
+        }
+    }
+}
+
+private extension URL {
+    var deletingLastPathComponentIfNeeded: URL? {
+        let parent = deletingLastPathComponent()
+        return parent.path == path ? nil : parent
+    }
+}
+
 // MARK: - Chat Models
 struct ChatMessage: Identifiable, Codable {
     var id = UUID()
@@ -311,8 +384,11 @@ class AppState: ObservableObject {
     }
     
     private func saveConversations() {
-        if let data = try? JSONEncoder().encode(conversations) {
-            try? data.write(to: conversationsURL)
+        do {
+            let data = try JSONEncoder().encode(conversations)
+            try SensitiveDataStore.write(data, to: conversationsURL)
+        } catch {
+            PrivacyLog.storageError("Save conversations", error: error)
         }
     }
     
@@ -324,8 +400,11 @@ class AppState: ObservableObject {
     }
     
     private func saveTrainingPlans() {
-        if let data = try? JSONEncoder().encode(trainingPlans) {
-            try? data.write(to: trainingPlansURL)
+        do {
+            let data = try JSONEncoder().encode(trainingPlans)
+            try SensitiveDataStore.write(data, to: trainingPlansURL)
+        } catch {
+            PrivacyLog.storageError("Save training plans", error: error)
         }
     }
     
@@ -338,9 +417,24 @@ class AppState: ObservableObject {
     }
     
     func saveUserProfile() {
-        if let data = try? JSONEncoder().encode(userProfile) {
-            try? data.write(to: userProfileURL)
+        do {
+            let data = try JSONEncoder().encode(userProfile)
+            try SensitiveDataStore.write(data, to: userProfileURL)
             isProfileComplete = true
+        } catch {
+            PrivacyLog.storageError("Save user profile", error: error)
         }
+    }
+
+    func deleteLocalUserData() {
+        conversations = []
+        trainingPlans = []
+        currentConversation = nil
+        userProfile = RunnerProfile()
+        isProfileComplete = false
+
+        SensitiveDataStore.remove(conversationsURL)
+        SensitiveDataStore.remove(trainingPlansURL)
+        SensitiveDataStore.remove(userProfileURL)
     }
 }

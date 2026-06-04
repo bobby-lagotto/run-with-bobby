@@ -43,8 +43,8 @@ struct WelcomeView: View {
         ),
         WelcomeStep(
             icon: "lock.shield.fill",
-            title: "AI Completamente Locale",
-            description: "Tutta l'intelligenza artificiale funziona sul tuo iPhone. I tuoi dati non lasciano mai il device",
+            title: "Privacy sotto controllo",
+            description: "Puoi usare il modello locale sul tuo iPhone. I provider cloud sono opzionali e inviano solo il contesto necessario quando li attivi",
             color: .bobbyCaramel
         ),
         WelcomeStep(

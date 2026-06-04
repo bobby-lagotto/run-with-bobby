@@ -21,9 +21,7 @@ class TrainingPlanManager: ObservableObject {
     
     // MARK: - Directory Setup
     private func createDirectoryIfNeeded() {
-        if !FileManager.default.fileExists(atPath: plansDirectory.path) {
-            try? FileManager.default.createDirectory(at: plansDirectory, withIntermediateDirectories: true)
-        }
+        SensitiveDataStore.createDirectoryIfNeeded(at: plansDirectory)
     }
     
     // MARK: - Plan Management
@@ -33,7 +31,7 @@ class TrainingPlanManager: ObservableObject {
         
         do {
             let data = try JSONEncoder().encode(plan)
-            try data.write(to: fileURL)
+            try SensitiveDataStore.write(data, to: fileURL)
             
             // Aggiorna la lista locale
             if let existingIndex = savedPlans.firstIndex(where: { $0.id == plan.id }) {
@@ -46,7 +44,7 @@ class TrainingPlanManager: ObservableObject {
             savedPlans.sort { $0.lastModified > $1.lastModified }
             
         } catch {
-            print("Errore nel salvataggio del piano: \(error)")
+            PrivacyLog.storageError("Save training plan", error: error)
         }
     }
     
@@ -75,14 +73,31 @@ class TrainingPlanManager: ObservableObject {
         let filename = "\(plan.id.uuidString).json"
         let fileURL = plansDirectory.appendingPathComponent(filename)
         
-        try? FileManager.default.removeItem(at: fileURL)
+        SensitiveDataStore.remove(fileURL)
         savedPlans.removeAll { $0.id == plan.id }
         
         // Se era il piano attivo, rimuovilo
         if currentActivePlan?.id == plan.id {
             currentActivePlan = nil
-            try? FileManager.default.removeItem(at: activePlanURL)
+            SensitiveDataStore.remove(activePlanURL)
         }
+    }
+
+    func deleteAllPlans() {
+        guard let files = try? FileManager.default.contentsOfDirectory(at: plansDirectory, includingPropertiesForKeys: nil) else {
+            savedPlans = []
+            currentActivePlan = nil
+            SensitiveDataStore.remove(activePlanURL)
+            return
+        }
+
+        for file in files where file.pathExtension == "json" {
+            SensitiveDataStore.remove(file)
+        }
+
+        savedPlans = []
+        currentActivePlan = nil
+        SensitiveDataStore.remove(activePlanURL)
     }
     
     func setActivePlan(_ plan: TrainingPlan) {
@@ -92,15 +107,15 @@ class TrainingPlanManager: ObservableObject {
     
     private func saveActivePlan() {
         guard let plan = currentActivePlan else {
-            try? FileManager.default.removeItem(at: activePlanURL)
+            SensitiveDataStore.remove(activePlanURL)
             return
         }
         
         do {
             let data = try JSONEncoder().encode(plan)
-            try data.write(to: activePlanURL)
+            try SensitiveDataStore.write(data, to: activePlanURL)
         } catch {
-            print("Errore nel salvataggio del piano attivo: \(error)")
+            PrivacyLog.storageError("Save active training plan", error: error)
         }
     }
     
@@ -215,10 +230,10 @@ class TrainingPlanManager: ObservableObject {
         
         do {
             let data = try JSONEncoder().encode(plan)
-            try data.write(to: tempURL)
+            try SensitiveDataStore.write(data, to: tempURL, excludeFromBackup: true)
             return tempURL
         } catch {
-            print("Errore nell'export: \(error)")
+            PrivacyLog.storageError("Export training plan", error: error)
             return nil
         }
     }
@@ -230,7 +245,7 @@ class TrainingPlanManager: ObservableObject {
             savePlan(plan)
             return true
         } catch {
-            print("Errore nell'import: \(error)")
+            PrivacyLog.storageError("Import training plan", error: error)
             return false
         }
     }

@@ -16,6 +16,10 @@ fi
 XCODE_VERSION=$(xcodebuild -version | head -n1 | cut -d ' ' -f2)
 echo "📱 Versione Xcode: $XCODE_VERSION"
 
+# Security preflight
+echo "🔐 Scansione segreti..."
+scripts/scan-secrets.sh
+
 # Pulisci build precedenti
 echo "🧹 Pulizia build precedenti..."
 xcodebuild clean -project RunWithBobby.xcodeproj -scheme RunWithBobby

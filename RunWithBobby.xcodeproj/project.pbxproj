@@ -383,7 +383,6 @@
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_NSHealthShareUsageDescription = "Run with Bobby legge in sola lettura dati di salute e allenamento per personalizzare coaching, recupero e piani. Puoi revocare l'accesso in Impostazioni > Salute.";
-				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "Run with Bobby puo' registrare in Apple Salute solo gli allenamenti che confermi esplicitamente, per tenere traccia dei progressi e mantenere coerente il tuo piano.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -416,7 +415,6 @@
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_NSHealthShareUsageDescription = "Run with Bobby legge in sola lettura dati di salute e allenamento per personalizzare coaching, recupero e piani. Puoi revocare l'accesso in Impostazioni > Salute.";
-				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "Run with Bobby puo' registrare in Apple Salute solo gli allenamenti che confermi esplicitamente, per tenere traccia dei progressi e mantenere coerente il tuo piano.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;

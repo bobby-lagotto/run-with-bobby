@@ -25,8 +25,7 @@ class AnthropicProvider: LLMService {
         }
 
         guard httpResponse.statusCode == 200 else {
-            let body = String(data: data, encoding: .utf8) ?? "Unknown error"
-            throw LLMError.apiError("HTTP \(httpResponse.statusCode): \(body)")
+            throw LLMError.apiError("HTTP \(httpResponse.statusCode)")
         }
 
         let anthropicResponse = try JSONDecoder().decode(AnthropicMessageResponse.self, from: data)
@@ -191,9 +190,7 @@ class AnthropicProvider: LLMService {
                         throw LLMError.invalidResponse
                     }
                     guard httpResponse.statusCode == 200 else {
-                        var errorBody = ""
-                        for try await line in bytes.lines { errorBody += line }
-                        throw LLMError.apiError("HTTP \(httpResponse.statusCode): \(errorBody)")
+                        throw LLMError.apiError("HTTP \(httpResponse.statusCode)")
                     }
 
                     var accumulatedText = ""

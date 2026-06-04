@@ -110,6 +110,11 @@ func importUserData(from url: URL) -> Bool {
 }
 ```
 
+### Protezione dati locali
+- Usa `SensitiveDataStore.write` per ogni JSON che contiene chat, profilo, piani allenamento o piani alimentari.
+- I file sensibili devono usare file protection completa ed essere esclusi da backup quando non servono fuori dispositivo.
+- Usa `PrivacyLog` per log di debug redatti; non stampare payload Health, prompt, risposte provider o API key.
+
 ## 🎨 UI/UX Guidelines
 
 ### Design System
@@ -179,8 +184,10 @@ xcodebuild -exportArchive \
 ```
 
 ### Privacy/Security  
-- **MLX Locale**: Enfatizza che l'AI non invia dati online
-- **Data Encryption**: Considera crittografia per dati sensibili
+- **MLX Locale**: Enfatizza che l'AI locale non invia dati online
+- **Provider Cloud**: dichiara che OpenAI, Anthropic e OpenRouter sono opzionali e possono ricevere chat, profilo, piani e riepiloghi Health necessari
+- **Data Protection**: usa `SensitiveDataStore` per JSON sensibili
+- **Secret Scan**: esegui `scripts/scan-secrets.sh` prima di release/CI
 - **App Tracking**: Dichiara utilizzo zero di tracking
 - **Privacy Policy**: Includi policy per App Store review
 

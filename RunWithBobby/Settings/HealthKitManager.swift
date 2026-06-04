@@ -44,9 +44,7 @@ class HealthKitManager: ObservableObject {
             await MainActor.run { self.isAuthorized = true }
             return true
         } catch {
-            #if DEBUG
-            print("HealthKit authorization error: \(error)")
-            #endif
+            PrivacyLog.storageError("HealthKit authorization", error: error)
             return false
         }
     }

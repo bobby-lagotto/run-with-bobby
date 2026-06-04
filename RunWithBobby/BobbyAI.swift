@@ -251,9 +251,7 @@ class BobbyAI: ObservableObject {
                     let result = await toolRouter.execute(toolCall, userProfile: userProfile, planManager: planManager, nutritionManager: nutritionManager, healthManager: healthManager)
                     toolResults.append(result)
 
-                    #if DEBUG
-                    print("🔧 Tool call: \(toolCall.name) → \(result.content.prefix(200))")
-                    #endif
+                    PrivacyLog.debug("Tool call completed: \(toolCall.name)")
                 }
 
                 // Append assistant message WITH tool_calls (required by OpenAI API)
@@ -282,14 +280,12 @@ class BobbyAI: ObservableObject {
                 }
 
             } catch {
-                #if DEBUG
-                print("❌ LLM Error: \(error)")
-                #endif
+                PrivacyLog.debug("LLM request failed: \(type(of: error))")
 
                 streamingText = ""
 
-                // Try fallback to cloud providers if we were using local
-                if let settings = aiSettings, settings.providerType == .auto || settings.providerType == .local {
+                // Auto mode may fall back to configured cloud providers. Explicit local mode stays on-device.
+                if let settings = aiSettings, settings.providerType == .auto {
                     let candidates: [LLMService?] = [anthropicProvider, openAIProvider, openRouterProvider]
                     let fallbackProviders = candidates.compactMap { $0 }.filter { $0.isAvailable }
                     for fallback in fallbackProviders {

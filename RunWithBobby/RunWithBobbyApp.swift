@@ -25,11 +25,7 @@ struct RunWithBobbyApp: App {
         createDirectoriesIfNeeded()
         
         // Log di avvio (solo per debug)
-        #if DEBUG
-        print("🏃‍♂️ Run with Bobby avviato con successo!")
-        print("📱 Versione iOS: \(UIDevice.current.systemVersion)")
-        print("📊 Modello dispositivo: \(UIDevice.current.model)")
-        #endif
+        PrivacyLog.debug("Run with Bobby started in debug mode")
     }
     
     private func configureAppearance() {
@@ -82,9 +78,7 @@ struct RunWithBobbyApp: App {
         
         for directory in directories {
             let dirURL = documentsPath.appendingPathComponent(directory)
-            if !FileManager.default.fileExists(atPath: dirURL.path) {
-                try? FileManager.default.createDirectory(at: dirURL, withIntermediateDirectories: true)
-            }
+            SensitiveDataStore.createDirectoryIfNeeded(at: dirURL)
         }
     }
 }

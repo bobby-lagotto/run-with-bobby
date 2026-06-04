@@ -35,8 +35,7 @@ class OpenAICompatibleProvider: LLMService {
         }
 
         guard httpResponse.statusCode == 200 else {
-            let body = String(data: data, encoding: .utf8) ?? "Unknown error"
-            throw LLMError.apiError("HTTP \(httpResponse.statusCode): \(body)")
+            throw LLMError.apiError("HTTP \(httpResponse.statusCode)")
         }
 
         let chatResponse = try JSONDecoder().decode(OpenAIChatResponse.self, from: data)
@@ -165,9 +164,7 @@ class OpenAICompatibleProvider: LLMService {
                         throw LLMError.invalidResponse
                     }
                     guard httpResponse.statusCode == 200 else {
-                        var errorBody = ""
-                        for try await line in bytes.lines { errorBody += line }
-                        throw LLMError.apiError("HTTP \(httpResponse.statusCode): \(errorBody)")
+                        throw LLMError.apiError("HTTP \(httpResponse.statusCode)")
                     }
 
                     var accumulatedText = ""
@@ -285,13 +282,12 @@ class OpenRouterProvider: OpenAICompatibleProvider {
         request.addValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
         request.timeoutInterval = 30
 
-        let (data, response) = try await URLSession.shared.data(for: request)
+        let (_, response) = try await URLSession.shared.data(for: request)
         guard let httpResponse = response as? HTTPURLResponse else {
             throw LLMError.invalidResponse
         }
         guard httpResponse.statusCode == 200 else {
-            let body = String(data: data, encoding: .utf8) ?? "Unknown error"
-            throw LLMError.apiError("HTTP \(httpResponse.statusCode): \(body)")
+            throw LLMError.apiError("HTTP \(httpResponse.statusCode)")
         }
     }
 }

@@ -14,7 +14,7 @@ Ho creato l'app iOS completa "Run with Bobby" come richiesto. Ecco cosa è stato
 ✅ **Generazione piani personalizzati** basati su profilo utente  
 ✅ **Archivio piani** con salvataggio locale  
 ✅ **Ottimizzazione piani** tramite feedback utente  
-✅ **Integrazione MLX** per AI completamente locale  
+✅ **Integrazione MLX** per AI locale e provider cloud opzionali  
 ✅ **UI moderna** con SwiftUI e Dark Mode support  
 
 ### 📋 Esempio Piano Generato
@@ -136,8 +136,9 @@ private func loadMLXModel() async throws -> MLXModel {
 
 ## 🔒 Privacy e Sicurezza
 
-✅ **AI completamente locale** - Zero dati inviati online  
-✅ **Persistenza locale** - Tutto salvato su device  
+✅ **AI locale disponibile** - Nessun invio cloud quando usi il provider Locale  
+✅ **Provider cloud opzionali** - OpenAI, Anthropic e OpenRouter usano API key utente e ricevono solo il contesto necessario quando selezionati  
+✅ **Persistenza locale protetta** - Chat, profilo e piani salvati su device con file protection  
 ✅ **No tracking** - Nessuna analisi comportamentale  
 ✅ **Open source ready** - Codice ispezionabile  
 

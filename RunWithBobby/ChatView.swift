@@ -15,6 +15,9 @@ struct ChatView: View {
     @State private var showingSettings = false
     @State private var showingConversationHistory = false
     @State private var showingNutritionPlan = false
+    @State private var showingDeleteDataConfirm = false
+    @State private var showingCloudHealthConfirm = false
+    @State private var pendingCloudHealthMessage: String?
     @State private var planToDiscuss: TrainingPlan?
     @State private var healthConnected = UserDefaults.standard.bool(forKey: "healthkit_connected")
 
@@ -59,6 +62,27 @@ struct ChatView: View {
                         sendQuickMessage("Vorrei modificare il mio piano alimentare")
                     }
                 })
+            }
+            .alert("Cancellare i dati locali?", isPresented: $showingDeleteDataConfirm) {
+                Button("Annulla", role: .cancel) {}
+                Button("Cancella", role: .destructive) {
+                    deleteLocalUserData()
+                }
+            } message: {
+                Text("Verranno rimossi chat, profilo runner, piani di allenamento e piani alimentari salvati su questo dispositivo. Le API key restano nel Keychain e puoi rimuoverle dalle impostazioni AI.")
+            }
+            .alert("Inviare riepilogo Health al provider cloud?", isPresented: $showingCloudHealthConfirm) {
+                Button("Annulla", role: .cancel) {
+                    pendingCloudHealthMessage = nil
+                }
+                Button("Continua") {
+                    if let message = pendingCloudHealthMessage {
+                        pendingCloudHealthMessage = nil
+                        sendMessageToBobby(message)
+                    }
+                }
+            } message: {
+                Text("Per questa richiesta Bobby potrebbe leggere un riepilogo Apple Health e inviarlo al provider cloud selezionato insieme al contesto della chat. Usa il provider Locale per restare on-device.")
             }
             .onAppear {
                 bobbyAI.configure(with: aiSettings, healthManager: healthConnected ? healthManager : nil)
@@ -129,6 +153,9 @@ struct ChatView: View {
                     }
                     Button(action: { appState.startNewConversation() }) {
                         Label("Nuova Chat", systemImage: "plus.bubble")
+                    }
+                    Button(role: .destructive, action: { showingDeleteDataConfirm = true }) {
+                        Label("Cancella dati locali", systemImage: "trash")
                     }
                 } label: {
                     Image(systemName: "ellipsis.circle")
@@ -323,11 +350,27 @@ struct ChatView: View {
         let text = messageText.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !text.isEmpty else { return }
 
-        sendQuickMessage(text)
+        if shouldConfirmCloudHealthSend(for: text) {
+            pendingCloudHealthMessage = text
+            showingCloudHealthConfirm = true
+            return
+        }
+
+        sendMessageToBobby(text)
         messageText = ""
     }
 
     private func sendQuickMessage(_ text: String) {
+        if shouldConfirmCloudHealthSend(for: text) {
+            pendingCloudHealthMessage = text
+            showingCloudHealthConfirm = true
+            return
+        }
+
+        sendMessageToBobby(text)
+    }
+
+    private func sendMessageToBobby(_ text: String) {
         appState.addMessage(text, isFromUser: true)
 
         Task {
@@ -345,6 +388,29 @@ struct ChatView: View {
         }
     }
 
+    private func shouldConfirmCloudHealthSend(for text: String) -> Bool {
+        guard healthConnected, isCloudProviderActive else { return false }
+        let normalized = text.folding(options: [.diacriticInsensitive, .caseInsensitive], locale: .current).lowercased()
+        return ["salute", "health", "come sto", "affatic", "recuper", "sonno", "hrv", "battit", "frequenza", "stress", "vo2", "spo2"].contains {
+            normalized.contains($0)
+        }
+    }
+
+    private var isCloudProviderActive: Bool {
+        switch aiSettings.providerType {
+        case .openai:
+            return aiSettings.hasOpenAIKey
+        case .anthropic:
+            return aiSettings.hasAnthropicKey
+        case .openrouter:
+            return aiSettings.hasOpenRouterKey
+        case .auto:
+            return !aiSettings.isLocalAvailable && (aiSettings.hasAnthropicKey || aiSettings.hasOpenAIKey || aiSettings.hasOpenRouterKey)
+        case .local:
+            return false
+        }
+    }
+
     private func askBobbyAboutPlan(_ plan: TrainingPlan) {
         var planText = "Cosa ne pensi di questo piano di allenamento?\n\n"
         planText += "\(plan.title)\n"
@@ -359,6 +425,16 @@ struct ChatView: View {
             }
         }
         sendQuickMessage(planText)
+    }
+
+    private func deleteLocalUserData() {
+        appState.deleteLocalUserData()
+        planManager.deleteAllPlans()
+        nutritionManager.deleteAllPlans()
+        UserDefaults.standard.set(false, forKey: "healthkit_connected")
+        healthConnected = false
+        bobbyAI.configure(with: aiSettings, healthManager: nil)
+        showWelcomeMessage()
     }
 }
 

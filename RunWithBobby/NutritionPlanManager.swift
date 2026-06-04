@@ -20,9 +20,7 @@ class NutritionPlanManager: ObservableObject {
 
     // MARK: - Directory Setup
     private func createDirectoryIfNeeded() {
-        if !FileManager.default.fileExists(atPath: plansDirectory.path) {
-            try? FileManager.default.createDirectory(at: plansDirectory, withIntermediateDirectories: true)
-        }
+        SensitiveDataStore.createDirectoryIfNeeded(at: plansDirectory)
     }
 
     // MARK: - Plan Management
@@ -32,7 +30,7 @@ class NutritionPlanManager: ObservableObject {
 
         do {
             let data = try JSONEncoder().encode(plan)
-            try data.write(to: fileURL)
+            try SensitiveDataStore.write(data, to: fileURL)
 
             if let existingIndex = savedPlans.firstIndex(where: { $0.id == plan.id }) {
                 savedPlans[existingIndex] = plan
@@ -42,7 +40,7 @@ class NutritionPlanManager: ObservableObject {
 
             savedPlans.sort { $0.lastModified > $1.lastModified }
         } catch {
-            print("Errore nel salvataggio del piano alimentare: \(error)")
+            PrivacyLog.storageError("Save nutrition plan", error: error)
         }
     }
 
@@ -66,13 +64,30 @@ class NutritionPlanManager: ObservableObject {
         let filename = "\(plan.id.uuidString).json"
         let fileURL = plansDirectory.appendingPathComponent(filename)
 
-        try? FileManager.default.removeItem(at: fileURL)
+        SensitiveDataStore.remove(fileURL)
         savedPlans.removeAll { $0.id == plan.id }
 
         if currentNutritionPlan?.id == plan.id {
             currentNutritionPlan = nil
-            try? FileManager.default.removeItem(at: activePlanURL)
+            SensitiveDataStore.remove(activePlanURL)
         }
+    }
+
+    func deleteAllPlans() {
+        guard let files = try? FileManager.default.contentsOfDirectory(at: plansDirectory, includingPropertiesForKeys: nil) else {
+            savedPlans = []
+            currentNutritionPlan = nil
+            SensitiveDataStore.remove(activePlanURL)
+            return
+        }
+
+        for file in files where file.pathExtension == "json" {
+            SensitiveDataStore.remove(file)
+        }
+
+        savedPlans = []
+        currentNutritionPlan = nil
+        SensitiveDataStore.remove(activePlanURL)
     }
 
     func setActivePlan(_ plan: NutritionPlan) {
@@ -82,15 +97,15 @@ class NutritionPlanManager: ObservableObject {
 
     private func saveActivePlan() {
         guard let plan = currentNutritionPlan else {
-            try? FileManager.default.removeItem(at: activePlanURL)
+            SensitiveDataStore.remove(activePlanURL)
             return
         }
 
         do {
             let data = try JSONEncoder().encode(plan)
-            try data.write(to: activePlanURL)
+            try SensitiveDataStore.write(data, to: activePlanURL)
         } catch {
-            print("Errore nel salvataggio del piano alimentare attivo: \(error)")
+            PrivacyLog.storageError("Save active nutrition plan", error: error)
         }
     }
 

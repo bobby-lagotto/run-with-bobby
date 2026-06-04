@@ -33,6 +33,7 @@ struct SettingsView: View {
     // Clipboard detection
     @State private var clipboardKey: String?
     @State private var clipboardKeyType: ClipboardKeyType?
+    @State private var clipboardChecked = false
 
     // Other state
     @State private var healthConnected: Bool = UserDefaults.standard.bool(forKey: "healthkit_connected")
@@ -77,7 +78,6 @@ struct SettingsView: View {
                 apiKeyInput = aiSettings.openAIAPIKey ?? ""
                 anthropicKeyInput = aiSettings.anthropicAPIKey ?? ""
                 openRouterKeyInput = aiSettings.openRouterAPIKey ?? ""
-                detectClipboardKey()
             }
         }
     }
@@ -85,6 +85,7 @@ struct SettingsView: View {
     // MARK: - Clipboard Detection
 
     private func detectClipboardKey() {
+        clipboardChecked = true
         guard let pasted = UIPasteboard.general.string, !pasted.isEmpty else { return }
         let trimmed = pasted.trimmingCharacters(in: .whitespacesAndNewlines)
 
@@ -104,6 +105,17 @@ struct SettingsView: View {
 
     private var providerSection: some View {
         Section {
+            Button(action: detectClipboardKey) {
+                Label("Controlla appunti per API key", systemImage: "doc.on.clipboard")
+                    .foregroundColor(.bobbyRed)
+            }
+
+            if clipboardChecked && clipboardKey == nil {
+                Text("Nessuna API key riconosciuta negli appunti.")
+                    .font(.caption)
+                    .foregroundColor(.bobbyWarmGray)
+            }
+
             ForEach(LLMProviderType.allCases, id: \.self) { type in
                 HStack(spacing: 12) {
                     Image(systemName: type.icon)
@@ -133,6 +145,9 @@ struct SettingsView: View {
         } header: {
             Label("Provider AI", systemImage: "cpu")
                 .foregroundColor(.bobbyRed)
+        } footer: {
+            Text("Gli appunti vengono letti solo quando tocchi il pulsante. Le API key salvate restano nel Keychain.")
+                .font(.caption)
         }
     }
 
@@ -591,6 +606,18 @@ struct SettingsView: View {
                 }
             }
 
+            if healthConnected && isCloudProviderSelected {
+                HStack(alignment: .top, spacing: 12) {
+                    Image(systemName: "exclamationmark.triangle.fill")
+                        .foregroundColor(.orange)
+                        .frame(width: 28)
+                    Text("Con un provider cloud attivo, i riepiloghi Health richiesti in chat possono essere inviati al provider selezionato insieme al contesto della conversazione.")
+                        .font(.caption)
+                        .foregroundColor(.bobbyWarmGray)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+            }
+
             if !healthConnected {
                 HStack(spacing: 12) {
                     Image(systemName: "lock.shield.fill")
@@ -606,7 +633,7 @@ struct SettingsView: View {
                 .foregroundColor(.bobbyRed)
         } footer: {
             if healthConnected {
-                Text("I dati vengono letti in sola lettura. Per revocare l'accesso vai in Impostazioni > Salute > Accesso Dati.")
+                Text("I dati vengono letti in sola lettura. Per revocare l'accesso vai in Impostazioni > Salute > Accesso Dati. Usa il provider Locale se vuoi evitare invii a provider cloud.")
                     .font(.caption)
             }
         }
@@ -704,13 +731,28 @@ struct SettingsView: View {
         }
     }
 
+    private var isCloudProviderSelected: Bool {
+        switch aiSettings.providerType {
+        case .openai:
+            return aiSettings.hasOpenAIKey
+        case .anthropic:
+            return aiSettings.hasAnthropicKey
+        case .openrouter:
+            return aiSettings.hasOpenRouterKey
+        case .auto:
+            return !aiSettings.isLocalAvailable && (aiSettings.hasAnthropicKey || aiSettings.hasOpenAIKey || aiSettings.hasOpenRouterKey)
+        case .local:
+            return false
+        }
+    }
+
     private func providerDescription(for type: LLMProviderType) -> String {
         switch type {
         case .local: return "Modello on-device o fallback gratuito"
         case .openai: return "Cloud OpenAI con API key utente"
         case .anthropic: return "Cloud Anthropic con API key utente"
         case .openrouter: return "Router cloud con API key utente"
-        case .auto: return "Locale, poi cloud, poi fallback gratuito"
+        case .auto: return "Locale se disponibile; altrimenti cloud configurato"
         }
     }
 
@@ -720,7 +762,7 @@ struct SettingsView: View {
                 .foregroundColor(.bobbyCaramel)
                 .frame(width: 28)
 
-            Text("Quando \(provider) è attivo, chat, profilo runner e riepiloghi Apple Health necessari possono essere inviati al provider selezionato per generare la risposta.")
+            Text("Quando \(provider) è attivo, chat, profilo runner, piani e riepiloghi Apple Health necessari possono essere inviati al provider selezionato per generare la risposta.")
                 .font(.caption)
                 .foregroundColor(.bobbyWarmGray)
                 .fixedSize(horizontal: false, vertical: true)
@@ -850,6 +892,6 @@ struct SettingsView: View {
         } else if message.contains("timeout") || message.contains("Timeout") {
             return "Timeout di connessione. Verifica la tua connessione internet."
         }
-        return "Errore: \(message)"
+        return "Errore di connessione o validazione. Riprova e verifica configurazione e rete."
     }
 }

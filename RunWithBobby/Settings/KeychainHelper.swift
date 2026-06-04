@@ -2,6 +2,7 @@ import Foundation
 import Security
 
 struct KeychainHelper {
+    private static let service = "com.runwithbobby.app.secrets"
 
     static func save(key: String, value: String) throws {
         guard let data = value.data(using: .utf8) else { return }
@@ -9,13 +10,16 @@ struct KeychainHelper {
         // Delete existing item first
         let deleteQuery: [String: Any] = [
             kSecClass as String: kSecClassGenericPassword,
+            kSecAttrService as String: service,
             kSecAttrAccount as String: key
         ]
         SecItemDelete(deleteQuery as CFDictionary)
+        SecItemDelete(legacyQuery(for: key) as CFDictionary)
 
         // Add new item
         let addQuery: [String: Any] = [
             kSecClass as String: kSecClassGenericPassword,
+            kSecAttrService as String: service,
             kSecAttrAccount as String: key,
             kSecValueData as String: data,
             kSecAttrAccessible as String: kSecAttrAccessibleWhenUnlockedThisDeviceOnly
@@ -30,6 +34,7 @@ struct KeychainHelper {
     static func load(key: String) -> String? {
         let query: [String: Any] = [
             kSecClass as String: kSecClassGenericPassword,
+            kSecAttrService as String: service,
             kSecAttrAccount as String: key,
             kSecReturnData as String: true,
             kSecMatchLimit as String: kSecMatchLimitOne
@@ -39,7 +44,7 @@ struct KeychainHelper {
         let status = SecItemCopyMatching(query as CFDictionary, &result)
 
         guard status == errSecSuccess, let data = result as? Data else {
-            return nil
+            return migrateLegacyValueIfNeeded(key: key)
         }
 
         return String(data: data, encoding: .utf8)
@@ -48,9 +53,40 @@ struct KeychainHelper {
     static func delete(key: String) {
         let query: [String: Any] = [
             kSecClass as String: kSecClassGenericPassword,
+            kSecAttrService as String: service,
             kSecAttrAccount as String: key
         ]
         SecItemDelete(query as CFDictionary)
+        SecItemDelete(legacyQuery(for: key) as CFDictionary)
+    }
+
+    private static func migrateLegacyValueIfNeeded(key: String) -> String? {
+        var result: AnyObject?
+        let status = SecItemCopyMatching(legacyLoadQuery(for: key) as CFDictionary, &result)
+        guard status == errSecSuccess,
+              let data = result as? Data,
+              let value = String(data: data, encoding: .utf8) else {
+            return nil
+        }
+
+        try? save(key: key, value: value)
+        return value
+    }
+
+    private static func legacyQuery(for key: String) -> [String: Any] {
+        [
+            kSecClass as String: kSecClassGenericPassword,
+            kSecAttrAccount as String: key
+        ]
+    }
+
+    private static func legacyLoadQuery(for key: String) -> [String: Any] {
+        [
+            kSecClass as String: kSecClassGenericPassword,
+            kSecAttrAccount as String: key,
+            kSecReturnData as String: true,
+            kSecMatchLimit as String: kSecMatchLimitOne
+        ]
     }
 
     enum KeychainError: Error {
