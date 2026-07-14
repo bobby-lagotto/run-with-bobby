@@ -117,30 +117,33 @@ struct SettingsView: View {
             }
 
             ForEach(LLMProviderType.allCases, id: \.self) { type in
-                HStack(spacing: 12) {
-                    Image(systemName: type.icon)
-                        .foregroundColor(aiSettings.providerType == type ? .bobbyRed : .bobbyWarmGray)
-                        .frame(width: 28)
-
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text(type.rawValue)
-                            .font(.body)
-                        Text(providerDescription(for: type))
-                            .font(.caption)
-                            .foregroundColor(.bobbyWarmGray)
-                    }
-
-                    Spacer()
-
-                    if aiSettings.providerType == type {
-                        Image(systemName: "checkmark.circle.fill")
-                            .foregroundColor(.bobbyRed)
-                    }
-                }
-                .contentShape(Rectangle())
-                .onTapGesture {
+                Button {
                     aiSettings.providerType = type
+                } label: {
+                    HStack(spacing: 12) {
+                        Image(systemName: type.icon)
+                            .foregroundColor(aiSettings.providerType == type ? .bobbyRed : .bobbyWarmGray)
+                            .frame(width: 28)
+
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(type.rawValue)
+                                .font(.body)
+                                .foregroundColor(.primary)
+                            Text(providerDescription(for: type))
+                                .font(.caption)
+                                .foregroundColor(.bobbyWarmGray)
+                        }
+
+                        Spacer()
+
+                        if aiSettings.providerType == type {
+                            Image(systemName: "checkmark.circle.fill")
+                                .foregroundColor(.bobbyRed)
+                        }
+                    }
+                    .contentShape(Rectangle())
                 }
+                .buttonStyle(.plain)
             }
         } header: {
             Label("Provider AI", systemImage: "cpu")
@@ -446,7 +449,7 @@ struct SettingsView: View {
             Label("Modello Locale", systemImage: "iphone")
                 .foregroundColor(.bobbyRed)
         } footer: {
-            Text("Tocca un modello per selezionarlo. I modelli funzionano completamente offline. Puoi tenerne più di uno scaricato e cambiare quando vuoi.")
+            Text("Tocca un modello per selezionarlo o avviare il download. I modelli funzionano completamente offline. Puoi tenerne più di uno scaricato e cambiare quando vuoi.")
                 .font(.caption)
         }
     }
@@ -460,55 +463,57 @@ struct SettingsView: View {
         let isRecommended = option.id == LocalModelCatalog.defaultId
 
         VStack(alignment: .leading, spacing: 8) {
-            HStack(spacing: 12) {
-                Image(systemName: isSelected ? "largecircle.fill.circle" : "circle")
-                    .foregroundColor(isSelected ? .bobbyRed : .bobbyWarmGray)
-                    .font(.title3)
+            Button {
+                handleLocalModelTap(for: option)
+            } label: {
+                VStack(alignment: .leading, spacing: 8) {
+                    HStack(spacing: 12) {
+                        Image(systemName: isSelected ? "largecircle.fill.circle" : "circle")
+                            .foregroundColor(isSelected ? .bobbyRed : .bobbyWarmGray)
+                            .font(.title3)
 
-                VStack(alignment: .leading, spacing: 2) {
-                    HStack(spacing: 6) {
-                        Text(option.tier)
-                            .font(.body.weight(.semibold))
-                            .foregroundColor(isSupported ? .primary : .secondary)
-                        Text("·")
-                            .foregroundColor(.bobbyWarmGray)
-                        Text(option.formattedSize)
-                            .font(.subheadline)
-                            .foregroundColor(.bobbyWarmGray)
-                        if isRecommended {
-                            Text("⭐ Consigliato")
-                                .font(.caption.weight(.medium))
-                                .foregroundColor(.bobbyCaramel)
+                        VStack(alignment: .leading, spacing: 2) {
+                            HStack(spacing: 6) {
+                                Text(option.tier)
+                                    .font(.body.weight(.semibold))
+                                    .foregroundColor(isSupported ? .primary : .secondary)
+                                Text("·")
+                                    .foregroundColor(.bobbyWarmGray)
+                                Text(option.formattedSize)
+                                    .font(.subheadline)
+                                    .foregroundColor(.bobbyWarmGray)
+                                if isRecommended {
+                                    Text("⭐ Consigliato")
+                                        .font(.caption.weight(.medium))
+                                        .foregroundColor(.bobbyCaramel)
+                                }
+                            }
+                            Text(option.shortName)
+                                .font(.caption)
+                                .foregroundColor(.bobbyWarmGray)
                         }
+
+                        Spacer()
                     }
-                    Text(option.shortName)
+
+                    Text(option.description)
                         .font(.caption)
-                        .foregroundColor(.bobbyWarmGray)
-                }
+                        .foregroundColor(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
 
-                Spacer()
-            }
-
-            Text(option.description)
-                .font(.caption)
-                .foregroundColor(.secondary)
-                .fixedSize(horizontal: false, vertical: true)
-
-            if !isSupported {
-                Text(option.requirementText)
-                    .font(.caption2.weight(.medium))
-                    .foregroundColor(.orange)
-            } else if isThisDownloading {
-                VStack(alignment: .leading, spacing: 4) {
-                    ProgressView(value: mlxProvider.downloadProgress)
-                        .tint(.bobbyRed)
-                    Text("Download: \(Int(mlxProvider.downloadProgress * 100))%")
-                        .font(.caption)
-                        .foregroundColor(.bobbyWarmGray)
-                }
-            } else {
-                HStack(spacing: 8) {
-                    if isDownloaded {
+                    if !isSupported {
+                        Text(option.requirementText)
+                            .font(.caption2.weight(.medium))
+                            .foregroundColor(.orange)
+                    } else if isThisDownloading {
+                        VStack(alignment: .leading, spacing: 4) {
+                            ProgressView(value: mlxProvider.downloadProgress)
+                                .tint(.bobbyRed)
+                            Text("Download: \(Int(mlxProvider.downloadProgress * 100))%")
+                                .font(.caption)
+                                .foregroundColor(.bobbyWarmGray)
+                        }
+                    } else if isDownloaded {
                         HStack(spacing: 4) {
                             Image(systemName: "checkmark.circle.fill")
                                 .foregroundColor(.green)
@@ -516,8 +521,20 @@ struct SettingsView: View {
                             Text(isSelected ? "Scaricato · Attivo" : "Scaricato")
                                 .font(.caption.weight(.medium))
                                 .foregroundColor(.green)
+                            Spacer()
                         }
-                        Spacer()
+                    }
+                }
+                .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .disabled(!isSupported || mlxProvider.isDownloading)
+            .opacity(isSupported ? 1.0 : 0.55)
+
+            if isSupported && !isThisDownloading {
+                HStack(spacing: 8) {
+                    Spacer()
+                    if isDownloaded {
                         if !isSelected {
                             Button("Elimina") {
                                 mlxProvider.deleteModelFiles(option.id)
@@ -527,7 +544,6 @@ struct SettingsView: View {
                             .foregroundColor(.bobbyRed)
                         }
                     } else {
-                        Spacer()
                         Button("Scarica") {
                             downloadModel(option)
                         }
@@ -542,12 +558,16 @@ struct SettingsView: View {
                 }
             }
         }
-        .contentShape(Rectangle())
-        .opacity(isSupported ? 1.0 : 0.55)
-        .onTapGesture {
-            guard isSupported, isDownloaded, !mlxProvider.isDownloading else { return }
+    }
+
+    private func handleLocalModelTap(for option: LocalModelOption) {
+        guard option.isSupportedOnThisDevice, !mlxProvider.isDownloading else { return }
+
+        if aiSettings.downloadedModelIds.contains(option.id) {
             aiSettings.selectedModelId = option.id
             onProviderChanged?()
+        } else {
+            downloadModel(option)
         }
     }
 

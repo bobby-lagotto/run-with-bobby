@@ -153,11 +153,15 @@ class AISettings: ObservableObject {
     }
 
     func markDownloaded(_ id: String) {
-        downloadedModelIds.insert(id)
+        var updated = downloadedModelIds
+        updated.insert(id)
+        downloadedModelIds = updated
     }
 
     func markDeleted(_ id: String) {
-        downloadedModelIds.remove(id)
+        var updated = downloadedModelIds
+        updated.remove(id)
+        downloadedModelIds = updated
     }
 
     /// Check if a string looks like a valid OpenAI API key
@@ -211,7 +215,9 @@ class AISettings: ObservableObject {
            UserDefaults.standard.bool(forKey: Self.legacyModelDownloadedKey),
            let legacyName = UserDefaults.standard.string(forKey: Self.legacyLocalModelKey) {
             let legacyId = legacyName.contains("/") ? legacyName : "mlx-community/\(legacyName)"
-            downloadedModelIds.insert(legacyId)
+            var migrated = downloadedModelIds
+            migrated.insert(legacyId)
+            downloadedModelIds = migrated
             UserDefaults.standard.removeObject(forKey: Self.legacyModelDownloadedKey)
             UserDefaults.standard.removeObject(forKey: Self.legacyLocalModelKey)
             UserDefaults.standard.removeObject(forKey: Self.legacyDownloadedModelIdKey)
