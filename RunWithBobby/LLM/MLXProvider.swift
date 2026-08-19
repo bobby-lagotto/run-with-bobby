@@ -55,7 +55,7 @@ class MLXProvider: @MainActor LLMService, ObservableObject {
         guard let container = modelContainer else { throw LLMError.modelNotLoaded }
 
         let userInput = Self.makeUserInput(messages: messages, toolDefinitions: toolDefinitions)
-        let params = GenerateParameters(maxKVSize: 2048, temperature: 0.3)
+        let params = generateParameters
 
         let result: (text: String, calls: [MLXLMCommon.ToolCall]) = try await container.perform { context in
             let lmInput = try await context.processor.prepare(input: userInput)
@@ -94,7 +94,7 @@ class MLXProvider: @MainActor LLMService, ObservableObject {
                     return
                 }
                 let userInput = Self.makeUserInput(messages: messages, toolDefinitions: toolDefinitions)
-                let params = GenerateParameters(maxKVSize: 2048, temperature: 0.3)
+                let params = self.generateParameters
 
                 do {
                     try await container.perform { context in
@@ -168,6 +168,14 @@ class MLXProvider: @MainActor LLMService, ObservableObject {
 
     func unloadModel() {
         modelContainer = nil
+    }
+
+    /// Keep KV small on-device. 27B also uses 4-bit KV to stay inside the iOS per-app budget.
+    private var generateParameters: GenerateParameters {
+        if modelId.contains("Bonsai-27B") {
+            return GenerateParameters(maxKVSize: 2048, kvBits: 4, temperature: 0.3)
+        }
+        return GenerateParameters(maxKVSize: 2048, temperature: 0.3)
     }
 
     // MARK: - Helpers

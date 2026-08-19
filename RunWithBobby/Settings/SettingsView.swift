@@ -52,7 +52,8 @@ struct SettingsView: View {
                 openAISection
                 anthropicSection
                 openRouterSection
-                localModelSection
+                qwenModelSection
+                bonsaiModelSection
                 healthSection
                 infoSection
             }
@@ -432,26 +433,50 @@ struct SettingsView: View {
         }
     }
 
-    // MARK: - Local Model Section
+    // MARK: - Local Model Sections
 
-    private var localModelSection: some View {
+    private var qwenModelSection: some View {
         Section {
-            ForEach(LocalModelCatalog.all) { option in
+            ForEach(LocalModelCatalog.qwenModels) { option in
                 localModelRow(for: option)
             }
 
-            if let downloadError {
+            if let downloadError, isDownloadError(for: LocalModelCatalog.qwenModels) {
                 Text("Errore: \(downloadError)")
                     .font(.caption)
                     .foregroundColor(.red)
             }
         } header: {
-            Label("Modello Locale", systemImage: "iphone")
+            Label("Modello locale (Qwen)", systemImage: "iphone")
                 .foregroundColor(.bobbyRed)
         } footer: {
-            Text("Tocca un modello per selezionarlo o avviare il download. I modelli funzionano completamente offline. Puoi tenerne più di uno scaricato e cambiare quando vuoi.")
+            Text("Tocca un modello per selezionarlo o avviare il download. I Qwen 4-bit sono il default: tool-calling più affidabile per i piani. Puoi tenerne più di uno scaricato.")
                 .font(.caption)
         }
+    }
+
+    private var bonsaiModelSection: some View {
+        Section {
+            ForEach(LocalModelCatalog.bonsaiModels) { option in
+                localModelRow(for: option)
+            }
+
+            if let downloadError, isDownloadError(for: LocalModelCatalog.bonsaiModels) {
+                Text("Errore: \(downloadError)")
+                    .font(.caption)
+                    .foregroundColor(.red)
+            }
+        } header: {
+            Label("Bonsai (1-bit / ternario)", systemImage: "leaf")
+                .foregroundColor(.bobbyRed)
+        } footer: {
+            Text("Modelli PrismML in MLX, non GGUF. Il ternario 4B è il più adatto alla maggior parte degli iPhone. Il 27B 1-bit è solo per iPhone 17 Pro / Pro Max e non è il default: il tool-calling è meno affidabile.")
+                .font(.caption)
+        }
+    }
+
+    private func isDownloadError(for options: [LocalModelOption]) -> Bool {
+        options.contains { $0.id == mlxProvider.modelId }
     }
 
     @ViewBuilder
@@ -482,6 +507,13 @@ struct SettingsView: View {
                                 Text(option.formattedSize)
                                     .font(.subheadline)
                                     .foregroundColor(.bobbyWarmGray)
+                                Text(option.family.badge)
+                                    .font(.caption2.weight(.medium))
+                                    .foregroundColor(.bobbyWarmGray)
+                                    .padding(.horizontal, 6)
+                                    .padding(.vertical, 2)
+                                    .background(Color.bobbyWarmGray.opacity(0.15))
+                                    .clipShape(Capsule())
                                 if isRecommended {
                                     Text("⭐ Consigliato")
                                         .font(.caption.weight(.medium))

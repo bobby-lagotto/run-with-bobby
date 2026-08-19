@@ -57,31 +57,43 @@ open RunWithBobby.xcodeproj
 
 ## 🧠 Integrazione MLX
 
-### Modelli Supportati
-L'app è progettata per modelli leggeri ottimizzati per iPhone:
+L'inferenza on-device usa **MLX Swift LM** (`Vendor/mlx-swift-lm`, tag 2.31.3) puntato al fork PrismML di `mlx-swift` (branch `v0.31.3_prism`) per i kernel 1-bit di Bonsai. I Qwen 4-bit restano supportati. 2.31.3 registra `qwen3_5`, necessario per Bonsai 27B.
 
-```swift
-// Modelli consigliati (placeholder - da implementare)
-- phi-3-mini-4k: ~2.3GB, ottimo per iPhone 12+
-- llama-3.2-1b: ~1.2GB, funziona su iPhone 11+  
-- qwen2.5-0.5b: ~600MB, compatibile con iPhone XS+
-```
+MLX **non funziona sul simulatore**: serve un iPhone fisico.
 
-### Configurazione MLX
-```swift
-// In BobbyAI.swift - loadModel()
-private func loadMLXModel() async throws -> MLXModel {
-    // Carica modello da bundle app o download
-    let modelURL = Bundle.main.url(forResource: "phi-3-mini", withExtension: "safetensors")
-    return try await MLX.loadModel(from: modelURL)
-}
-```
+### Catalogo modelli (`LocalModelCatalog.swift`)
 
-### Performance Optimization
-- **Memory Management**: Libera modello quando app va in background
-- **Batch Processing**: Processa più richieste insieme se possibile
-- **Caching**: Cache di risposte comuni per ridurre inferenza
-- **Quantization**: Usa modelli quantizzati INT8 per memoria ridotta
+**Qwen 2.5 Instruct 4-bit** (default, tool-calling più affidabile):
+
+- `mlx-community/Qwen2.5-0.5B-Instruct-4bit` — ~400 MB, 4 GB RAM
+- `mlx-community/Qwen2.5-1.5B-Instruct-4bit` — ~900 MB, 6 GB RAM (consigliato)
+- `mlx-community/Qwen2.5-3B-Instruct-4bit` — ~1.9 GB, 8 GB RAM
+
+**Bonsai MLX** (non GGUF):
+
+- `prism-ml/Ternary-Bonsai-4B-mlx-2bit` — ~1.1 GB, 6 GB RAM, 2-bit ternario
+- `prism-ml/Bonsai-8B-mlx-1bit` — ~1.3 GB, 6 GB RAM, 1-bit
+- `prism-ml/Bonsai-27B-mlx-1bit` — ~5.2 GB, iPhone 17 Pro / Pro Max (12 GB). `model_type=qwen3_5` (Qwen3.5 hybrid). mlx-swift-lm 2.31.3 lo registra; il load on-device resta da verificare su Pro Max.
+
+Il contesto KV è limitato a 2048 token (`GenerateParameters.maxKVSize`). Il 27B usa anche KV 4-bit.
+
+### Test on-device (ordine)
+
+1. Build su device fisico (MLX non gira sul simulatore).
+2. Regression Qwen 1.5B: chat in italiano + tool `calculate_training_plan`.
+3. Ternary Bonsai 4B: download, generazione, piano + conferma save.
+4. Bonsai 8B 1-bit: stesso protocollo (se i kernel 1-bit mancano, il load fallisce qui).
+5. Bonsai 27B: solo iPhone 17 Pro / Pro Max; chat breve e un tool round-trip. Osservare jetsam e termico. Non deve diventare il modello consigliato.
+
+Verifica catalogo HuggingFace (senza device): `scripts/verify-bonsai-catalog.sh`.
+
+Stato già verificato in sviluppo: `xcodebuild` iOS generic **BUILD SUCCEEDED** con fork PrismML `v0.31.3_prism`; i `config.json` HF confermano Qwen2 (Qwen 1.5B), Qwen3 2-bit/1-bit (Ternary 4B, Bonsai 8B) e `qwen3_5` 1-bit (Bonsai 27B). Nessun iPhone fisico collegato al momento del merge: i passi 2–5 restano da fare sul device.
+
+### Dipendenze SPM
+
+Il progetto Xcode usa il package locale `Vendor/mlx-swift-lm`, che scarica `PrismML-Eng/mlx-swift` da GitHub. Non aggiungere anche `ml-explore/mlx-swift`: conflitto di identità SPM.
+
+Per Bonsai 27B l'app dichiara `com.apple.developer.kernel.increased-memory-limit`. Abilita la capability **Increased Memory Limit** sull'App ID in Apple Developer, altrimenti il profilo di provisioning può rifiutare la firma.
 
 ## 💾 Persistenza Dati
 

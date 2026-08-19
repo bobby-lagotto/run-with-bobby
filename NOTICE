@@ -4,12 +4,20 @@ Run with Bobby — Third-Party Notices
 This application includes or depends on the following open-source components.
 See each project for full license terms.
 
-- mlx-swift-examples (https://github.com/ml-explore/mlx-swift-examples)
-  Used via Swift Package Manager for on-device MLX inference.
+- mlx-swift-lm (https://github.com/ml-explore/mlx-swift-lm)
+  Vendored at tag 2.31.3 under Vendor/mlx-swift-lm and used via Swift Package Manager
+  for on-device MLX inference (MLXLLM, MLXLMCommon).
   License: MIT (see upstream repository).
+
+- PrismML mlx-swift (https://github.com/PrismML-Eng/mlx-swift)
+  Fork of Apple MLX Swift with 1-bit Metal kernels required by Bonsai 1-bit models.
+  Pinned to branch v0.31.3_prism. License: MIT (see upstream repository).
 
 - Apple MLX / MLX Swift ecosystem
   See https://github.com/ml-explore/mlx-swift and related packages.
+
+- PrismML Bonsai models (https://huggingface.co/prism-ml)
+  Optional on-device weights (Apache 2.0), downloaded at runtime if the user selects them.
 
 Run with Bobby itself is licensed under GNU GPL v3.
 Copyright (C) 2026 Francesco Saverio Mazzi <francemazzi@gmail.com>

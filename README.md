@@ -67,9 +67,10 @@ Ecco la versione aggiornata..."
 
 ## 🧠 Integrazione MLX
 
-L'app utilizza **MLX Swift** di Apple per l'inferenza locale dei modelli AI:
+L'app utilizza **MLX Swift** (fork PrismML per i kernel 1-bit) per l'inferenza locale:
 
-- Modelli leggeri ottimizzati per mobile (phi-3-mini, llama-3.2-1b)
+- Qwen 2.5 Instruct 4-bit (0.5B / 1.5B / 3B) come default
+- Bonsai MLX opzionali: Ternary 4B (2-bit), Bonsai 8B 1-bit, Bonsai 27B 1-bit (iPhone 17 Pro / Pro Max)
 - Zero latenza di rete
 - Privacy locale quando usi il modello on-device; se abiliti OpenAI, Anthropic o OpenRouter, chat, profilo runner e riepiloghi Health necessari possono essere inviati al provider selezionato
 - Funziona anche offline
