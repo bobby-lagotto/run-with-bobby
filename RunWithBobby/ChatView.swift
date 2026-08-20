@@ -1,11 +1,12 @@
 import SwiftUI
 
 struct ChatView: View {
-    @StateObject private var appState = AppState()
-    @StateObject private var bobbyAI = BobbyAI()
-    @StateObject private var planManager = TrainingPlanManager()
-    @StateObject private var healthManager = HealthKitManager()
-    @StateObject private var nutritionManager = NutritionPlanManager()
+    @EnvironmentObject var appState: AppState
+    @EnvironmentObject var bobbyAI: BobbyAI
+    @EnvironmentObject var planManager: TrainingPlanManager
+    @EnvironmentObject var healthManager: HealthKitManager
+    @EnvironmentObject var nutritionManager: NutritionPlanManager
+    @EnvironmentObject var habitCoordinator: HabitCoordinator
     @EnvironmentObject var aiSettings: AISettings
     @Environment(\.colorScheme) var colorScheme
 
@@ -173,6 +174,10 @@ struct ChatView: View {
                 }
             }
 
+            if habitCoordinator.today.hasActivePlan {
+                todayStrip
+            }
+
             // Active plan pills
             HStack(spacing: 8) {
                 if let activePlan = planManager.currentActivePlan {
@@ -322,12 +327,39 @@ struct ChatView: View {
             HStack(spacing: 8) {
                 QuickButton("Nuovo piano") { sendQuickMessage("Crea un nuovo piano di allenamento per me") }
                 QuickButton("Piano alimentare") { sendQuickMessage("Crea un piano alimentare basato sul mio allenamento") }
+                QuickButton("Cosa faccio oggi?") { sendQuickMessage("Cosa faccio oggi? Usa il briefing e l'aderenza.") }
                 QuickButton("Come sto?") { sendQuickMessage("Analizza i miei dati di salute e dimmi come sto. Sono affaticato? Fammi un riassunto completo.") }
                 QuickButton("Ottimizza piano") { sendQuickMessage("Vorrei ottimizzare il mio piano attuale") }
                 QuickButton("Consigli recupero") { sendQuickMessage("Dammi consigli per il recupero") }
             }
             .padding(.horizontal)
         }
+    }
+
+    private var todayStrip: some View {
+        let state = habitCoordinator.today
+        return HStack(spacing: 8) {
+            Image(systemName: "sun.max.fill")
+                .foregroundColor(.bobbyCaramel)
+            Text(state.workoutType)
+                .font(.caption.weight(.semibold))
+            Text("·")
+            Text(state.sessionStatus.italianLabel)
+                .font(.caption)
+            if state.plannedKm > 0 {
+                Text(String(format: "· %.1f km", state.plannedKm))
+                    .font(.caption)
+            }
+            Spacer()
+            Text(state.recommendation.italianLabel)
+                .font(.caption.weight(.medium))
+                .foregroundColor(.bobbyRed)
+        }
+        .foregroundColor(BobbyTheme.secondaryText(for: colorScheme))
+        .padding(.horizontal, 12)
+        .padding(.vertical, 8)
+        .background(BobbyTheme.cardBackground(for: colorScheme))
+        .clipShape(RoundedRectangle(cornerRadius: 12))
     }
 
     // MARK: - Helper Methods
@@ -434,6 +466,7 @@ struct ChatView: View {
         UserDefaults.standard.set(false, forKey: "healthkit_connected")
         healthConnected = false
         bobbyAI.configure(with: aiSettings, healthManager: nil)
+        habitCoordinator.refresh(plan: nil)
         showWelcomeMessage()
     }
 }
@@ -862,6 +895,8 @@ struct DayTrainingRowView: View {
                 HStack(spacing: 4) {
                     Image(systemName: dayTraining.workoutType.sfSymbol)
                     Text(dayTraining.workoutType.rawValue)
+                    Text("·")
+                    Text(dayTraining.sessionStatus.italianLabel)
                 }
                 .font(.caption.weight(.medium))
                 .padding(.horizontal, 10)

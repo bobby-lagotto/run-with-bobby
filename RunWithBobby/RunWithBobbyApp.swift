@@ -4,15 +4,26 @@ import SwiftUI
 struct RunWithBobbyApp: App {
     @StateObject private var appState = AppState()
     @StateObject private var aiSettings = AISettings()
+    @StateObject private var planManager = TrainingPlanManager()
+    @StateObject private var nutritionManager = NutritionPlanManager()
+    @StateObject private var healthManager = HealthKitManager()
+    @StateObject private var bobbyAI = BobbyAI()
+    @StateObject private var habitCoordinator = HabitCoordinator()
 
     var body: some Scene {
         WindowGroup {
             ContentView()
                 .environmentObject(appState)
                 .environmentObject(aiSettings)
-                .preferredColorScheme(.none) // Supporta sia light che dark mode
+                .environmentObject(planManager)
+                .environmentObject(nutritionManager)
+                .environmentObject(healthManager)
+                .environmentObject(bobbyAI)
+                .environmentObject(habitCoordinator)
+                .preferredColorScheme(.none)
                 .onAppear {
                     setupApp()
+                    habitCoordinator.refresh(plan: planManager.currentActivePlan)
                 }
         }
     }

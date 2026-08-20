@@ -8,12 +8,16 @@ class TrainingPlanManager: ObservableObject {
     
     private let plansDirectory: URL
     private let activePlanURL: URL
-    
-    init() {
+
+    convenience init() {
         let documentsPath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
-        plansDirectory = documentsPath.appendingPathComponent("TrainingPlans")
-        activePlanURL = documentsPath.appendingPathComponent("active_plan.json")
-        
+        self.init(baseDirectory: documentsPath)
+    }
+
+    init(baseDirectory: URL) {
+        plansDirectory = baseDirectory.appendingPathComponent("TrainingPlans")
+        activePlanURL = baseDirectory.appendingPathComponent("active_plan.json")
+
         createDirectoryIfNeeded()
         loadAllPlans()
         loadActivePlan()

@@ -10,7 +10,7 @@ struct ContentView: View {
             if isFirstLaunch && !appState.isProfileComplete {
                 WelcomeView(appState: appState, isFirstLaunch: $isFirstLaunch)
             } else {
-                ChatView()
+                MainTabView()
             }
         }
         .onAppear {
@@ -29,6 +29,29 @@ struct ContentView: View {
 }
 
 // MARK: - Welcome View
+struct MainTabView: View {
+    @State private var selectedTab = 0
+
+    var body: some View {
+        TabView(selection: $selectedTab) {
+            NavigationView {
+                TodayView(onTalkToBobby: { selectedTab = 1 })
+            }
+            .tabItem {
+                Label("Oggi", systemImage: "sun.max.fill")
+            }
+            .tag(0)
+
+            ChatView()
+                .tabItem {
+                    Label("Bobby", systemImage: "bubble.left.and.bubble.right.fill")
+                }
+                .tag(1)
+        }
+        .tint(.bobbyRed)
+    }
+}
+
 struct WelcomeView: View {
     @ObservedObject var appState: AppState
     @Binding var isFirstLaunch: Bool

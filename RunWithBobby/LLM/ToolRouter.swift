@@ -90,6 +90,29 @@ class ToolRouter {
                 required: []
             )
         ),
+        ToolDefinitionSchema(
+            name: "get_adherence",
+            description: "Ottieni l'aderenza della settimana: sedute fatte, parziali, saltate e previste, con contesto per il coach. Usa questo tool quando l'utente chiede se ha corso, come sta andando la settimana o cosa manca.",
+            parameters: ToolParametersSchema(type: "object", properties: [:], required: [])
+        ),
+        ToolDefinitionSchema(
+            name: "log_session",
+            description: "Segna una seduta come fatta, parziale o saltata. Chiama questo tool SOLO dopo conferma esplicita e specifica dell'utente.",
+            parameters: ToolParametersSchema(
+                type: "object",
+                properties: [
+                    "day_of_week": ToolPropertySchema(type: "string", description: "Giorno in italiano (es. MERCOLEDÌ). Default: oggi"),
+                    "status": ToolPropertySchema(type: "string", description: "Esito della seduta", enumValues: ["completed", "partial", "skipped"]),
+                    "logged_km": ToolPropertySchema(type: "number", description: "Chilometri effettivamente corsi, se noti"),
+                ],
+                required: ["status"]
+            )
+        ),
+        ToolDefinitionSchema(
+            name: "get_today_briefing",
+            description: "Ottieni la raccomandazione di oggi (vai, facile, riposo) da piano attivo e segnali di recupero, senza inventare numeri. Usalo per 'cosa faccio oggi?', briefing del mattino o prontezza.",
+            parameters: ToolParametersSchema(type: "object", properties: [:], required: [])
+        ),
     ]
 
     // MARK: - Tool descriptions for system prompt (used by local models that don't support native function calling)
@@ -122,7 +145,10 @@ class ToolRouter {
         userProfile: RunnerProfile,
         planManager: TrainingPlanManager,
         nutritionManager: NutritionPlanManager? = nil,
-        healthManager: HealthKitManager? = nil
+        healthManager: HealthKitManager? = nil,
+        loggedWorkouts: [LoggedWorkout] = [],
+        healthSignals: HealthSignals? = nil,
+        referenceDate: Date = Date()
     ) async -> ToolResult {
         switch toolCall.name {
         case "calculate_training_plan":
@@ -143,6 +169,12 @@ class ToolRouter {
             return getNutritionPlan(nutritionManager: nutritionManager, toolCallId: toolCall.id)
         case "save_nutrition_plan":
             return saveNutritionPlan(arguments: toolCall.arguments, nutritionManager: nutritionManager, toolCallId: toolCall.id)
+        case "get_adherence":
+            return await getAdherence(planManager: planManager, healthManager: healthManager, loggedWorkouts: loggedWorkouts, toolCallId: toolCall.id)
+        case "log_session":
+            return logSession(arguments: toolCall.arguments, planManager: planManager, referenceDate: referenceDate, toolCallId: toolCall.id)
+        case "get_today_briefing":
+            return await getTodayBriefing(planManager: planManager, healthManager: healthManager, loggedWorkouts: loggedWorkouts, healthSignals: healthSignals, referenceDate: referenceDate, toolCallId: toolCall.id)
         default:
             return ToolResult(toolCallId: toolCall.id, name: toolCall.name, content: "{\"error\": \"Tool sconosciuto: \(toolCall.name)\"}")
         }
@@ -209,13 +241,18 @@ class ToolRouter {
         }
 
         let planData = plan.weeklyPlan.map { day -> [String: Any] in
-            [
+            var row: [String: Any] = [
                 "giorno": day.dayOfWeek,
                 "tipo": day.workoutType.rawValue,
                 "distanza_km": day.distance,
                 "durata_min": day.estimatedDuration,
-                "descrizione": day.description
+                "descrizione": day.description,
+                "stato": day.sessionStatus.rawValue
             ]
+            if let logged = day.loggedDistance {
+                row["km_loggati"] = logged
+            }
+            return row
         }
 
         let result: [String: Any] = [
@@ -312,6 +349,120 @@ class ToolRouter {
             result["nota_piano_alimentare"] = "Il piano di allenamento è cambiato. Chiedi all'utente se vuole aggiornare anche il piano alimentare."
         }
         return ToolResult(toolCallId: toolCallId, name: "save_training_plan", content: serializeJSON(result))
+    }
+
+    // MARK: - Habit Tools
+
+    private func resolveWorkouts(healthManager: HealthKitManager?, loggedWorkouts: [LoggedWorkout]) async -> [LoggedWorkout] {
+        if !loggedWorkouts.isEmpty { return loggedWorkouts }
+        guard let healthManager, healthManager.isAuthorized else { return [] }
+        return await healthManager.fetchLoggedWorkouts(days: 7)
+    }
+
+    private func resolveSignals(healthManager: HealthKitManager?, healthSignals: HealthSignals?) async -> HealthSignals {
+        if let healthSignals { return healthSignals }
+        guard let healthManager, healthManager.isAuthorized else { return HealthSignals() }
+        return await healthManager.fetchHealthSignals()
+    }
+
+    private func persistMatchedPlan(_ plan: TrainingPlan, planManager: TrainingPlanManager) {
+        planManager.savePlan(plan)
+        planManager.setActivePlan(plan)
+    }
+
+    private func getAdherence(
+        planManager: TrainingPlanManager,
+        healthManager: HealthKitManager?,
+        loggedWorkouts: [LoggedWorkout],
+        toolCallId: String
+    ) async -> ToolResult {
+        guard let plan = planManager.currentActivePlan else {
+            return ToolResult(toolCallId: toolCallId, name: "get_adherence", content: "{\"messaggio\": \"Nessun piano attivo.\"}")
+        }
+
+        let workouts = await resolveWorkouts(healthManager: healthManager, loggedWorkouts: loggedWorkouts)
+        let matched = AdherenceEngine.applyMatches(to: plan, workouts: workouts)
+        persistMatchedPlan(matched, planManager: planManager)
+        let summary = AdherenceEngine.summary(for: matched)
+
+        let result: [String: Any] = [
+            "percentuale": summary.percent,
+            "sedute_previste": summary.plannedWorkouts,
+            "fatte": summary.completedWorkouts,
+            "parziali": summary.partialWorkouts,
+            "saltate": summary.skippedWorkouts,
+            "rimaste": summary.remainingWorkouts,
+            "contesto_coach": summary.coachContext
+        ]
+        return ToolResult(toolCallId: toolCallId, name: "get_adherence", content: serializeJSON(result))
+    }
+
+    private func logSession(
+        arguments: [String: JSONValue],
+        planManager: TrainingPlanManager,
+        referenceDate: Date,
+        toolCallId: String
+    ) -> ToolResult {
+        guard let plan = planManager.currentActivePlan else {
+            return ToolResult(toolCallId: toolCallId, name: "log_session", content: "{\"errore\": \"Nessun piano attivo.\"}")
+        }
+
+        let statusRaw = arguments["status"]?.stringValue ?? "completed"
+        guard let status = SessionStatus(rawValue: statusRaw), status != .planned else {
+            return ToolResult(toolCallId: toolCallId, name: "log_session", content: "{\"errore\": \"Stato non valido. Usa completed, partial o skipped.\"}")
+        }
+
+        let day = arguments["day_of_week"]?.stringValue ?? WeekdayKey.italianName(for: referenceDate)
+        let loggedKm = arguments["logged_km"]?.doubleValue
+        let updated = AdherenceEngine.log(
+            plan: plan,
+            dayOfWeek: day,
+            status: status,
+            loggedDistance: loggedKm,
+            loggedDurationMinutes: nil
+        )
+        persistMatchedPlan(updated, planManager: planManager)
+        let summary = AdherenceEngine.summary(for: updated)
+
+        let result: [String: Any] = [
+            "giorno": day,
+            "stato": status.rawValue,
+            "percentuale": summary.percent,
+            "messaggio": "Seduta \(status.italianLabel) registrata."
+        ]
+        return ToolResult(toolCallId: toolCallId, name: "log_session", content: serializeJSON(result))
+    }
+
+    private func getTodayBriefing(
+        planManager: TrainingPlanManager,
+        healthManager: HealthKitManager?,
+        loggedWorkouts: [LoggedWorkout],
+        healthSignals: HealthSignals?,
+        referenceDate: Date,
+        toolCallId: String
+    ) async -> ToolResult {
+        let workouts = await resolveWorkouts(healthManager: healthManager, loggedWorkouts: loggedWorkouts)
+        let signals = await resolveSignals(healthManager: healthManager, healthSignals: healthSignals)
+        let matched = planManager.currentActivePlan.map { AdherenceEngine.applyMatches(to: $0, workouts: workouts) }
+        if let matched {
+            persistMatchedPlan(matched, planManager: planManager)
+        }
+
+        let today = matched.flatMap { AdherenceEngine.day(in: $0, on: referenceDate) }
+        let recommendation = ReadinessEngine.recommend(signals: signals, today: today, hasActivePlan: matched != nil)
+        let line = ReadinessEngine.briefingLine(recommendation: recommendation, today: today, hasActivePlan: matched != nil)
+
+        var result: [String: Any] = [
+            "raccomandazione": recommendation.rawValue,
+            "briefing": line,
+            "giorno": today?.dayOfWeek ?? WeekdayKey.italianName(for: referenceDate),
+            "tipo": today?.workoutType.rawValue ?? "nessuno"
+        ]
+        if let today {
+            result["km_previsti"] = today.distance
+            result["stato"] = today.sessionStatus.rawValue
+        }
+        return ToolResult(toolCallId: toolCallId, name: "get_today_briefing", content: serializeJSON(result))
     }
 
     // MARK: - Training Plan Distribution Logic

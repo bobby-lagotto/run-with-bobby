@@ -46,6 +46,9 @@ class BobbyAI: ObservableObject {
     - Usa "get_nutrition_plan" quando devi commentare o modificare il piano alimentare attivo.
     - Usa "calculate_nutrition_plan" quando l'utente chiede un piano alimentare completo.
     - Usa "get_health_summary" quando la richiesta riguarda salute, recupero, sonno, affaticamento, stress, carico, performance recente, prontezza gara o domande sullo stato fisico come "come sto?". Non usarlo per consigli generici non sanitari.
+    - Usa "get_today_briefing" per "cosa faccio oggi?", briefing del mattino o prontezza della seduta odierna. Non inventare la raccomandazione: leggi il tool.
+    - Usa "get_adherence" quando l'utente chiede se ha corso, come sta andando la settimana o cosa manca.
+    - Usa "log_session" SOLO dopo conferma esplicita per segnare fatto / parziale / saltato.
 
     SALUTE E RED FLAG
     - Se l'utente riferisce dolore o pressione al petto, dolore che si irradia a collo/spalla/braccio, dispnea estrema, svenimento, capogiri importanti, nausea marcata, dolore acuto/progressivo, sospetto infortunio serio, sintomi neurologici, gravidanza con sintomi, patologie non controllate o farmaci rilevanti: consiglia di fermare l'allenamento e contattare un medico o assistenza urgente se necessario.
@@ -248,7 +251,13 @@ class BobbyAI: ObservableObject {
                 // Execute tool calls
                 var toolResults: [ToolResult] = []
                 for toolCall in response.toolCalls {
-                    let result = await toolRouter.execute(toolCall, userProfile: userProfile, planManager: planManager, nutritionManager: nutritionManager, healthManager: healthManager)
+                    let result = await toolRouter.execute(
+                        toolCall,
+                        userProfile: userProfile,
+                        planManager: planManager,
+                        nutritionManager: nutritionManager,
+                        healthManager: healthManager
+                    )
                     toolResults.append(result)
 
                     PrivacyLog.debug("Tool call completed: \(toolCall.name)")

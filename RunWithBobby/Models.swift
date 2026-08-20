@@ -139,14 +139,49 @@ struct DayTraining: Identifiable, Codable {
     var distance: Double // km
     var estimatedDuration: Int // minuti
     var paceZones: [PaceZone]
-    
-    init(dayOfWeek: String, workoutType: WorkoutType, description: String, distance: Double, estimatedDuration: Int, paceZones: [PaceZone] = []) {
+    var sessionStatus: SessionStatus
+    var loggedDistance: Double?
+    var loggedDurationMinutes: Int?
+
+    init(
+        dayOfWeek: String,
+        workoutType: WorkoutType,
+        description: String,
+        distance: Double,
+        estimatedDuration: Int,
+        paceZones: [PaceZone] = [],
+        sessionStatus: SessionStatus = .planned,
+        loggedDistance: Double? = nil,
+        loggedDurationMinutes: Int? = nil
+    ) {
         self.dayOfWeek = dayOfWeek
         self.workoutType = workoutType
         self.description = description
         self.distance = distance
         self.estimatedDuration = estimatedDuration
         self.paceZones = paceZones
+        self.sessionStatus = sessionStatus
+        self.loggedDistance = loggedDistance
+        self.loggedDurationMinutes = loggedDurationMinutes
+    }
+
+    enum CodingKeys: String, CodingKey {
+        case id, dayOfWeek, workoutType, description, distance, estimatedDuration, paceZones
+        case sessionStatus, loggedDistance, loggedDurationMinutes
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        id = try container.decodeIfPresent(UUID.self, forKey: .id) ?? UUID()
+        dayOfWeek = try container.decode(String.self, forKey: .dayOfWeek)
+        workoutType = try container.decode(WorkoutType.self, forKey: .workoutType)
+        description = try container.decode(String.self, forKey: .description)
+        distance = try container.decode(Double.self, forKey: .distance)
+        estimatedDuration = try container.decode(Int.self, forKey: .estimatedDuration)
+        paceZones = try container.decodeIfPresent([PaceZone].self, forKey: .paceZones) ?? []
+        sessionStatus = try container.decodeIfPresent(SessionStatus.self, forKey: .sessionStatus) ?? .planned
+        loggedDistance = try container.decodeIfPresent(Double.self, forKey: .loggedDistance)
+        loggedDurationMinutes = try container.decodeIfPresent(Int.self, forKey: .loggedDurationMinutes)
     }
 }
 

@@ -32,7 +32,84 @@
 		DD0000010000000BAABBCCDD /* NutritionPlanManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD0000020000000BAABBCCDD /* NutritionPlanManager.swift */; };
 		DD0000010000000CAABBCCDD /* ConversationHistoryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD0000020000000CAABBCCDD /* ConversationHistoryView.swift */; };
 		DD0000010000000DAABBCCDD /* NutritionPlanView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD0000020000000DAABBCCDD /* NutritionPlanView.swift */; };
+		F0A00002AAAA0001BBBB0001 /* HabitModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0A00001AAAA0001BBBB0001 /* HabitModels.swift */; };
+		F0A00004AAAA0001BBBB0002 /* AdherenceEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0A00003AAAA0001BBBB0002 /* AdherenceEngine.swift */; };
+		F0A00006AAAA0001BBBB0003 /* ReadinessEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0A00005AAAA0001BBBB0003 /* ReadinessEngine.swift */; };
+		F0A00008AAAA0001BBBB0004 /* NotificationPlanning.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0A00007AAAA0001BBBB0004 /* NotificationPlanning.swift */; };
+		F0A0000AAAAA0001BBBB0005 /* TodayPresenter.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0A00009AAAA0001BBBB0005 /* TodayPresenter.swift */; };
+		F0A0000CAAAA0001BBBB0006 /* TodaySnapshot.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0A0000BAAAA0001BBBB0006 /* TodaySnapshot.swift */; };
+		F0A0000EAAAA0001BBBB0007 /* RunSessionLogic.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0A0000DAAAA0001BBBB0007 /* RunSessionLogic.swift */; };
+		F0A00010AAAA0001BBBB0008 /* NotificationScheduler.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0A0000FAAAA0001BBBB0008 /* NotificationScheduler.swift */; };
+		F0A00012AAAA0001BBBB0009 /* RunSessionController.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0A00011AAAA0001BBBB0009 /* RunSessionController.swift */; };
+		F0A00014AAAA0001BBBB000A /* HabitCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0A00013AAAA0001BBBB000A /* HabitCoordinator.swift */; };
+		F0A00016AAAA0001BBBB000B /* TodayView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0A00015AAAA0001BBBB000B /* TodayView.swift */; };
+		F0A00018AAAA0001BBBB000C /* RunSessionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0A00017AAAA0001BBBB000C /* RunSessionView.swift */; };
+		F1T00003AAAA0002BBBB0001 /* ToolRouterIntegrationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1T00002AAAA0002BBBB0001 /* ToolRouterIntegrationTests.swift */; };
+		F1T00005AAAA0002BBBB0002 /* AdherenceIntegrationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1T00004AAAA0002BBBB0002 /* AdherenceIntegrationTests.swift */; };
+		F1T00007AAAA0002BBBB0003 /* ReadinessNotificationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1T00006AAAA0002BBBB0003 /* ReadinessNotificationTests.swift */; };
+		F1T00009AAAA0002BBBB0004 /* TodayPresenterTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1T00008AAAA0002BBBB0004 /* TodayPresenterTests.swift */; };
+		F1T0000BAAAA0002BBBB0005 /* RunSessionLogicTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1T0000AAAAA0002BBBB0005 /* RunSessionLogicTests.swift */; };
+		F1T0000DAAAA0002BBBB0006 /* TodaySnapshotTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1T0000CAAAA0002BBBB0006 /* TodaySnapshotTests.swift */; };
+		F1T0000FAAAA0002BBBB0007 /* HabitFixtures.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1T0000EAAAA0002BBBB0007 /* HabitFixtures.swift */; };
+		F2W00003AAAA0003BBBB0001 /* BobbyTodayWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = F2W00002AAAA0003BBBB0001 /* BobbyTodayWidget.swift */; };
+		F2W00004AAAA0003BBBB0002 /* HabitModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0A00001AAAA0001BBBB0001 /* HabitModels.swift */; };
+		F2W00005AAAA0003BBBB0003 /* TodaySnapshot.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0A0000BAAAA0001BBBB0006 /* TodaySnapshot.swift */; };
+		F2W0000FAAAA0003BBBB0004 /* WidgetKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F2W0000EAAAA0003BBBB0004 /* WidgetKit.framework */; };
+		F2W00012AAAA0003BBBB0005 /* BobbyTodayWidget.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = F2W00001AAAA0003BBBB0001 /* BobbyTodayWidget.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		F3A00003AAAA0004BBBB0001 /* BobbyWatchApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3A00002AAAA0004BBBB0001 /* BobbyWatchApp.swift */; };
+		F3A00004AAAA0004BBBB0002 /* HabitModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0A00001AAAA0001BBBB0001 /* HabitModels.swift */; };
+		F3A00005AAAA0004BBBB0003 /* TodaySnapshot.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0A0000BAAAA0001BBBB0006 /* TodaySnapshot.swift */; };
+		F3A0000EAAAA0004BBBB0004 /* BobbyWatch.app in Embed Watch Content */ = {isa = PBXBuildFile; fileRef = F3A00001AAAA0004BBBB0001 /* BobbyWatch.app */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 /* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		F1T00017AAAA0002BBBB0008 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 3D92FB1E2C8E4B2A00123456 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 3D92FB252C8E4B2A00123456;
+			remoteInfo = RunWithBobby;
+		};
+		F2W00013AAAA0003BBBB0006 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 3D92FB1E2C8E4B2A00123456 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = F2W00007AAAA0003BBBB0007;
+			remoteInfo = BobbyTodayWidget;
+		};
+		F3A0000FAAAA0004BBBB0005 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 3D92FB1E2C8E4B2A00123456 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = F3A00007AAAA0004BBBB0006;
+			remoteInfo = BobbyWatch;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		F2W00014AAAA0003BBBB0008 /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				F2W00012AAAA0003BBBB0005 /* BobbyTodayWidget.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		F3A00010AAAA0004BBBB0007 /* Embed Watch Content */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "$(CONTENTS_FOLDER_PATH)/Watch";
+			dstSubfolderSpec = 16;
+			files = (
+				F3A0000EAAAA0004BBBB0004 /* BobbyWatch.app in Embed Watch Content */,
+			);
+			name = "Embed Watch Content";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
 		3D92FB262C8E4B2A00123456 /* RunWithBobby.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = RunWithBobby.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -60,6 +137,34 @@
 		DD0000020000000BAABBCCDD /* NutritionPlanManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NutritionPlanManager.swift; sourceTree = "<group>"; };
 		DD0000020000000CAABBCCDD /* ConversationHistoryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConversationHistoryView.swift; sourceTree = "<group>"; };
 		DD0000020000000DAABBCCDD /* NutritionPlanView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NutritionPlanView.swift; sourceTree = "<group>"; };
+		F0A00001AAAA0001BBBB0001 /* HabitModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HabitModels.swift; sourceTree = "<group>"; };
+		F0A00003AAAA0001BBBB0002 /* AdherenceEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AdherenceEngine.swift; sourceTree = "<group>"; };
+		F0A00005AAAA0001BBBB0003 /* ReadinessEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReadinessEngine.swift; sourceTree = "<group>"; };
+		F0A00007AAAA0001BBBB0004 /* NotificationPlanning.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationPlanning.swift; sourceTree = "<group>"; };
+		F0A00009AAAA0001BBBB0005 /* TodayPresenter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TodayPresenter.swift; sourceTree = "<group>"; };
+		F0A0000BAAAA0001BBBB0006 /* TodaySnapshot.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TodaySnapshot.swift; sourceTree = "<group>"; };
+		F0A0000DAAAA0001BBBB0007 /* RunSessionLogic.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RunSessionLogic.swift; sourceTree = "<group>"; };
+		F0A0000FAAAA0001BBBB0008 /* NotificationScheduler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationScheduler.swift; sourceTree = "<group>"; };
+		F0A00011AAAA0001BBBB0009 /* RunSessionController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RunSessionController.swift; sourceTree = "<group>"; };
+		F0A00013AAAA0001BBBB000A /* HabitCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HabitCoordinator.swift; sourceTree = "<group>"; };
+		F0A00015AAAA0001BBBB000B /* TodayView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TodayView.swift; sourceTree = "<group>"; };
+		F0A00017AAAA0001BBBB000C /* RunSessionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RunSessionView.swift; sourceTree = "<group>"; };
+		F1T00001AAAA0002BBBB0000 /* RunWithBobbyTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = RunWithBobbyTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		F1T00002AAAA0002BBBB0001 /* ToolRouterIntegrationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ToolRouterIntegrationTests.swift; sourceTree = "<group>"; };
+		F1T00004AAAA0002BBBB0002 /* AdherenceIntegrationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AdherenceIntegrationTests.swift; sourceTree = "<group>"; };
+		F1T00006AAAA0002BBBB0003 /* ReadinessNotificationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReadinessNotificationTests.swift; sourceTree = "<group>"; };
+		F1T00008AAAA0002BBBB0004 /* TodayPresenterTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TodayPresenterTests.swift; sourceTree = "<group>"; };
+		F1T0000AAAAA0002BBBB0005 /* RunSessionLogicTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RunSessionLogicTests.swift; sourceTree = "<group>"; };
+		F1T0000CAAAA0002BBBB0006 /* TodaySnapshotTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TodaySnapshotTests.swift; sourceTree = "<group>"; };
+		F1T0000EAAAA0002BBBB0007 /* HabitFixtures.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HabitFixtures.swift; sourceTree = "<group>"; };
+		F2W00001AAAA0003BBBB0001 /* BobbyTodayWidget.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = BobbyTodayWidget.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		F2W00002AAAA0003BBBB0001 /* BobbyTodayWidget.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BobbyTodayWidget.swift; sourceTree = "<group>"; };
+		F2W00006AAAA0003BBBB0009 /* BobbyTodayWidget.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = BobbyTodayWidget.entitlements; sourceTree = "<group>"; };
+		F2W00015AAAA0003BBBB000A /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		F2W0000EAAAA0003BBBB0004 /* WidgetKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WidgetKit.framework; path = System/Library/Frameworks/WidgetKit.framework; sourceTree = SDKROOT; };
+		F3A00001AAAA0004BBBB0001 /* BobbyWatch.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = BobbyWatch.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		F3A00002AAAA0004BBBB0001 /* BobbyWatchApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BobbyWatchApp.swift; sourceTree = "<group>"; };
+		F3A00006AAAA0004BBBB0008 /* BobbyWatch.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = BobbyWatch.entitlements; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -72,6 +177,28 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		F1T00012AAAA0002BBBB0009 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		F2W00009AAAA0003BBBB000B /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				F2W0000FAAAA0003BBBB0004 /* WidgetKit.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		F3A00009AAAA0004BBBB0009 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
@@ -79,6 +206,10 @@
 			isa = PBXGroup;
 			children = (
 				3D92FB282C8E4B2A00123456 /* RunWithBobby */,
+				F1T00019AAAA0002BBBB000A /* RunWithBobbyTests */,
+				F2W00100AAAA0003BBBB000C /* BobbyTodayWidget */,
+				F3A00100AAAA0004BBBB000A /* BobbyWatch */,
+				F2W00101AAAA0003BBBB000D /* Frameworks */,
 				3D92FB272C8E4B2A00123456 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -87,6 +218,9 @@
 			isa = PBXGroup;
 			children = (
 				3D92FB262C8E4B2A00123456 /* RunWithBobby.app */,
+				F1T00001AAAA0002BBBB0000 /* RunWithBobbyTests.xctest */,
+				F2W00001AAAA0003BBBB0001 /* BobbyTodayWidget.appex */,
+				F3A00001AAAA0004BBBB0001 /* BobbyWatch.app */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -99,6 +233,8 @@
 				3D92FB292C8E4B2A00123456 /* RunWithBobbyApp.swift */,
 				3D92FB2B2C8E4B2A00123456 /* ContentView.swift */,
 				3D92FB372C8E4B5600123456 /* ChatView.swift */,
+				F0A00015AAAA0001BBBB000B /* TodayView.swift */,
+				F0A00017AAAA0001BBBB000C /* RunSessionView.swift */,
 				3D92FB3B2C8E4B7800123456 /* Models.swift */,
 				3D92FB3D2C8E4B8900123456 /* BobbyAI.swift */,
 				3D92FB392C8E4B6700123456 /* TrainingPlanManager.swift */,
@@ -106,6 +242,7 @@
 				DD0000020000000CAABBCCDD /* ConversationHistoryView.swift */,
 				DD0000020000000DAABBCCDD /* NutritionPlanView.swift */,
 				3D92FB3F2C8E4B9A00123456 /* Theme.swift */,
+				F0A00100AAAA0001BBBB000D /* Habit */,
 				AA00000300000001AABBCCDD /* LLM */,
 				AA00000300000002AABBCCDD /* Settings */,
 				3D92FB2D2C8E4B2B00123456 /* Assets.xcassets */,
@@ -146,6 +283,64 @@
 			path = Settings;
 			sourceTree = "<group>";
 		};
+		F0A00100AAAA0001BBBB000D /* Habit */ = {
+			isa = PBXGroup;
+			children = (
+				F0A00001AAAA0001BBBB0001 /* HabitModels.swift */,
+				F0A00003AAAA0001BBBB0002 /* AdherenceEngine.swift */,
+				F0A00005AAAA0001BBBB0003 /* ReadinessEngine.swift */,
+				F0A00007AAAA0001BBBB0004 /* NotificationPlanning.swift */,
+				F0A00009AAAA0001BBBB0005 /* TodayPresenter.swift */,
+				F0A0000BAAAA0001BBBB0006 /* TodaySnapshot.swift */,
+				F0A0000DAAAA0001BBBB0007 /* RunSessionLogic.swift */,
+				F0A0000FAAAA0001BBBB0008 /* NotificationScheduler.swift */,
+				F0A00011AAAA0001BBBB0009 /* RunSessionController.swift */,
+				F0A00013AAAA0001BBBB000A /* HabitCoordinator.swift */,
+			);
+			path = Habit;
+			sourceTree = "<group>";
+		};
+		F1T00019AAAA0002BBBB000A /* RunWithBobbyTests */ = {
+			isa = PBXGroup;
+			children = (
+				F1T0000EAAAA0002BBBB0007 /* HabitFixtures.swift */,
+				F1T00002AAAA0002BBBB0001 /* ToolRouterIntegrationTests.swift */,
+				F1T00004AAAA0002BBBB0002 /* AdherenceIntegrationTests.swift */,
+				F1T00006AAAA0002BBBB0003 /* ReadinessNotificationTests.swift */,
+				F1T00008AAAA0002BBBB0004 /* TodayPresenterTests.swift */,
+				F1T0000AAAAA0002BBBB0005 /* RunSessionLogicTests.swift */,
+				F1T0000CAAAA0002BBBB0006 /* TodaySnapshotTests.swift */,
+			);
+			path = RunWithBobbyTests;
+			sourceTree = "<group>";
+		};
+		F2W00100AAAA0003BBBB000C /* BobbyTodayWidget */ = {
+			isa = PBXGroup;
+			children = (
+				F2W00002AAAA0003BBBB0001 /* BobbyTodayWidget.swift */,
+				F2W00006AAAA0003BBBB0009 /* BobbyTodayWidget.entitlements */,
+				F2W00015AAAA0003BBBB000A /* Info.plist */,
+			);
+			path = BobbyTodayWidget;
+			sourceTree = "<group>";
+		};
+		F2W00101AAAA0003BBBB000D /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				F2W0000EAAAA0003BBBB0004 /* WidgetKit.framework */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		F3A00100AAAA0004BBBB000A /* BobbyWatch */ = {
+			isa = PBXGroup;
+			children = (
+				F3A00002AAAA0004BBBB0001 /* BobbyWatchApp.swift */,
+				F3A00006AAAA0004BBBB0008 /* BobbyWatch.entitlements */,
+			);
+			path = BobbyWatch;
+			sourceTree = "<group>";
+		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
@@ -156,10 +351,12 @@
 				3D92FB222C8E4B2A00123456 /* Sources */,
 				3D92FB232C8E4B2A00123456 /* Frameworks */,
 				3D92FB242C8E4B2A00123456 /* Resources */,
+				F2W00014AAAA0003BBBB0008 /* Embed Foundation Extensions */,
 			);
 			buildRules = (
 			);
 			dependencies = (
+				F2W00016AAAA0003BBBB000E /* PBXTargetDependency */,
 			);
 			name = RunWithBobby;
 			packageProductDependencies = (
@@ -169,6 +366,58 @@
 			productName = RunWithBobby;
 			productReference = 3D92FB262C8E4B2A00123456 /* RunWithBobby.app */;
 			productType = "com.apple.product-type.application";
+		};
+		F1T00010AAAA0002BBBB000B /* RunWithBobbyTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = F1T00016AAAA0002BBBB000C /* Build configuration list for PBXNativeTarget "RunWithBobbyTests" */;
+			buildPhases = (
+				F1T00011AAAA0002BBBB000D /* Sources */,
+				F1T00012AAAA0002BBBB0009 /* Frameworks */,
+				F1T00013AAAA0002BBBB000E /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				F1T00018AAAA0002BBBB000F /* PBXTargetDependency */,
+			);
+			name = RunWithBobbyTests;
+			productName = RunWithBobbyTests;
+			productReference = F1T00001AAAA0002BBBB0000 /* RunWithBobbyTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+		F2W00007AAAA0003BBBB0007 /* BobbyTodayWidget */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = F2W0000DAAAA0003BBBB000F /* Build configuration list for PBXNativeTarget "BobbyTodayWidget" */;
+			buildPhases = (
+				F2W00008AAAA0003BBBB0010 /* Sources */,
+				F2W00009AAAA0003BBBB000B /* Frameworks */,
+				F2W0000AAAAA0003BBBB0011 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = BobbyTodayWidget;
+			productName = BobbyTodayWidget;
+			productReference = F2W00001AAAA0003BBBB0001 /* BobbyTodayWidget.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
+		F3A00007AAAA0004BBBB0006 /* BobbyWatch */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = F3A0000DAAAA0004BBBB000C /* Build configuration list for PBXNativeTarget "BobbyWatch" */;
+			buildPhases = (
+				F3A00008AAAA0004BBBB000D /* Sources */,
+				F3A00009AAAA0004BBBB0009 /* Frameworks */,
+				F3A0000AAAAA0004BBBB000E /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = BobbyWatch;
+			productName = BobbyWatch;
+			productType = "com.apple.product-type.application";
+			productReference = F3A00001AAAA0004BBBB0001 /* BobbyWatch.app */;
 		};
 /* End PBXNativeTarget section */
 
@@ -181,6 +430,16 @@
 				LastUpgradeCheck = 1540;
 				TargetAttributes = {
 					3D92FB252C8E4B2A00123456 = {
+						CreatedOnToolsVersion = 15.4;
+					};
+					F1T00010AAAA0002BBBB000B = {
+						CreatedOnToolsVersion = 15.4;
+						TestTargetID = 3D92FB252C8E4B2A00123456;
+					};
+					F2W00007AAAA0003BBBB0007 = {
+						CreatedOnToolsVersion = 15.4;
+					};
+					F3A00007AAAA0004BBBB0006 = {
 						CreatedOnToolsVersion = 15.4;
 					};
 				};
@@ -203,6 +462,9 @@
 			projectRoot = "";
 			targets = (
 				3D92FB252C8E4B2A00123456 /* RunWithBobby */,
+				F1T00010AAAA0002BBBB000B /* RunWithBobbyTests */,
+				F2W00007AAAA0003BBBB0007 /* BobbyTodayWidget */,
+				F3A00007AAAA0004BBBB0006 /* BobbyWatch */,
 			);
 		};
 /* End PBXProject section */
@@ -215,6 +477,27 @@
 				EE15000100000001AABBCCDD /* PrivacyInfo.xcprivacy in Resources */,
 				3D92FB312C8E4B2B00123456 /* Preview Assets.xcassets in Resources */,
 				3D92FB2E2C8E4B2B00123456 /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		F1T00013AAAA0002BBBB000E /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		F2W0000AAAAA0003BBBB0011 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		F3A0000AAAAA0004BBBB000E /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -245,10 +528,74 @@
 				DD0000010000000BAABBCCDD /* NutritionPlanManager.swift in Sources */,
 				DD0000010000000CAABBCCDD /* ConversationHistoryView.swift in Sources */,
 				DD0000010000000DAABBCCDD /* NutritionPlanView.swift in Sources */,
+				F0A00002AAAA0001BBBB0001 /* HabitModels.swift in Sources */,
+				F0A00004AAAA0001BBBB0002 /* AdherenceEngine.swift in Sources */,
+				F0A00006AAAA0001BBBB0003 /* ReadinessEngine.swift in Sources */,
+				F0A00008AAAA0001BBBB0004 /* NotificationPlanning.swift in Sources */,
+				F0A0000AAAAA0001BBBB0005 /* TodayPresenter.swift in Sources */,
+				F0A0000CAAAA0001BBBB0006 /* TodaySnapshot.swift in Sources */,
+				F0A0000EAAAA0001BBBB0007 /* RunSessionLogic.swift in Sources */,
+				F0A00010AAAA0001BBBB0008 /* NotificationScheduler.swift in Sources */,
+				F0A00012AAAA0001BBBB0009 /* RunSessionController.swift in Sources */,
+				F0A00014AAAA0001BBBB000A /* HabitCoordinator.swift in Sources */,
+				F0A00016AAAA0001BBBB000B /* TodayView.swift in Sources */,
+				F0A00018AAAA0001BBBB000C /* RunSessionView.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		F1T00011AAAA0002BBBB000D /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				F1T0000FAAAA0002BBBB0007 /* HabitFixtures.swift in Sources */,
+				F1T00003AAAA0002BBBB0001 /* ToolRouterIntegrationTests.swift in Sources */,
+				F1T00005AAAA0002BBBB0002 /* AdherenceIntegrationTests.swift in Sources */,
+				F1T00007AAAA0002BBBB0003 /* ReadinessNotificationTests.swift in Sources */,
+				F1T00009AAAA0002BBBB0004 /* TodayPresenterTests.swift in Sources */,
+				F1T0000BAAAA0002BBBB0005 /* RunSessionLogicTests.swift in Sources */,
+				F1T0000DAAAA0002BBBB0006 /* TodaySnapshotTests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		F2W00008AAAA0003BBBB0010 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				F2W00003AAAA0003BBBB0001 /* BobbyTodayWidget.swift in Sources */,
+				F2W00004AAAA0003BBBB0002 /* HabitModels.swift in Sources */,
+				F2W00005AAAA0003BBBB0003 /* TodaySnapshot.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		F3A00008AAAA0004BBBB000D /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				F3A00003AAAA0004BBBB0001 /* BobbyWatchApp.swift in Sources */,
+				F3A00004AAAA0004BBBB0002 /* HabitModels.swift in Sources */,
+				F3A00005AAAA0004BBBB0003 /* TodaySnapshot.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		F1T00018AAAA0002BBBB000F /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 3D92FB252C8E4B2A00123456 /* RunWithBobby */;
+			targetProxy = F1T00017AAAA0002BBBB0008 /* PBXContainerItemProxy */;
+		};
+		F2W00016AAAA0003BBBB000E /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = F2W00007AAAA0003BBBB0007 /* BobbyTodayWidget */;
+			targetProxy = F2W00013AAAA0003BBBB0006 /* PBXContainerItemProxy */;
+		};
+		F3A00011AAAA0004BBBB000B /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = F3A00007AAAA0004BBBB0006 /* BobbyWatch */;
+			targetProxy = F3A0000FAAAA0004BBBB0005 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
 		3D92FB322C8E4B2B00123456 /* Debug */ = {
@@ -382,8 +729,9 @@
 				DEVELOPMENT_TEAM = 4YW6S35MTZ;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_KEY_NSHealthShareUsageDescription = "Run with Bobby legge in sola lettura dati di salute e allenamento per personalizzare coaching, recupero e piani. Puoi revocare l'accesso in Impostazioni > Salute.";
-				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "Run with Bobby non salva dati in Salute. L'app legge in sola lettura dati di salute e allenamento per personalizzare coaching, recupero e piani.";
+				INFOPLIST_KEY_NSHealthShareUsageDescription = "Run with Bobby legge dati di salute e allenamento per personalizzare coaching, recupero e piani. Puoi revocare l'accesso in Impostazioni > Salute.";
+				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "Run with Bobby puo' salvare un allenamento di corsa in Salute quando registri una seduta. Puoi revocare l'accesso in Impostazioni > Salute.";
+				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "Run with Bobby usa la posizione solo durante una sessione di corsa per calcolare distanza e percorso.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -415,8 +763,9 @@
 				DEVELOPMENT_TEAM = 4YW6S35MTZ;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_KEY_NSHealthShareUsageDescription = "Run with Bobby legge in sola lettura dati di salute e allenamento per personalizzare coaching, recupero e piani. Puoi revocare l'accesso in Impostazioni > Salute.";
-				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "Run with Bobby non salva dati in Salute. L'app legge in sola lettura dati di salute e allenamento per personalizzare coaching, recupero e piani.";
+				INFOPLIST_KEY_NSHealthShareUsageDescription = "Run with Bobby legge dati di salute e allenamento per personalizzare coaching, recupero e piani. Puoi revocare l'accesso in Impostazioni > Salute.";
+				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "Run with Bobby puo' salvare un allenamento di corsa in Salute quando registri una seduta. Puoi revocare l'accesso in Impostazioni > Salute.";
+				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "Run with Bobby usa la posizione solo durante una sessione di corsa per calcolare distanza e percorso.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -433,6 +782,152 @@
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.9;
 				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+		F1T00014AAAA0002BBBB0010 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 4YW6S35MTZ;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.runwithbobby.app.tests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.9;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/RunWithBobby.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/RunWithBobby";
+			};
+			name = Debug;
+		};
+		F1T00015AAAA0002BBBB0011 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 4YW6S35MTZ;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.runwithbobby.app.tests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.9;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/RunWithBobby.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/RunWithBobby";
+			};
+			name = Release;
+		};
+		F2W0000BAAAA0003BBBB0012 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = BobbyTodayWidget/BobbyTodayWidget.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 4;
+				DEVELOPMENT_TEAM = 4YW6S35MTZ;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = BobbyTodayWidget/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = Oggi;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.5.2;
+				PRODUCT_BUNDLE_IDENTIFIER = com.runwithbobby.app.BobbyTodayWidget;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.9;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		F2W0000CAAAA0003BBBB0013 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = BobbyTodayWidget/BobbyTodayWidget.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 4;
+				DEVELOPMENT_TEAM = 4YW6S35MTZ;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = BobbyTodayWidget/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = Oggi;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.5.2;
+				PRODUCT_BUNDLE_IDENTIFIER = com.runwithbobby.app.BobbyTodayWidget;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.9;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+		F3A0000BAAAA0004BBBB000F /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = BobbyWatch/BobbyWatch.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 4;
+				DEVELOPMENT_TEAM = 4YW6S35MTZ;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = Bobby;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
+				INFOPLIST_KEY_WKCompanionAppBundleIdentifier = com.runwithbobby.app;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.5.2;
+				PRODUCT_BUNDLE_IDENTIFIER = com.runwithbobby.app.watchkitapp;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = watchos;
+				SKIP_INSTALL = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.9;
+				TARGETED_DEVICE_FAMILY = 4;
+				WATCHOS_DEPLOYMENT_TARGET = 10.0;
+			};
+			name = Debug;
+		};
+		F3A0000CAAAA0004BBBB0010 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = BobbyWatch/BobbyWatch.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 4;
+				DEVELOPMENT_TEAM = 4YW6S35MTZ;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = Bobby;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
+				INFOPLIST_KEY_WKCompanionAppBundleIdentifier = com.runwithbobby.app;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.5.2;
+				PRODUCT_BUNDLE_IDENTIFIER = com.runwithbobby.app.watchkitapp;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = watchos;
+				SKIP_INSTALL = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.9;
+				TARGETED_DEVICE_FAMILY = 4;
+				WATCHOS_DEPLOYMENT_TARGET = 10.0;
 			};
 			name = Release;
 		};
@@ -453,6 +948,33 @@
 			buildConfigurations = (
 				3D92FB352C8E4B2B00123456 /* Debug */,
 				3D92FB362C8E4B2B00123456 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		F1T00016AAAA0002BBBB000C /* Build configuration list for PBXNativeTarget "RunWithBobbyTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				F1T00014AAAA0002BBBB0010 /* Debug */,
+				F1T00015AAAA0002BBBB0011 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		F2W0000DAAAA0003BBBB000F /* Build configuration list for PBXNativeTarget "BobbyTodayWidget" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				F2W0000BAAAA0003BBBB0012 /* Debug */,
+				F2W0000CAAAA0003BBBB0013 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		F3A0000DAAAA0004BBBB000C /* Build configuration list for PBXNativeTarget "BobbyWatch" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				F3A0000BAAAA0004BBBB000F /* Debug */,
+				F3A0000CAAAA0004BBBB0010 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

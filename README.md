@@ -15,6 +15,8 @@ Progetto open source di [Francesco Saverio Mazzi](https://frasma.org) — [franc
 
 - **Chat conversazionale** con Bobby, il tuo coach AI specializzato nella corsa
 - **Piani di allenamento personalizzati** basati sui tuoi obiettivi e livello
+- **Oggi**: seduta del giorno, briefing di recupero e aderenza settimanale
+- **HealthKit** per recupero e matching delle corse (lettura; scrittura workout solo se registri una seduta)
 - **AI locale con MLX** e provider cloud opzionali con API key utente
 - **Archivio piani** per salvare e ottimizzare i tuoi allenamenti
 - **Interfaccia moderna** con SwiftUI e supporto Dark Mode
@@ -60,7 +62,7 @@ Ecco la versione aggiornata..."
 
 ## 🛠 Requisiti Tecnici
 
-- **iOS 16.0+**
+- **iOS 17.0+**
 - **iPhone** (ottimizzato per MLX)
 - **Spazio**: ~500MB per l'app + modelli AI
 - **RAM**: Minimo 3GB consigliati per prestazioni ottimali
@@ -144,15 +146,8 @@ Supporto: https://github.com/bobby-lagotto/run-with-bobby/issues
 
 Run with Bobby è software libero (GPL-3.0). Pull request e issue sono benvenuti su GitHub.
 
-### Possibili Miglioramenti
-- [ ] Integrazione HealthKit per dati reali di corsa
-- [ ] Notifiche promemoria allenamenti
-- [ ] Widget iOS per piano settimanale
-- [ ] Apple Watch companion app
-- [ ] Grafici avanzati prestazioni
-- [ ] Modelli MLX personalizzati pre-addestrati
-- [ ] Supporto per piani multi-settimana
-- [ ] Integrazione GPS per tracking corse
+La roadmap prodotto (abitudine quotidiana, test, widget, Watch) è in [`ROADMAP.md`](ROADMAP.md).
+La checklist modelli MLX on-device resta in [`DEVELOPMENT.md`](DEVELOPMENT.md).
 
 ## 🐛 Troubleshooting
 

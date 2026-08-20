@@ -35,12 +35,16 @@ class HealthKitManager: ObservableObject {
         return types
     }()
 
+    private let shareTypes: Set<HKSampleType> = {
+        [HKObjectType.workoutType()]
+    }()
+
     // MARK: - Authorization
 
     func requestAuthorization() async -> Bool {
         guard isAvailable else { return false }
         do {
-            try await healthStore.requestAuthorization(toShare: [], read: readTypes)
+            try await healthStore.requestAuthorization(toShare: shareTypes, read: readTypes)
             await MainActor.run { self.isAuthorized = true }
             return true
         } catch {
@@ -127,6 +131,44 @@ class HealthKitManager: ObservableObject {
         return summary
     }
 
+    func fetchLoggedWorkouts(days: Int = 7) async -> [LoggedWorkout] {
+        guard isAvailable else { return [] }
+        let now = Date()
+        guard let startDate = Calendar.current.date(byAdding: .day, value: -days, to: now) else { return [] }
+        return await fetchWorkoutRecords(limit: 20, start: startDate, end: now)
+    }
+
+    func fetchHealthSignals(days: Int = 7) async -> HealthSignals {
+        let summary = await fetchHealthSummary(days: days)
+        let sleepHours = summary["sonno_media_ore"] as? Double
+        let hrv = (summary["variabilita_cardiaca_hrv_ms"] as? Int).map(Double.init)
+        let resting = (summary["frequenza_cardiaca_riposo_bpm"] as? Int).map(Double.init)
+        return HealthSignals(sleepHours: sleepHours, hrvMs: hrv, restingHeartRate: resting)
+    }
+
+    func saveRunningWorkout(distanceKm: Double, durationMinutes: Int, endedAt: Date = Date()) async {
+        guard isAvailable, distanceKm > 0 else { return }
+        if !isAuthorized {
+            _ = await requestAuthorization()
+        }
+        let duration = TimeInterval(max(1, durationMinutes) * 60)
+        let start = endedAt.addingTimeInterval(-duration)
+        let workout = HKWorkout(
+            activityType: .running,
+            start: start,
+            end: endedAt,
+            duration: duration,
+            totalEnergyBurned: nil,
+            totalDistance: HKQuantity(unit: .meterUnit(with: .kilo), doubleValue: distanceKm),
+            metadata: [HKMetadataKeyIndoorWorkout: false]
+        )
+        do {
+            try await healthStore.save(workout)
+        } catch {
+            PrivacyLog.storageError("Save HealthKit workout", error: error)
+        }
+    }
+
     // MARK: - Query Helpers
 
     private func fetchStatistic(
@@ -184,7 +226,7 @@ class HealthKitManager: ObservableObject {
 
     // MARK: - Workouts
 
-    private func fetchRecentWorkouts(limit: Int = 10, start: Date, end: Date) async -> [[String: Any]] {
+    private func fetchWorkoutRecords(limit: Int = 10, start: Date, end: Date) async -> [LoggedWorkout] {
         let predicate = HKQuery.predicateForSamples(withStart: start, end: end, options: .strictStartDate)
         let sortDescriptor = NSSortDescriptor(key: HKSampleSortIdentifierStartDate, ascending: false)
 
@@ -199,27 +241,34 @@ class HealthKitManager: ObservableObject {
                     continuation.resume(returning: [])
                     return
                 }
-
-                let dateFormatter = DateFormatter()
-                dateFormatter.dateStyle = .medium
-                dateFormatter.timeStyle = .short
-                dateFormatter.locale = Locale(identifier: "it_IT")
-
-                let results = workouts.map { workout -> [String: Any] in
-                    var dict: [String: Any] = [
-                        "tipo": workout.workoutActivityType.displayName,
-                        "durata_minuti": Int(workout.duration / 60),
-                        "data": dateFormatter.string(from: workout.startDate),
-                        "calorie_kcal": Int(workout.totalEnergyBurned?.doubleValue(for: .kilocalorie()) ?? 0)
-                    ]
-                    if let distance = workout.totalDistance?.doubleValue(for: .meterUnit(with: .kilo)) {
-                        dict["distanza_km"] = round(distance * 10) / 10
-                    }
-                    return dict
+                let records = workouts.map { workout in
+                    LoggedWorkout(
+                        startDate: workout.startDate,
+                        distanceKm: workout.totalDistance?.doubleValue(for: .meterUnit(with: .kilo)) ?? 0,
+                        durationMinutes: Int(workout.duration / 60),
+                        activityType: workout.workoutActivityType.displayName
+                    )
                 }
-                continuation.resume(returning: results)
+                continuation.resume(returning: records)
             }
             self.healthStore.execute(query)
+        }
+    }
+
+    private func fetchRecentWorkouts(limit: Int = 10, start: Date, end: Date) async -> [[String: Any]] {
+        let records = await fetchWorkoutRecords(limit: limit, start: start, end: end)
+        let dateFormatter = DateFormatter()
+        dateFormatter.dateStyle = .medium
+        dateFormatter.timeStyle = .short
+        dateFormatter.locale = Locale(identifier: "it_IT")
+
+        return records.map { workout in
+            [
+                "tipo": workout.activityType,
+                "durata_minuti": workout.durationMinutes,
+                "data": dateFormatter.string(from: workout.startDate),
+                "distanza_km": round(workout.distanceKm * 10) / 10
+            ]
         }
     }
 

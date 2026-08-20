@@ -148,34 +148,22 @@ func importUserData(from url: URL) -> Bool {
 - Usare colori semantici (`.primary`, `.secondary`)
 - AccentColor ha varianti per light/dark mode
 
+## Test di integrazione (simulatore)
+
+I test dell'app stanno in `RunWithBobbyTests/` e coprono tool, aderenza, briefing e snapshot. Non lanciano MLX.
+
+```bash
+xcodebuild test \
+  -project RunWithBobby.xcodeproj \
+  -scheme RunWithBobby \
+  -destination 'platform=iOS Simulator,name=iPhone 17'
+```
+
+La roadmap prodotto e il protocollo fase-per-fase sono in [`ROADMAP.md`](ROADMAP.md). Questa sezione MLX on-device resta la checklist modelli.
+
 ## 🧪 Testing Strategy
 
-### Unit Tests
-```swift
-// Test logica core
-- BobbyAI response generation
-- TrainingPlan parsing e validation  
-- RunnerProfile calculations
-- Data persistence round-trip
-```
-
-### UI Tests
-```swift
-// Test flussi utente critici
-- Onboarding primo avvio
-- Creazione piano di allenamento
-- Salvataggio e recupero conversazioni
-- Ottimizzazione piani esistenti
-```
-
-### Performance Tests  
-```swift
-// Test prestazioni MLX
-- Tempo caricamento modello
-- Latenza generazione risposta
-- Memory usage durante inferenza
-- Battery impact measurement
-```
+I test automatici sono quelli in `RunWithBobbyTests`. I test UI e performance MLX restano manuali sul device.
 
 ## 🚀 Deployment
 
@@ -229,27 +217,9 @@ Error: "Swift version mismatch"
 Fix: Imposta SWIFT_VERSION = 5.0 nel progetto
 ```
 
-## 📈 Roadmap Funzionalità
+## Roadmap prodotto
 
-### v1.1 - Health Integration
-- [ ] HealthKit per tracking corse reali
-- [ ] Confronto piano vs prestazioni effettive  
-- [ ] Suggerimenti basati su dati biometrici
-
-### v1.2 - Social Features
-- [ ] Condivisione piani con altri runner
-- [ ] Community di piani pubblici
-- [ ] Sfide e obiettivi condivisi
-
-### v1.3 - Advanced AI
-- [ ] Modelli MLX personalizzati pre-addestrati  
-- [ ] Analisi video tecnica di corsa
-- [ ] Previsione performance e tempi gara
-
-### v2.0 - Ecosystem
-- [ ] Apple Watch companion app
-- [ ] iPad version con grafici avanzati
-- [ ] macOS version per coaching professionale
+Vedi [`ROADMAP.md`](ROADMAP.md). Non duplicare checkbox qui.
 
 ## 🤝 Contributi
 
