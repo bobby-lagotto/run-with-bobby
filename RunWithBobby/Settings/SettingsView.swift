@@ -450,7 +450,7 @@ struct SettingsView: View {
             Label("Modello locale (Qwen)", systemImage: "iphone")
                 .foregroundColor(.bobbyRed)
         } footer: {
-            Text("Tocca un modello per selezionarlo o avviare il download. I Qwen 4-bit sono il default: tool-calling più affidabile per i piani. Puoi tenerne più di uno scaricato.")
+            Text("Tocca un modello per selezionarlo o avviare il download. I Qwen 1.5B+ fanno tool-calling per i piani. Il 0.5B resta per iPhone più vecchi: chat semplice e piani dal motore deterministico. Puoi tenerne più di uno scaricato.")
                 .font(.caption)
         }
     }

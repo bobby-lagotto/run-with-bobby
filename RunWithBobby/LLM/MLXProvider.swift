@@ -63,10 +63,13 @@ class MLXProvider: @MainActor LLMService, ObservableObject {
             var calls: [MLXLMCommon.ToolCall] = []
             for await event in try MLXLMCommon.generate(input: lmInput, parameters: params, context: context) {
                 switch event {
-                case .chunk(let s): text += s
+                case .chunk(let s):
+                    text += s
+                    if GenerationLoopGuard.shouldHideFromStream(text) { break }
                 case .toolCall(let tc): calls.append(tc)
                 case .info: break
                 }
+                if GenerationLoopGuard.shouldHideFromStream(text) { break }
             }
             return (text, calls)
         }
@@ -80,10 +83,7 @@ class MLXProvider: @MainActor LLMService, ObservableObject {
             return try await generate(messages: retryMessages, toolDefinitions: toolDefinitions, retried: true)
         }
 
-        return LLMResponse(
-            text: trimmed,
-            toolCalls: result.calls.map(Self.convert)
-        )
+        return Self.sanitizedResponse(text: trimmed, calls: result.calls)
     }
 
     func generateStream(messages: [LLMMessage], toolDefinitions: [ToolDefinitionSchema]?) -> AsyncThrowingStream<StreamEvent, Error> {
@@ -105,17 +105,19 @@ class MLXProvider: @MainActor LLMService, ObservableObject {
                             switch event {
                             case .chunk(let s):
                                 text += s
-                                continuation.yield(.textDelta(s))
+                                if !GenerationLoopGuard.shouldHideFromStream(s)
+                                    && !GenerationLoopGuard.shouldHideFromStream(text) {
+                                    continuation.yield(.textDelta(s))
+                                }
+                                if GenerationLoopGuard.shouldHideFromStream(text) { break }
                             case .toolCall(let tc):
                                 calls.append(tc)
                             case .info:
                                 break
                             }
+                            if GenerationLoopGuard.shouldHideFromStream(text) { break }
                         }
-                        let response = LLMResponse(
-                            text: text.trimmingCharacters(in: .whitespacesAndNewlines),
-                            toolCalls: calls.map(Self.convert)
-                        )
+                        let response = Self.sanitizedResponse(text: text, calls: calls)
                         continuation.yield(.done(response))
                         continuation.finish()
                     }
@@ -171,11 +173,27 @@ class MLXProvider: @MainActor LLMService, ObservableObject {
     }
 
     /// Keep KV small on-device. 27B also uses 4-bit KV to stay inside the iOS per-app budget.
+    /// Small Qwen models get a tighter token cap; all local models use a repetition penalty
+    /// so structured JSON loops cannot run until the KV window fills.
     private var generateParameters: GenerateParameters {
+        let maxTokens = modelId.contains("0.5B") ? 384 : 768
         if modelId.contains("Bonsai-27B") {
-            return GenerateParameters(maxKVSize: 2048, kvBits: 4, temperature: 0.3)
+            return GenerateParameters(
+                maxTokens: maxTokens,
+                maxKVSize: 2048,
+                kvBits: 4,
+                temperature: 0.3,
+                repetitionPenalty: 1.15,
+                repetitionContextSize: 64
+            )
         }
-        return GenerateParameters(maxKVSize: 2048, temperature: 0.3)
+        return GenerateParameters(
+            maxTokens: maxTokens,
+            maxKVSize: 2048,
+            temperature: 0.3,
+            repetitionPenalty: 1.15,
+            repetitionContextSize: 64
+        )
     }
 
     // MARK: - Helpers
@@ -214,6 +232,14 @@ class MLXProvider: @MainActor LLMService, ObservableObject {
             "type": "function",
             "function": function
         ]
+    }
+
+    private nonisolated static func sanitizedResponse(text: String, calls: [MLXLMCommon.ToolCall]) -> LLMResponse {
+        let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        if calls.isEmpty && GenerationLoopGuard.shouldDiscardAsModelOutput(trimmed) {
+            return LLMResponse(text: "", toolCalls: [])
+        }
+        return LLMResponse(text: trimmed, toolCalls: calls.map(convert))
     }
 
     private nonisolated static func convert(_ tc: MLXLMCommon.ToolCall) -> ToolCall {

@@ -16,6 +16,7 @@ struct ChatView: View {
     @State private var showingSettings = false
     @State private var showingConversationHistory = false
     @State private var showingNutritionPlan = false
+    @State private var showingToday = false
     @State private var showingDeleteDataConfirm = false
     @State private var showingCloudHealthConfirm = false
     @State private var pendingCloudHealthMessage: String?
@@ -63,6 +64,11 @@ struct ChatView: View {
                         sendQuickMessage("Vorrei modificare il mio piano alimentare")
                     }
                 })
+            }
+            .sheet(isPresented: $showingToday) {
+                NavigationView {
+                    TodayView(onTalkToBobby: { showingToday = false })
+                }
             }
             .alert("Cancellare i dati locali?", isPresented: $showingDeleteDataConfirm) {
                 Button("Annulla", role: .cancel) {}
@@ -193,6 +199,7 @@ struct ChatView: View {
                     .padding(.vertical, 6)
                     .background(Color.bobbyRed.opacity(0.08))
                     .clipShape(Capsule())
+                    .onTapGesture { showingToday = true }
                 }
 
                 if nutritionManager.currentNutritionPlan != nil {
@@ -360,6 +367,7 @@ struct ChatView: View {
         .padding(.vertical, 8)
         .background(BobbyTheme.cardBackground(for: colorScheme))
         .clipShape(RoundedRectangle(cornerRadius: 12))
+        .onTapGesture { showingToday = true }
     }
 
     // MARK: - Helper Methods

@@ -138,6 +138,9 @@ class ToolRouter {
     private var lastCalculatedPlan: [DayTraining]?
     private var lastCalculatedNutritionPlan: NutritionPlan?
 
+    var hasPendingTrainingPlan: Bool { lastCalculatedPlan != nil }
+    var hasPendingNutritionPlan: Bool { lastCalculatedNutritionPlan != nil }
+
     // MARK: - Execute Tool Call
 
     func execute(

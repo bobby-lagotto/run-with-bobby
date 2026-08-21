@@ -23,6 +23,7 @@ struct LocalModelOption: Identifiable, Hashable {
     let minRamGB: Int
     let family: LocalModelFamily
     let requirementTextOverride: String?
+    let supportsNativeToolCalling: Bool
 
     init(
         id: String,
@@ -32,7 +33,8 @@ struct LocalModelOption: Identifiable, Hashable {
         diskSizeMB: Int,
         minRamGB: Int,
         family: LocalModelFamily,
-        requirementTextOverride: String? = nil
+        requirementTextOverride: String? = nil,
+        supportsNativeToolCalling: Bool = true
     ) {
         self.id = id
         self.tier = tier
@@ -42,6 +44,7 @@ struct LocalModelOption: Identifiable, Hashable {
         self.minRamGB = minRamGB
         self.family = family
         self.requirementTextOverride = requirementTextOverride
+        self.supportsNativeToolCalling = supportsNativeToolCalling
     }
 
     var formattedSize: String {
@@ -72,10 +75,11 @@ enum LocalModelCatalog {
             id: "mlx-community/Qwen2.5-0.5B-Instruct-4bit",
             tier: "Compatto",
             shortName: "Qwen 2.5 0.5B",
-            description: "Ultra-leggero. OK per chat base ma poco affidabile per generare piani di allenamento. Solo come fallback per iPhone più vecchi.",
+            description: "Ultra-leggero. Chat semplice; i piani usano il motore deterministico, non il tool-calling del modello. Fallback per iPhone più vecchi.",
             diskSizeMB: 400,
             minRamGB: 4,
-            family: .qwen4bit
+            family: .qwen4bit,
+            supportsNativeToolCalling: false
         ),
         LocalModelOption(
             id: "mlx-community/Qwen2.5-1.5B-Instruct-4bit",

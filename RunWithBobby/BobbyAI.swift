@@ -16,6 +16,7 @@ class BobbyAI: ObservableObject {
 
     private let toolRouter = ToolRouter()
     private let offlineFallback = OfflineCoachFallback()
+    private lazy var compactPlanner = CompactCoachPlanner(toolRouter: toolRouter)
     private let maxToolIterations = 3
 
     init() {
@@ -187,6 +188,27 @@ class BobbyAI: ObservableObject {
 
         // Load local model into memory on-demand
         let usingLocalModel = provider is MLXProvider
+        let selectedLocalModel = usingLocalModel ? LocalModelCatalog.find(mlxProvider.modelId) : nil
+        let supportsNativeTools = !usingLocalModel || (selectedLocalModel?.supportsNativeToolCalling ?? true)
+        let toolDefinitions: [ToolDefinitionSchema]? = supportsNativeTools ? ToolRouter.toolDefinitions : nil
+
+        if usingLocalModel && !supportsNativeTools {
+            if let deterministic = await compactPlanner.respond(
+                to: userMessage,
+                userProfile: userProfile,
+                planManager: planManager,
+                nutritionManager: nutritionManager
+            ) {
+                return deterministic
+            }
+            return compactModelFallback(
+                userMessage: userMessage,
+                userProfile: userProfile,
+                planManager: planManager,
+                nutritionManager: nutritionManager
+            )
+        }
+
         if usingLocalModel && !mlxProvider.isAvailable {
             await mlxProvider.loadIfAvailable()
             guard mlxProvider.isAvailable else {
@@ -217,32 +239,39 @@ class BobbyAI: ObservableObject {
                 streamingText = ""
 
                 var fullResponse: LLMResponse?
-                for try await event in provider.generateStream(messages: messages, toolDefinitions: ToolRouter.toolDefinitions) {
+                for try await event in provider.generateStream(messages: messages, toolDefinitions: toolDefinitions) {
                     switch event {
                     case .textDelta(let delta):
-                        streamingText += delta
+                        appendVisibleDelta(delta)
                     case .done(let response):
                         fullResponse = response
                     }
                 }
 
                 guard let response = fullResponse else {
-                    if !streamingText.isEmpty {
-                        return streamingText
+                    if let visible = visibleStreamingText() {
+                        return visible
                     }
-                    activeProviderName = "Locale fallback gratuito"
-                    return offlineFallback.response(
-                        to: userMessage,
+                    return fallbackDidNotAnswer(
+                        userMessage: userMessage,
                         userProfile: userProfile,
-                        activePlan: planManager.currentActivePlan,
-                        nutritionPlan: nutritionManager?.currentNutritionPlan,
-                        reason: .providerDidNotAnswer
+                        planManager: planManager,
+                        nutritionManager: nutritionManager
                     )
                 }
 
                 // If no tool calls, return the text response
                 if response.toolCalls.isEmpty {
-                    return response.text.trimmingCharacters(in: .whitespacesAndNewlines)
+                    let text = response.text.trimmingCharacters(in: .whitespacesAndNewlines)
+                    if GenerationLoopGuard.shouldDiscardAsModelOutput(text) {
+                        return fallbackDidNotAnswer(
+                            userMessage: userMessage,
+                            userProfile: userProfile,
+                            planManager: planManager,
+                            nutritionManager: nutritionManager
+                        )
+                    }
+                    return text
                 }
 
                 // Tool calls detected — clear streaming text during tool processing
@@ -299,15 +328,25 @@ class BobbyAI: ObservableObject {
                     let fallbackProviders = candidates.compactMap { $0 }.filter { $0.isAvailable }
                     for fallback in fallbackProviders {
                         do {
+                            var discarded = false
                             for try await event in fallback.generateStream(messages: messages, toolDefinitions: ToolRouter.toolDefinitions) {
                                 switch event {
                                 case .textDelta(let delta):
-                                    streamingText += delta
+                                    appendVisibleDelta(delta)
                                 case .done(let response):
                                     if response.toolCalls.isEmpty {
-                                        return response.text.trimmingCharacters(in: .whitespacesAndNewlines)
+                                        let text = response.text.trimmingCharacters(in: .whitespacesAndNewlines)
+                                        if GenerationLoopGuard.shouldDiscardAsModelOutput(text) {
+                                            discarded = true
+                                        } else {
+                                            return text
+                                        }
                                     }
                                 }
+                            }
+                            if discarded {
+                                streamingText = ""
+                                continue
                             }
                         } catch {
                             streamingText = ""
@@ -391,6 +430,52 @@ class BobbyAI: ObservableObject {
         messages.append(LLMMessage(role: .user, content: userMessage))
 
         return messages
+    }
+
+    private func appendVisibleDelta(_ delta: String) {
+        let candidate = streamingText + delta
+        if GenerationLoopGuard.shouldHideFromStream(delta) || GenerationLoopGuard.shouldHideFromStream(candidate) {
+            streamingText = ""
+            return
+        }
+        streamingText = candidate
+    }
+
+    private func visibleStreamingText() -> String? {
+        let text = streamingText.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !GenerationLoopGuard.shouldDiscardAsModelOutput(text) else { return nil }
+        return text
+    }
+
+    private func compactModelFallback(
+        userMessage: String,
+        userProfile: RunnerProfile,
+        planManager: TrainingPlanManager,
+        nutritionManager: NutritionPlanManager?
+    ) -> String {
+        return offlineFallback.response(
+            to: userMessage,
+            userProfile: userProfile,
+            activePlan: planManager.currentActivePlan,
+            nutritionPlan: nutritionManager?.currentNutritionPlan,
+            reason: .compactModel
+        )
+    }
+
+    private func fallbackDidNotAnswer(
+        userMessage: String,
+        userProfile: RunnerProfile,
+        planManager: TrainingPlanManager,
+        nutritionManager: NutritionPlanManager?
+    ) -> String {
+        activeProviderName = "Locale fallback gratuito"
+        return offlineFallback.response(
+            to: userMessage,
+            userProfile: userProfile,
+            activePlan: planManager.currentActivePlan,
+            nutritionPlan: nutritionManager?.currentNutritionPlan,
+            reason: .providerDidNotAnswer
+        )
     }
 
     // MARK: - Text Plan Extraction (fallback parser for saving plans from LLM text output)
@@ -495,6 +580,7 @@ private struct OfflineCoachFallback {
         case localModelUnavailable
         case providerDidNotAnswer
         case providerError
+        case compactModel
 
         var intro: String {
             switch self {
@@ -506,6 +592,8 @@ private struct OfflineCoachFallback {
                 return "Modalità gratuita locale fallback: il provider selezionato non ha completato la risposta."
             case .providerError:
                 return "Modalità gratuita locale fallback: il provider selezionato ha avuto un errore, quindi resto sul dispositivo."
+            case .compactModel:
+                return "Questo modello è troppo piccolo per la chat libera: resto sul coaching deterministico sul dispositivo."
             }
         }
     }

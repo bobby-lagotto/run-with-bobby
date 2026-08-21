@@ -7,6 +7,7 @@ struct TodayView: View {
     @EnvironmentObject var appState: AppState
     @Environment(\.colorScheme) var colorScheme
 
+    @Environment(\.dismiss) private var dismiss
     @State private var showingRun = false
     var onTalkToBobby: () -> Void = {}
 
@@ -79,6 +80,12 @@ struct TodayView: View {
         }
         .background(BobbyTheme.background(for: colorScheme).ignoresSafeArea())
         .navigationTitle("Oggi")
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItem(placement: .cancellationAction) {
+                Button("Chiudi") { dismiss() }
+            }
+        }
         .task { await refreshFromHealth() }
         .sheet(isPresented: $showingRun) {
             RunSessionView()

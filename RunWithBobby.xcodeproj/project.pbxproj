@@ -22,6 +22,8 @@
 		AA00000100000003AABBCCDD /* MLXProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA00000200000003AABBCCDD /* MLXProvider.swift */; };
 		AA00000100000004AABBCCDD /* ToolRouter.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA00000200000004AABBCCDD /* ToolRouter.swift */; };
 		BB0000010000001AAABBCCDD /* LocalModelCatalog.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB0000020000001AAABBCCDD /* LocalModelCatalog.swift */; };
+		BB0000010000002AAABBCCDD /* GenerationLoopGuard.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB0000020000002AAABBCCDD /* GenerationLoopGuard.swift */; };
+		BB0000010000003AAABBCCDD /* CompactCoachPlanner.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB0000020000003AAABBCCDD /* CompactCoachPlanner.swift */; };
 		AA00000100000005AABBCCDD /* AISettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA00000200000005AABBCCDD /* AISettings.swift */; };
 		AA00000100000006AABBCCDD /* KeychainHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA00000200000006AABBCCDD /* KeychainHelper.swift */; };
 		AA00000100000007AABBCCDD /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA00000200000007AABBCCDD /* SettingsView.swift */; };
@@ -45,6 +47,7 @@
 		F0A00016AAAA0001BBBB000B /* TodayView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0A00015AAAA0001BBBB000B /* TodayView.swift */; };
 		F0A00018AAAA0001BBBB000C /* RunSessionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0A00017AAAA0001BBBB000C /* RunSessionView.swift */; };
 		F1T00003AAAA0002BBBB0001 /* ToolRouterIntegrationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1T00002AAAA0002BBBB0001 /* ToolRouterIntegrationTests.swift */; };
+		F1T00021AAAA0002BBBB0008 /* GenerationLoopGuardTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1T00020AAAA0002BBBB0008 /* GenerationLoopGuardTests.swift */; };
 		F1T00005AAAA0002BBBB0002 /* AdherenceIntegrationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1T00004AAAA0002BBBB0002 /* AdherenceIntegrationTests.swift */; };
 		F1T00007AAAA0002BBBB0003 /* ReadinessNotificationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1T00006AAAA0002BBBB0003 /* ReadinessNotificationTests.swift */; };
 		F1T00009AAAA0002BBBB0004 /* TodayPresenterTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1T00008AAAA0002BBBB0004 /* TodayPresenterTests.swift */; };
@@ -128,6 +131,8 @@
 		AA00000200000003AABBCCDD /* MLXProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MLXProvider.swift; sourceTree = "<group>"; };
 		AA00000200000004AABBCCDD /* ToolRouter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ToolRouter.swift; sourceTree = "<group>"; };
 		BB0000020000001AAABBCCDD /* LocalModelCatalog.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalModelCatalog.swift; sourceTree = "<group>"; };
+		BB0000020000002AAABBCCDD /* GenerationLoopGuard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GenerationLoopGuard.swift; sourceTree = "<group>"; };
+		BB0000020000003AAABBCCDD /* CompactCoachPlanner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CompactCoachPlanner.swift; sourceTree = "<group>"; };
 		AA00000200000005AABBCCDD /* AISettings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AISettings.swift; sourceTree = "<group>"; };
 		AA00000200000006AABBCCDD /* KeychainHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeychainHelper.swift; sourceTree = "<group>"; };
 		AA00000200000007AABBCCDD /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
@@ -151,6 +156,7 @@
 		F0A00017AAAA0001BBBB000C /* RunSessionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RunSessionView.swift; sourceTree = "<group>"; };
 		F1T00001AAAA0002BBBB0000 /* RunWithBobbyTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = RunWithBobbyTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		F1T00002AAAA0002BBBB0001 /* ToolRouterIntegrationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ToolRouterIntegrationTests.swift; sourceTree = "<group>"; };
+		F1T00020AAAA0002BBBB0008 /* GenerationLoopGuardTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GenerationLoopGuardTests.swift; sourceTree = "<group>"; };
 		F1T00004AAAA0002BBBB0002 /* AdherenceIntegrationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AdherenceIntegrationTests.swift; sourceTree = "<group>"; };
 		F1T00006AAAA0002BBBB0003 /* ReadinessNotificationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReadinessNotificationTests.swift; sourceTree = "<group>"; };
 		F1T00008AAAA0002BBBB0004 /* TodayPresenterTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TodayPresenterTests.swift; sourceTree = "<group>"; };
@@ -268,6 +274,8 @@
 				AA00000200000003AABBCCDD /* MLXProvider.swift */,
 				AA00000200000004AABBCCDD /* ToolRouter.swift */,
 				BB0000020000001AAABBCCDD /* LocalModelCatalog.swift */,
+				BB0000020000002AAABBCCDD /* GenerationLoopGuard.swift */,
+				BB0000020000003AAABBCCDD /* CompactCoachPlanner.swift */,
 			);
 			path = LLM;
 			sourceTree = "<group>";
@@ -304,6 +312,7 @@
 			isa = PBXGroup;
 			children = (
 				F1T0000EAAAA0002BBBB0007 /* HabitFixtures.swift */,
+				F1T00020AAAA0002BBBB0008 /* GenerationLoopGuardTests.swift */,
 				F1T00002AAAA0002BBBB0001 /* ToolRouterIntegrationTests.swift */,
 				F1T00004AAAA0002BBBB0002 /* AdherenceIntegrationTests.swift */,
 				F1T00006AAAA0002BBBB0003 /* ReadinessNotificationTests.swift */,
@@ -520,6 +529,8 @@
 				AA00000100000003AABBCCDD /* MLXProvider.swift in Sources */,
 				AA00000100000004AABBCCDD /* ToolRouter.swift in Sources */,
 				BB0000010000001AAABBCCDD /* LocalModelCatalog.swift in Sources */,
+				BB0000010000002AAABBCCDD /* GenerationLoopGuard.swift in Sources */,
+				BB0000010000003AAABBCCDD /* CompactCoachPlanner.swift in Sources */,
 				AA00000100000005AABBCCDD /* AISettings.swift in Sources */,
 				AA00000100000006AABBCCDD /* KeychainHelper.swift in Sources */,
 				AA00000100000007AABBCCDD /* SettingsView.swift in Sources */,
@@ -549,6 +560,7 @@
 			files = (
 				F1T0000FAAAA0002BBBB0007 /* HabitFixtures.swift in Sources */,
 				F1T00003AAAA0002BBBB0001 /* ToolRouterIntegrationTests.swift in Sources */,
+				F1T00021AAAA0002BBBB0008 /* GenerationLoopGuardTests.swift in Sources */,
 				F1T00005AAAA0002BBBB0002 /* AdherenceIntegrationTests.swift in Sources */,
 				F1T00007AAAA0002BBBB0003 /* ReadinessNotificationTests.swift in Sources */,
 				F1T00009AAAA0002BBBB0004 /* TodayPresenterTests.swift in Sources */,
