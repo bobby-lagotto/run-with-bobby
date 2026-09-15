@@ -6,6 +6,8 @@
 
 **Il tuo personal trainer di corsa con AI locale su iPhone**
 
+Sito: [bobby-lagotto.github.io/run-with-bobby](https://bobby-lagotto.github.io/run-with-bobby/) · [Informativa privacy](https://bobby-lagotto.github.io/run-with-bobby/privacy.html)
+
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](LICENSE)
 [![Repository](https://img.shields.io/badge/GitHub-run--with--bobby-181717?logo=github)](https://github.com/bobby-lagotto/run-with-bobby)
 

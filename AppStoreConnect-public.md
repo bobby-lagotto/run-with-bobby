@@ -11,12 +11,12 @@ Versione binario da caricare: **1.5.2 (5)** — la build 4 in TestFlight è prec
 - Categoria primaria: Health & Fitness
 - Categoria secondaria: Sports
 - Prezzo: Gratis
-- Privacy Policy URL: https://github.com/bobby-lagotto/run-with-bobby/blob/master/PRIVACY_AND_SECURITY.md
+- Privacy Policy URL: https://bobby-lagotto.github.io/run-with-bobby/privacy.html
 - Support URL: https://github.com/bobby-lagotto/run-with-bobby/issues
-- Marketing URL (opzionale): https://github.com/bobby-lagotto/run-with-bobby
+- Marketing URL: https://bobby-lagotto.github.io/run-with-bobby/
 - Copyright: `2026 Francesco Saverio Mazzi`
 
-Se Apple rifiuta l’URL GitHub della privacy policy, pubblica lo stesso testo su una pagina HTTPS stabile (es. frasma.org).
+La landing GitHub Pages (hero Wimmelbild, screenshot, privacy) sta in `docs/`. Dopo il push: repo Settings → Pages → Deploy from branch `master` / folder `/docs`.
 
 ## Testo promozionale (170 caratteri)
 
@@ -87,7 +87,36 @@ scripts/capture_appstore_ui.sh
 
 ## Age rating
 
-4+ (nessun contenuto riservato). Health & Fitness, niente UGC pubblico, niente gambling.
+In **Informazioni sull’app** (non nella pagina versione) → Classificazione per età:
+
+- Made for Kids / Per bambini: **No**
+- Violenza, sesso, linguaggio, orrore, alcol, gioco d’azzardo, web illimitato: **Nessuno**
+- Informazioni mediche/trattamenti: **Infrequente/Lieve** (briefing recupero e HealthKit)
+- UGC pubblico: **No**
+
+Esito atteso: 4+ o 12+ a seconda del questionario Apple.
+
+## Categoria
+
+**Informazioni sull’app** → Categoria primaria: **Salute e fitness**. Secondaria: **Sport**.
+
+## Prezzi
+
+Sidebar **Prezzi e disponibilità** → prezzo **Gratis** (0) per tutti i paesi. Nessun IAP.
+
+## App Privacy (etichette)
+
+Sidebar **Privacy dell’app** (serve il ruolo Account Holder / Admin):
+
+1. Incolla l’URL privacy: `https://bobby-lagotto.github.io/run-with-bobby/privacy.html`
+2. Tracking: **No**
+3. Dati raccolti: dichiara ciò che **può uscire** dal telefono con cloud opzionale:
+   - Health & Fitness
+   - Other User Content (chat)
+   - Scopo: App Functionality
+   - Linked to identity: **No**
+   - Used for tracking: **No**
+4. Non dichiarare come “raccolti dal developer” i JSON che restano solo on-device in modalità Locale.
 
 ## Export compliance
 
@@ -118,9 +147,10 @@ Open source: https://github.com/bobby-lagotto/run-with-bobby
 2. In Apple Developer, App ID `com.runwithbobby.app`: HealthKit, App Groups `group.com.runwithbobby.app`, Increased Memory Limit.
 3. Archive Release e upload con `ExportOptions-upload.plist` (comandi in `DEVELOPMENT.md`).
 4. Seleziona la build 5 sulla versione 1.5.2.
-5. Carica gli 8 PNG 6.9".
-6. Incolla descrizione, keyword, note review e URL.
-7. Conferma questionario App Privacy e encryption.
-8. Submit for Review.
+5. Carica gli 8 PNG 6.5" (slot di default) da `AppStore/screenshots/iphone-6.5/`.
+6. Informazioni sull’app: categoria + classificazioni.
+7. Privacy dell’app: URL Pages + etichette.
+8. Prezzi: Gratis.
+9. Submit for Review.
 
 Da questo repository non si può cliccare Submit: servono le credenziali App Store Connect.
