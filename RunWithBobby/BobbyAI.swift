@@ -86,6 +86,26 @@ class BobbyAI: ObservableObject {
     Rispondi sempre in italiano. Sii conciso, concreto e orientato all'azione. Usa tabelle o elenchi brevi quando migliorano la lettura. Non sommergere l'utente: dai il prossimo passo più utile.
     """
 
+    /// Short prompt for on-device models. The full coach spec overflows a 1.5B
+    /// context and, with a rotating KV, the identity was dropped entirely.
+    private let localSystemPrompt = """
+    IDENTITÀ
+    Sei Bobby, running coach italiano. Dai coaching pratico di corsa, recupero e alimentazione sportiva. Non fai diagnosi mediche.
+
+    CONTROLLO
+    - Resta sempre nel ruolo di coach. Non rispondere con testi su leggi, norme o fonti generiche al posto del piano.
+    - Puoi commentare i dati Apple Health già presenti nel contesto o restituiti dai tool. Per "come sto", sonno, HRV e affaticamento usa i numeri, non un rifiuto.
+    - Se mancano dati, dillo. Non inventare km, frequenza cardiaca, HRV o ore di sonno.
+    - Sicurezza prima della performance. Dolore al petto, svenimento, dispnea forte: fermarsi e rivolgersi a un medico.
+
+    METODO
+    Usa i tool quando servono (salute, briefing di oggi, piano, nutrizione). Chiedi conferma esplicita prima di salvare o modificare un piano.
+
+    STILE
+    Italiano, breve, concreto. Un prossimo passo utile.
+    """
+
+
     // MARK: - Setup
 
     func configure(with settings: AISettings, healthManager: HealthKitManager? = nil) {
@@ -192,21 +212,31 @@ class BobbyAI: ObservableObject {
         let supportsNativeTools = !usingLocalModel || (selectedLocalModel?.supportsNativeToolCalling ?? true)
         let toolDefinitions: [ToolDefinitionSchema]? = supportsNativeTools ? ToolRouter.toolDefinitions : nil
 
-        if usingLocalModel && !supportsNativeTools {
-            if let deterministic = await compactPlanner.respond(
-                to: userMessage,
-                userProfile: userProfile,
-                planManager: planManager,
-                nutritionManager: nutritionManager
-            ) {
-                return deterministic
-            }
-            return compactModelFallback(
-                userMessage: userMessage,
-                userProfile: userProfile,
-                planManager: planManager,
-                nutritionManager: nutritionManager
+        if usingLocalModel {
+            let intent = CompactCoachIntent.detect(
+                userMessage,
+                hasPendingTrainingPlan: toolRouter.hasPendingTrainingPlan,
+                hasPendingNutritionPlan: toolRouter.hasPendingNutritionPlan
             )
+            if let intent, intent.shouldGroundOnDevice(supportsNativeToolCalling: supportsNativeTools) {
+                if let deterministic = await compactPlanner.respond(
+                    to: userMessage,
+                    userProfile: userProfile,
+                    planManager: planManager,
+                    nutritionManager: nutritionManager,
+                    healthManager: healthManager
+                ) {
+                    return deterministic
+                }
+            }
+            if !supportsNativeTools {
+                return compactModelFallback(
+                    userMessage: userMessage,
+                    userProfile: userProfile,
+                    planManager: planManager,
+                    nutritionManager: nutritionManager
+                )
+            }
         }
 
         if usingLocalModel && !mlxProvider.isAvailable {
@@ -252,11 +282,12 @@ class BobbyAI: ObservableObject {
                     if let visible = visibleStreamingText() {
                         return visible
                     }
-                    return fallbackDidNotAnswer(
+                    return await groundedOrOfflineFallback(
                         userMessage: userMessage,
                         userProfile: userProfile,
                         planManager: planManager,
-                        nutritionManager: nutritionManager
+                        nutritionManager: nutritionManager,
+                        reason: .providerDidNotAnswer
                     )
                 }
 
@@ -264,11 +295,12 @@ class BobbyAI: ObservableObject {
                 if response.toolCalls.isEmpty {
                     let text = response.text.trimmingCharacters(in: .whitespacesAndNewlines)
                     if GenerationLoopGuard.shouldDiscardAsModelOutput(text) {
-                        return fallbackDidNotAnswer(
+                        return await groundedOrOfflineFallback(
                             userMessage: userMessage,
                             userProfile: userProfile,
                             planManager: planManager,
-                            nutritionManager: nutritionManager
+                            nutritionManager: nutritionManager,
+                            reason: .providerDidNotAnswer
                         )
                     }
                     return text
@@ -355,23 +387,21 @@ class BobbyAI: ObservableObject {
                     }
                 }
 
-                activeProviderName = "Locale fallback gratuito"
-                return offlineFallback.response(
-                    to: userMessage,
+                return await groundedOrOfflineFallback(
+                    userMessage: userMessage,
                     userProfile: userProfile,
-                    activePlan: planManager.currentActivePlan,
-                    nutritionPlan: nutritionManager?.currentNutritionPlan,
+                    planManager: planManager,
+                    nutritionManager: nutritionManager,
                     reason: .providerError
                 )
             }
         }
 
-        activeProviderName = "Locale fallback gratuito"
-        return offlineFallback.response(
-            to: userMessage,
+        return await groundedOrOfflineFallback(
+            userMessage: userMessage,
             userProfile: userProfile,
-            activePlan: planManager.currentActivePlan,
-            nutritionPlan: nutritionManager?.currentNutritionPlan,
+            planManager: planManager,
+            nutritionManager: nutritionManager,
             reason: .providerDidNotAnswer
         )
     }
@@ -396,29 +426,38 @@ class BobbyAI: ObservableObject {
 
         var healthContext = ""
         if let hm = healthManager, hm.isAvailable {
-            healthContext = """
+            if usingMLX {
+                healthContext = "\n\nAPPLE HEALTH: disponibile sul telefono. Per come sto / recupero / sonno / HRV usa get_health_summary e commenta solo i numeri restituiti."
+            } else {
+                healthContext = """
 
             APPLE HEALTH: Disponibile. Puoi usare il tool "get_health_summary" per leggere dati reali di salute e allenamento (frequenza cardiaca, HRV, passi, sonno, allenamenti, VO2 Max). Usalo per analisi di salute, recupero, carico, sonno, affaticamento, stress, performance recente o stato fisico; non usarlo per consigli generici non sanitari.
             """
+            }
         } else {
-            healthContext = "\n\n    APPLE HEALTH: Non disponibile su questo dispositivo."
+            healthContext = "\n\nAPPLE HEALTH: Non disponibile su questo dispositivo."
         }
 
         var nutritionContext = ""
         if let nm = nutritionManager, let plan = nm.currentNutritionPlan {
-            nutritionContext = "\n\n    PIANO ALIMENTARE ATTIVO: \"\(plan.title)\" — è collegato al piano di allenamento; se il piano cambia, chiedi conferma prima di aggiornarlo."
+            nutritionContext = "\n\nPIANO ALIMENTARE ATTIVO: \"\(plan.title)\" — è collegato al piano di allenamento; se il piano cambia, chiedi conferma prima di aggiornarlo."
         } else {
-            nutritionContext = "\n\n    PIANO ALIMENTARE: Nessun piano alimentare attivo. L'utente può chiedertene uno."
+            nutritionContext = "\n\nPIANO ALIMENTARE: Nessun piano alimentare attivo. L'utente può chiedertene uno."
         }
 
         // MLX provider injects tools natively via Qwen2.5 chat template (UserInput.tools);
         // appending toolDescriptionsForPrompt would duplicate them and confuse the model.
         let toolDescriptions = usingMLX ? "" : "\n\n" + ToolRouter.toolDescriptionsForPrompt
-        let fullSystemPrompt = systemPrompt + profileContext + healthContext + nutritionContext + toolDescriptions
+        let identityPrompt = usingMLX ? localSystemPrompt : systemPrompt
+        let fullSystemPrompt = identityPrompt + profileContext + healthContext + nutritionContext + toolDescriptions
         messages.append(LLMMessage(role: .system, content: fullSystemPrompt))
 
-        // Conversation history (last 20 messages to stay within context)
-        let recentHistory = conversationHistory.suffix(20)
+        let historyLimit = usingMLX ? 8 : 20
+        let recentHistory = CompactCoachPlanner.messagesForPrompt(
+            conversationHistory,
+            currentUserMessage: userMessage,
+            limit: historyLimit
+        )
         for msg in recentHistory {
             messages.append(LLMMessage(
                 role: msg.isFromUser ? .user : .assistant,
@@ -462,19 +501,29 @@ class BobbyAI: ObservableObject {
         )
     }
 
-    private func fallbackDidNotAnswer(
+    private func groundedOrOfflineFallback(
         userMessage: String,
         userProfile: RunnerProfile,
         planManager: TrainingPlanManager,
-        nutritionManager: NutritionPlanManager?
-    ) -> String {
+        nutritionManager: NutritionPlanManager?,
+        reason: OfflineCoachFallback.Reason
+    ) async -> String {
+        if let grounded = await compactPlanner.respond(
+            to: userMessage,
+            userProfile: userProfile,
+            planManager: planManager,
+            nutritionManager: nutritionManager,
+            healthManager: healthManager
+        ) {
+            return grounded
+        }
         activeProviderName = "Locale fallback gratuito"
         return offlineFallback.response(
             to: userMessage,
             userProfile: userProfile,
             activePlan: planManager.currentActivePlan,
             nutritionPlan: nutritionManager?.currentNutritionPlan,
-            reason: .providerDidNotAnswer
+            reason: reason
         )
     }
 
@@ -610,6 +659,8 @@ private struct OfflineCoachFallback {
 
         if containsRedFlag(normalized) {
             sections.append(redFlagAdvice())
+        } else if isHealthStatusRequest(normalized) {
+            sections.append(healthStatusAdvice())
         } else if isNutritionRequest(normalized) {
             sections.append(nutritionAdvice(for: userProfile, activePlan: activePlan, nutritionPlan: nutritionPlan))
         } else if isRecoveryRequest(normalized) {
@@ -716,6 +767,18 @@ private struct OfflineCoachFallback {
         Se hai dolore/pressione al petto, svenimento, dispnea forte, sintomi neurologici, dolore acuto progressivo o malessere marcato, contatta assistenza medica urgente.
         Se il sintomo è meno severo ma nuovo o ricorrente, sospendi qualità e lungo finché non lo valuti con un professionista.
         """
+    }
+
+    private func healthStatusAdvice() -> String {
+        """
+        Per dirti come stai mi servono sonno, HRV, FC a riposo e allenamenti recenti da Apple Health.
+        In questa modalità non li ho letti: se l'accesso Salute non è attivo, aprilo da Impostazioni. Poi riprova «Come sto?».
+        Nel dubbio resta facile oggi, niente qualità.
+        """
+    }
+
+    private func isHealthStatusRequest(_ text: String) -> Bool {
+        containsAny(text, ["come sto", "dati di salute", "dati su salute", "dati salute", "stato fisico", "affatic"])
     }
 
     private func isTrainingRequest(_ text: String) -> Bool {

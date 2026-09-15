@@ -5,6 +5,8 @@ enum CompactCoachIntent: Equatable {
     case createNutritionPlan
     case savePendingTraining
     case savePendingNutrition
+    case healthStatus
+    case todayBriefing
 
     static func detect(
         _ raw: String,
@@ -18,7 +20,20 @@ enum CompactCoachIntent: Equatable {
             if hasPendingTrainingPlan { return .savePendingTraining }
             if hasPendingNutritionPlan { return .savePendingNutrition }
         }
+        if isHealthStatus(text) { return .healthStatus }
+        if isTodayBriefing(text) { return .todayBriefing }
         return nil
+    }
+
+    /// Health and today must not go through small local LLMs: they ignore the
+    /// coach prompt and refuse with legal/privacy boilerplate.
+    func shouldGroundOnDevice(supportsNativeToolCalling: Bool) -> Bool {
+        switch self {
+        case .healthStatus, .todayBriefing:
+            return true
+        case .createTrainingPlan, .createNutritionPlan, .savePendingTraining, .savePendingNutrition:
+            return !supportsNativeToolCalling
+        }
     }
 
     private static func isTrainingCreate(_ text: String) -> Bool {
@@ -44,6 +59,27 @@ enum CompactCoachIntent: Equatable {
         return compact.contains("salva") && compact.count < 40
     }
 
+    private static func isHealthStatus(_ text: String) -> Bool {
+        containsAny(text, [
+            "come sto",
+            "dati di salute",
+            "dati su salute",
+            "dati salute",
+            "analizza i miei dati",
+            "riassunto completo",
+            "sono affatic",
+            "stato fisico"
+        ])
+    }
+
+    private static func isTodayBriefing(_ text: String) -> Bool {
+        containsAny(text, [
+            "cosa faccio oggi",
+            "briefing",
+            "prontezza"
+        ])
+    }
+
     private static func normalize(_ text: String) -> String {
         text.folding(options: [.diacriticInsensitive, .caseInsensitive], locale: .current).lowercased()
     }
@@ -60,7 +96,8 @@ struct CompactCoachPlanner {
         to userMessage: String,
         userProfile: RunnerProfile,
         planManager: TrainingPlanManager,
-        nutritionManager: NutritionPlanManager?
+        nutritionManager: NutritionPlanManager?,
+        healthManager: HealthKitManager? = nil
     ) async -> String? {
         guard let intent = CompactCoachIntent.detect(
             userMessage,
@@ -79,6 +116,10 @@ struct CompactCoachPlanner {
             return await saveTrainingPlan(userProfile: userProfile, planManager: planManager, nutritionManager: nutritionManager)
         case .savePendingNutrition:
             return await saveNutritionPlan(planManager: planManager, nutritionManager: nutritionManager)
+        case .healthStatus:
+            return await healthStatus(userProfile: userProfile, planManager: planManager, healthManager: healthManager)
+        case .todayBriefing:
+            return await todayBriefing(userProfile: userProfile, planManager: planManager, healthManager: healthManager)
         }
     }
 
@@ -142,6 +183,82 @@ struct CompactCoachPlanner {
         return lines.joined(separator: "\n")
     }
 
+    static func formatHealthStatus(healthJSON: String, briefingJSON: String?) -> String {
+        guard let health = parseObject(healthJSON) else {
+            return "Non riesco a leggere i dati Salute in questo momento. Controlla l'autorizzazione in Impostazioni > Salute."
+        }
+        if let error = stringValue(health["errore"]) {
+            return error
+        }
+        if let message = stringValue(health["messaggio"]) {
+            return message
+        }
+
+        var lines = ["Ecco come ti vedo dai dati Apple Health sul telefono. Non è una diagnosi."]
+        var facts: [String] = []
+
+        if let sleep = doubleValue(health["sonno_media_ore"]) {
+            facts.append("Sonno medio: \(formatNumber(sleep)) ore/notte.")
+        }
+        if let hrv = intValue(health["variabilita_cardiaca_hrv_ms"]) {
+            facts.append("HRV: \(hrv) ms.")
+        }
+        if let resting = intValue(health["frequenza_cardiaca_riposo_bpm"]) {
+            facts.append("FC a riposo: \(resting) bpm.")
+        }
+        if let avgHR = intValue(health["frequenza_cardiaca_media_bpm"]) {
+            facts.append("FC media: \(avgHR) bpm.")
+        }
+        if let vo2 = doubleValue(health["vo2max_ml_kg_min"]) {
+            facts.append("VO2 max: \(formatNumber(vo2)) ml/kg/min.")
+        }
+        if let steps = intValue(health["passi_media_giornaliera"]) {
+            facts.append("Passi medi: \(steps)/giorno.")
+        }
+        if let km = doubleValue(health["distanza_totale_km"]) {
+            facts.append("Distanza ultimi giorni: \(formatKm(km)) km.")
+        }
+        if let workouts = intValue(health["numero_allenamenti"]) {
+            facts.append("Allenamenti nel periodo: \(workouts).")
+        }
+
+        if facts.isEmpty {
+            lines.append("I numeri di sonno, HRV, FC o allenamenti non ci sono in questi giorni: non li invento. Se non hai ancora dato l'accesso, aprilo da Impostazioni > Salute.")
+        } else {
+            lines.append(contentsOf: facts.map { "- \($0)" })
+            lines.append(healthCoachingNote(health: health))
+        }
+
+        if let briefingJSON, let briefing = parseObject(briefingJSON), let line = stringValue(briefing["briefing"]) {
+            lines.append("Oggi: \(line)")
+        }
+
+        return lines.joined(separator: "\n")
+    }
+
+    static func formatTodayBriefing(from json: String) -> String {
+        guard let root = parseObject(json), let line = stringValue(root["briefing"]) else {
+            return "Non ho un briefing affidabile. Dimmi se hai un piano attivo e come hai dormito."
+        }
+        var lines = [line]
+        if let recommendation = stringValue(root["raccomandazione"]) {
+            lines.append("Raccomandazione: \(recommendation).")
+        }
+        return lines.joined(separator: "\n")
+    }
+
+    static func messagesForPrompt(
+        _ conversationHistory: [ChatMessage],
+        currentUserMessage: String,
+        limit: Int
+    ) -> [ChatMessage] {
+        var history = Array(conversationHistory.suffix(limit))
+        if let last = history.last, last.isFromUser, last.content == currentUserMessage {
+            history.removeLast()
+        }
+        return history
+    }
+
     private func createTrainingPlan(userProfile: RunnerProfile, planManager: TrainingPlanManager) async -> String {
         let result = await toolRouter.execute(
             ToolCall(name: "calculate_training_plan", arguments: [
@@ -200,6 +317,55 @@ struct CompactCoachPlanner {
             return error
         }
         return "Piano alimentare salvato e attivato."
+    }
+
+    private func healthStatus(
+        userProfile: RunnerProfile,
+        planManager: TrainingPlanManager,
+        healthManager: HealthKitManager?
+    ) async -> String {
+        let health = await toolRouter.execute(
+            ToolCall(name: "get_health_summary", arguments: ["days": .int(7)]),
+            userProfile: userProfile,
+            planManager: planManager,
+            healthManager: healthManager
+        )
+        let briefing = await toolRouter.execute(
+            ToolCall(name: "get_today_briefing", arguments: [:]),
+            userProfile: userProfile,
+            planManager: planManager,
+            healthManager: healthManager
+        )
+        return Self.formatHealthStatus(healthJSON: health.content, briefingJSON: briefing.content)
+    }
+
+    private func todayBriefing(
+        userProfile: RunnerProfile,
+        planManager: TrainingPlanManager,
+        healthManager: HealthKitManager?
+    ) async -> String {
+        let briefing = await toolRouter.execute(
+            ToolCall(name: "get_today_briefing", arguments: [:]),
+            userProfile: userProfile,
+            planManager: planManager,
+            healthManager: healthManager
+        )
+        return Self.formatTodayBriefing(from: briefing.content)
+    }
+
+    private static func healthCoachingNote(health: [String: Any]) -> String {
+        let sleep = doubleValue(health["sonno_media_ore"])
+        let hrv = intValue(health["variabilita_cardiaca_hrv_ms"])
+        let resting = intValue(health["frequenza_cardiaca_riposo_bpm"])
+        let tired = (sleep ?? 8) < 6.5 || (hrv ?? 80) < 45 || (resting ?? 50) >= 68
+        if tired {
+            return "Segnale da monitorare: oggi tieni facile o riposa, niente qualità. Se il quadro resta così 48 ore, scala il carico."
+        }
+        return "I segnali disponibili non gridano allarme: puoi seguire il piano, con i giorni facili davvero facili."
+    }
+
+    private static func formatNumber(_ value: Double) -> String {
+        formatKm(value)
     }
 
     private static func toolGoal(for goal: TrainingGoal) -> String {

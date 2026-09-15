@@ -137,4 +137,26 @@ enum LocalModelCatalog {
     static func find(_ id: String) -> LocalModelOption? {
         all.first { $0.id == id }
     }
+
+    /// On-device generation limits. A rotating KV of 2048 was dropping the
+    /// system prompt on 6 GB phones (iPhone 14 Pro), so Qwen answered without
+    /// Bobby's identity. Small Qwen KV is tens of MB even at 8k tokens.
+    static func generationConfig(for modelId: String) -> LocalGenerationConfig {
+        if modelId.contains("Bonsai-27B") {
+            return LocalGenerationConfig(maxTokens: 768, maxKVSize: 4096, kvBits: 4)
+        }
+        if modelId.contains("0.5B") {
+            return LocalGenerationConfig(maxTokens: 384, maxKVSize: nil, kvBits: nil)
+        }
+        if modelId.contains("Bonsai-8B") || modelId.contains("Ternary-Bonsai") {
+            return LocalGenerationConfig(maxTokens: 768, maxKVSize: 4096, kvBits: nil)
+        }
+        return LocalGenerationConfig(maxTokens: 768, maxKVSize: nil, kvBits: nil)
+    }
+}
+
+struct LocalGenerationConfig: Equatable {
+    let maxTokens: Int
+    let maxKVSize: Int?
+    let kvBits: Int?
 }

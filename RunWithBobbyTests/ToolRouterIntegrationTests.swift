@@ -74,4 +74,28 @@ final class ToolRouterIntegrationTests: XCTestCase {
         XCTAssertEqual(manager.currentActivePlan?.weeklyPlan.count, 7)
         XCTAssertFalse(router.hasPendingTrainingPlan)
     }
+
+    func testHealthQuestionUsesDeterministicCoachNotLegalRefusal() async {
+        let router = ToolRouter()
+        let planner = CompactCoachPlanner(toolRouter: router)
+        let manager = HabitFixtures.isolatedManager()
+        var profile = RunnerProfile()
+        profile.weeklyKilometers = 20
+
+        let text = await planner.respond(
+            to: "In base ai dati su salute mi dici come sto?",
+            userProfile: profile,
+            planManager: manager,
+            nutritionManager: nil,
+            healthManager: nil
+        )
+
+        XCTAssertNotNil(text)
+        XCTAssertFalse(text?.contains("diritto alla privacy") == true, text ?? "")
+        XCTAssertFalse(text?.contains("Modalità gratuita") == true, text ?? "")
+        XCTAssertTrue(
+            text?.contains("HealthKit") == true || text?.contains("Salute") == true,
+            text ?? ""
+        )
+    }
 }

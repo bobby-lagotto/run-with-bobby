@@ -172,24 +172,15 @@ class MLXProvider: @MainActor LLMService, ObservableObject {
         modelContainer = nil
     }
 
-    /// Keep KV small on-device. 27B also uses 4-bit KV to stay inside the iOS per-app budget.
-    /// Small Qwen models get a tighter token cap; all local models use a repetition penalty
-    /// so structured JSON loops cannot run until the KV window fills.
+    /// Keep KV small on large 1-bit models. Qwen 1.5B/3B must not rotate at 2048:
+    /// that dropped the system prompt on iPhone 14 Pro (6 GB) and the model
+    /// answered as generic Qwen instead of Bobby.
     private var generateParameters: GenerateParameters {
-        let maxTokens = modelId.contains("0.5B") ? 384 : 768
-        if modelId.contains("Bonsai-27B") {
-            return GenerateParameters(
-                maxTokens: maxTokens,
-                maxKVSize: 2048,
-                kvBits: 4,
-                temperature: 0.3,
-                repetitionPenalty: 1.15,
-                repetitionContextSize: 64
-            )
-        }
+        let config = LocalModelCatalog.generationConfig(for: modelId)
         return GenerateParameters(
-            maxTokens: maxTokens,
-            maxKVSize: 2048,
+            maxTokens: config.maxTokens,
+            maxKVSize: config.maxKVSize,
+            kvBits: config.kvBits,
             temperature: 0.3,
             repetitionPenalty: 1.15,
             repetitionContextSize: 64

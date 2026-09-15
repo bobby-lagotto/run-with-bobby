@@ -35,9 +35,33 @@ enum GenerationLoopGuard {
         return markers.contains { lower.contains($0) }
     }
 
+    /// Qwen 2.5 often answers health/coaching questions with a canned legal-privacy refusal
+    /// when the system prompt is truncated or ignored.
+    static func looksLikeLegalPrivacyRefusal(_ text: String) -> Bool {
+        let lower = text.lowercased()
+        let markers = [
+            "diritto alla privacy",
+            "libertà di informazioni",
+            "liberta di informazioni",
+            "regole legali",
+            "normative che governano",
+            "non posso fornire un'opzione specifica",
+            "non posso fornire un’opzione specifica",
+            "questione relativa alle regole legali",
+            "consultare una fonte affidabile",
+            "privacy rights",
+            "freedom of information",
+            "i cannot provide a specific option"
+        ]
+        return markers.contains { lower.contains($0) }
+    }
+
     /// Hide mid-stream so the chat stays on "Sta pensando..." instead of dumping loops.
     static func shouldHideFromStream(_ text: String) -> Bool {
-        looksLikeLeakedToolJSON(text) || looksLikeEnglishSchemaDump(text) || isRepeating(text)
+        looksLikeLeakedToolJSON(text)
+            || looksLikeEnglishSchemaDump(text)
+            || looksLikeLegalPrivacyRefusal(text)
+            || isRepeating(text)
     }
 
     /// Empty, repeating, leaked tool JSON, or English schema dumps should not be shown as a coach reply.
