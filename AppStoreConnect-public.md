@@ -11,12 +11,14 @@ Versione binario da caricare: **1.5.3 (6)** — la build 5 in TestFlight è prec
 - Categoria primaria: Health & Fitness
 - Categoria secondaria: Sports
 - Prezzo: Gratis
-- Privacy Policy URL: https://bobby-lagotto.github.io/run-with-bobby/privacy.html
+- Privacy Policy URL (IT): https://bobby-lagotto.github.io/run-with-bobby/privacy.html
+- Privacy Policy URL (EN): https://bobby-lagotto.github.io/run-with-bobby/en/privacy.html
 - Support URL: https://github.com/bobby-lagotto/run-with-bobby/issues
-- Marketing URL: https://bobby-lagotto.github.io/run-with-bobby/
+- Marketing URL (IT): https://bobby-lagotto.github.io/run-with-bobby/
+- Marketing URL (EN): https://bobby-lagotto.github.io/run-with-bobby/en/
 - Copyright: `2026 Francesco Saverio Mazzi`
 
-La landing GitHub Pages (hero Wimmelbild, screenshot, privacy) sta in `docs/` e, perché Pages è su `master` / `/` (root), anche in `index.html` / `privacy.html` alla root. Se in Settings → Pages imposti folder `/docs`, gli URL restano gli stessi e le copie in root si possono togliere.
+La landing GitHub Pages (hero Wimmelbild, screenshot, privacy) sta in `docs/` e, perché Pages è su `master` / `/` (root), anche in `index.html` / `privacy.html` / `en/` alla root. Se in Settings → Pages imposti folder `/docs`, gli URL restano gli stessi e le copie in root si possono togliere. In App Store Connect, localizza l’URL privacy in inglese sulla pagina EN.
 
 ## Testo promozionale (170 caratteri)
 
@@ -108,7 +110,7 @@ Sidebar **Prezzi e disponibilità** → prezzo **Gratis** (0) per tutti i paesi.
 
 Sidebar **Privacy dell’app** (serve il ruolo Account Holder / Admin):
 
-1. Incolla l’URL privacy: `https://bobby-lagotto.github.io/run-with-bobby/privacy.html`
+1. Incolla l’URL privacy IT: `https://bobby-lagotto.github.io/run-with-bobby/privacy.html`. Per la localizzazione inglese: `https://bobby-lagotto.github.io/run-with-bobby/en/privacy.html`.
 2. Tracking: **No**
 3. Dati raccolti: dichiara ciò che **può uscire** dal telefono con cloud opzionale:
    - Health & Fitness

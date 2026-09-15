@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Privacy Policy — Run with Bobby</title>
+  <meta name="description" content="Privacy policy for Run with Bobby: on-device data, HealthKit, and optional cloud providers.">
+  <link rel="canonical" href="https://bobby-lagotto.github.io/run-with-bobby/en/privacy.html">
+  <link rel="alternate" hreflang="en" href="https://bobby-lagotto.github.io/run-with-bobby/en/privacy.html">
+  <link rel="alternate" hreflang="it" href="https://bobby-lagotto.github.io/run-with-bobby/privacy.html">
+  <link rel="alternate" hreflang="x-default" href="https://bobby-lagotto.github.io/run-with-bobby/privacy.html">
+  <link rel="icon" href="../docs/assets/icon.png">
+  <link rel="stylesheet" href="../docs/styles.css">
+</head>
+<body>
+  <nav class="nav">
+    <a class="brand" href="index.html">
+      <img src="../docs/assets/icon.png" alt="Bobby">
+      Run with Bobby
+    </a>
+    <div class="nav-end">
+      <div class="nav-links">
+        <a href="index.html">Home</a>
+        <a href="https://github.com/bobby-lagotto/run-with-bobby">GitHub</a>
+      </div>
+      <nav class="lang-switch" aria-label="Language">
+        <a href="../privacy.html" lang="it" hreflang="it">IT</a>
+        <a href="privacy.html" lang="en" hreflang="en" aria-current="page">EN</a>
+      </nav>
+    </div>
+  </nav>
+
+  <article class="prose">
+    <p class="kicker" style="color: var(--red);">Policy</p>
+    <h1>Privacy</h1>
+    <p class="muted">Last updated: 15 September 2026. Controller: Francesco Saverio Mazzi — <a href="mailto:francemazzi@gmail.com">francemazzi@gmail.com</a>. <a href="../privacy.html" hreflang="it">Versione italiana</a>.</p>
+    <p>Run with Bobby is a running coach for iPhone. The default path is <strong>local</strong>: chat, runner profile, training plans, and nutrition plans stay on the device. The app does not run advertising tracking and does not sell data.</p>
+
+    <h2>On-device data</h2>
+    <table>
+      <thead>
+        <tr><th>Data</th><th>Where it lives</th><th>Network</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Conversations</td><td>App Documents, protected</td><td>Only if you enable a cloud provider</td></tr>
+        <tr><td>Runner profile</td><td>App Documents, protected</td><td>Only if you enable a cloud provider</td></tr>
+        <tr><td>Training and nutrition plans</td><td>App Documents, protected</td><td>Only if you enable a cloud provider</td></tr>
+        <tr><td>API keys (OpenAI, Anthropic, OpenRouter)</td><td>iOS Keychain</td><td>Only as authorization to the provider you chose</td></tr>
+        <tr><td>MLX models</td><td>Local cache</td><td>Model file download; not personal data</td></tr>
+      </tbody>
+    </table>
+    <p>You can delete chat, profile, and plans in the app (“Delete local data”). API keys are removed from AI Settings.</p>
+
+    <h2>Apple Health (HealthKit)</h2>
+    <p>With your permission, Run with Bobby can read health and workout metrics (for example heart rate, HRV, sleep, steps, workouts) to personalize recovery briefings and match your runs. These summaries are <strong>not stored</strong> by the app: they are read on demand from Apple Health.</p>
+    <p>The app can <strong>write a workout</strong> to Health only if you record a run session. You can revoke access in iOS Settings → Health.</p>
+    <p>In Local mode, HealthKit data does not leave the phone. If you select a cloud provider, a Health summary needed for the reply may be sent to that provider, after in-app confirmation when required.</p>
+
+    <h2>Location</h2>
+    <p>Location is used only during a run session, for distance and route, and stays on the device. It is not used for advertising.</p>
+
+    <h2>Optional cloud providers</h2>
+    <p>OpenAI, Anthropic, and OpenRouter are not the default. They work only if you paste your own API key. In that case the provider receives the context needed to generate a reply (recent chat, profile, plan, and, if required, a Health summary). Those services have their own privacy policies. The app does not use Claude.ai or ChatGPT consumer logins.</p>
+    <p>Local mode never falls back to the cloud. Automatic mode uses the local model when it is available.</p>
+
+    <h2>What we do not do</h2>
+    <ul>
+      <li>No advertising tracking, no advertising identifier, no third-party analytics.</li>
+      <li>No required account, no paywall, no StoreKit.</li>
+      <li>No sale of data to brokers.</li>
+    </ul>
+
+    <h2>Children</h2>
+    <p>The app is not intended for children under 13 and does not knowingly collect data from children.</p>
+
+    <h2>Rights and contact</h2>
+    <p>You control local data: view it, edit your profile and plans, and delete it in the app. Questions: <a href="mailto:francemazzi@gmail.com">francemazzi@gmail.com</a> or <a href="https://github.com/bobby-lagotto/run-with-bobby/issues">GitHub Issues</a>.</p>
+    <p>Technical map: <a href="https://github.com/bobby-lagotto/run-with-bobby/blob/master/PRIVACY_AND_SECURITY.md">PRIVACY_AND_SECURITY.md</a>.</p>
+  </article>
+
+  <footer>
+    <span>© 2026 Francesco Saverio Mazzi</span>
+    <span>
+      <a href="index.html">Back to home</a> ·
+      <a href="../privacy.html" hreflang="it">Italiano</a>
+    </span>
+  </footer>
+</body>
+</html>

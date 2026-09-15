@@ -48,6 +48,13 @@ a:hover { text-decoration: underline; }
   height: 42px;
   border-radius: 12px;
 }
+.nav-end {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
 .nav-links {
   display: flex;
   gap: 18px;
@@ -55,6 +62,22 @@ a:hover { text-decoration: underline; }
   font-weight: 600;
 }
 .nav-links a { color: var(--charcoal); }
+.lang-switch {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+}
+.lang-switch a {
+  color: var(--charcoal);
+  padding: 4px 2px;
+}
+.lang-switch a[aria-current="page"] {
+  color: var(--red);
+  text-decoration: none;
+}
 
 .hero {
   position: relative;
@@ -151,6 +174,6 @@ footer {
 }
 
 @media (max-width: 700px) {
-  .nav-links { display: none; }
   h1 { max-width: none; }
+  .nav-links { gap: 12px; font-size: 14px; }
 }
