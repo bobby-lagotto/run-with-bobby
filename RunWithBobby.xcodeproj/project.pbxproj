@@ -63,6 +63,7 @@
 		F3A00004AAAA0004BBBB0002 /* HabitModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0A00001AAAA0001BBBB0001 /* HabitModels.swift */; };
 		F3A00005AAAA0004BBBB0003 /* TodaySnapshot.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0A0000BAAAA0001BBBB0006 /* TodaySnapshot.swift */; };
 		F3A0000EAAAA0004BBBB0004 /* BobbyWatch.app in Embed Watch Content */ = {isa = PBXBuildFile; fileRef = F3A00001AAAA0004BBBB0001 /* BobbyWatch.app */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		F4S00002AAAA0005BBBB0002 /* AppStoreScreenshotSeed.swift in Sources */ = {isa = PBXBuildFile; fileRef = F4S00001AAAA0005BBBB0001 /* AppStoreScreenshotSeed.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -117,6 +118,7 @@
 /* Begin PBXFileReference section */
 		3D92FB262C8E4B2A00123456 /* RunWithBobby.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = RunWithBobby.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		3D92FB292C8E4B2A00123456 /* RunWithBobbyApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RunWithBobbyApp.swift; sourceTree = "<group>"; };
+		F4S00001AAAA0005BBBB0001 /* AppStoreScreenshotSeed.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppStoreScreenshotSeed.swift; sourceTree = "<group>"; };
 		3D92FB2B2C8E4B2A00123456 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		3D92FB2D2C8E4B2B00123456 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		3D92FB302C8E4B2B00123456 /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
@@ -237,6 +239,7 @@
 				AA00000200000009AABBCCDD /* RunWithBobby.entitlements */,
 				EE15000200000001AABBCCDD /* PrivacyInfo.xcprivacy */,
 				3D92FB292C8E4B2A00123456 /* RunWithBobbyApp.swift */,
+				F4S00001AAAA0005BBBB0001 /* AppStoreScreenshotSeed.swift */,
 				3D92FB2B2C8E4B2A00123456 /* ContentView.swift */,
 				3D92FB372C8E4B5600123456 /* ChatView.swift */,
 				F0A00015AAAA0001BBBB000B /* TodayView.swift */,
@@ -521,6 +524,7 @@
 				3D92FB382C8E4B5600123456 /* ChatView.swift in Sources */,
 				3D92FB3E2C8E4B8900123456 /* BobbyAI.swift in Sources */,
 				3D92FB2A2C8E4B2A00123456 /* RunWithBobbyApp.swift in Sources */,
+				F4S00002AAAA0005BBBB0002 /* AppStoreScreenshotSeed.swift in Sources */,
 				3D92FB3C2C8E4B7800123456 /* Models.swift in Sources */,
 				3D92FB3A2C8E4B6700123456 /* TrainingPlanManager.swift in Sources */,
 				3D92FB402C8E4B9A00123456 /* Theme.swift in Sources */,
@@ -736,12 +740,14 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = RunWithBobby/RunWithBobby.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 4;
-				DEVELOPMENT_ASSET_PATHS = "\"RunWithBobby/Preview Content\"";
-				DEVELOPMENT_TEAM = 4YW6S35MTZ;
-				ENABLE_PREVIEWS = YES;
-				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_KEY_NSHealthShareUsageDescription = "Run with Bobby legge dati di salute e allenamento per personalizzare coaching, recupero e piani. Puoi revocare l'accesso in Impostazioni > Salute.";
+                CURRENT_PROJECT_VERSION = 5;
+                DEVELOPMENT_ASSET_PATHS = "\"RunWithBobby/Preview Content\"";
+                DEVELOPMENT_TEAM = 4YW6S35MTZ;
+                ENABLE_PREVIEWS = YES;
+                GENERATE_INFOPLIST_FILE = YES;
+                INFOPLIST_KEY_CFBundleDisplayName = "Run with Bobby";
+                INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
+                INFOPLIST_KEY_NSHealthShareUsageDescription = "Run with Bobby legge dati di salute e allenamento per personalizzare coaching, recupero e piani. Puoi revocare l'accesso in Impostazioni > Salute.";
 				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "Run with Bobby puo' salvare un allenamento di corsa in Salute quando registri una seduta. Puoi revocare l'accesso in Impostazioni > Salute.";
 				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "Run with Bobby usa la posizione solo durante una sessione di corsa per calcolare distanza e percorso.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
@@ -757,9 +763,10 @@
 				MARKETING_VERSION = 1.5.2;
 				PRODUCT_BUNDLE_IDENTIFIER = com.runwithbobby.app;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				SUPPORTS_MACCATALYST = NO;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.9;
-				TARGETED_DEVICE_FAMILY = "1,2";
+				TARGETED_DEVICE_FAMILY = 1;
 			};
 			name = Debug;
 		};
@@ -770,12 +777,14 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = RunWithBobby/RunWithBobby.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 4;
-				DEVELOPMENT_ASSET_PATHS = "\"RunWithBobby/Preview Content\"";
-				DEVELOPMENT_TEAM = 4YW6S35MTZ;
-				ENABLE_PREVIEWS = YES;
-				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_KEY_NSHealthShareUsageDescription = "Run with Bobby legge dati di salute e allenamento per personalizzare coaching, recupero e piani. Puoi revocare l'accesso in Impostazioni > Salute.";
+                CURRENT_PROJECT_VERSION = 5;
+                DEVELOPMENT_ASSET_PATHS = "\"RunWithBobby/Preview Content\"";
+                DEVELOPMENT_TEAM = 4YW6S35MTZ;
+                ENABLE_PREVIEWS = YES;
+                GENERATE_INFOPLIST_FILE = YES;
+                INFOPLIST_KEY_CFBundleDisplayName = "Run with Bobby";
+                INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
+                INFOPLIST_KEY_NSHealthShareUsageDescription = "Run with Bobby legge dati di salute e allenamento per personalizzare coaching, recupero e piani. Puoi revocare l'accesso in Impostazioni > Salute.";
 				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "Run with Bobby puo' salvare un allenamento di corsa in Salute quando registri una seduta. Puoi revocare l'accesso in Impostazioni > Salute.";
 				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "Run with Bobby usa la posizione solo durante una sessione di corsa per calcolare distanza e percorso.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
@@ -791,9 +800,10 @@
 				MARKETING_VERSION = 1.5.2;
 				PRODUCT_BUNDLE_IDENTIFIER = com.runwithbobby.app;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				SUPPORTS_MACCATALYST = NO;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.9;
-				TARGETED_DEVICE_FAMILY = "1,2";
+				TARGETED_DEVICE_FAMILY = 1;
 			};
 			name = Release;
 		};
@@ -840,11 +850,11 @@
 			buildSettings = {
 				CODE_SIGN_ENTITLEMENTS = BobbyTodayWidget/BobbyTodayWidget.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 4;
-				DEVELOPMENT_TEAM = 4YW6S35MTZ;
-				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_FILE = BobbyTodayWidget/Info.plist;
-				INFOPLIST_KEY_CFBundleDisplayName = Oggi;
+                CURRENT_PROJECT_VERSION = 5;
+                DEVELOPMENT_TEAM = 4YW6S35MTZ;
+                GENERATE_INFOPLIST_FILE = YES;
+                INFOPLIST_FILE = BobbyTodayWidget/Info.plist;
+                INFOPLIST_KEY_CFBundleDisplayName = Oggi;
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -856,9 +866,10 @@
 				PRODUCT_BUNDLE_IDENTIFIER = com.runwithbobby.app.BobbyTodayWidget;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
+				SUPPORTS_MACCATALYST = NO;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.9;
-				TARGETED_DEVICE_FAMILY = "1,2";
+				TARGETED_DEVICE_FAMILY = 1;
 			};
 			name = Debug;
 		};
@@ -867,11 +878,11 @@
 			buildSettings = {
 				CODE_SIGN_ENTITLEMENTS = BobbyTodayWidget/BobbyTodayWidget.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 4;
-				DEVELOPMENT_TEAM = 4YW6S35MTZ;
-				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_FILE = BobbyTodayWidget/Info.plist;
-				INFOPLIST_KEY_CFBundleDisplayName = Oggi;
+                CURRENT_PROJECT_VERSION = 5;
+                DEVELOPMENT_TEAM = 4YW6S35MTZ;
+                GENERATE_INFOPLIST_FILE = YES;
+                INFOPLIST_FILE = BobbyTodayWidget/Info.plist;
+                INFOPLIST_KEY_CFBundleDisplayName = Oggi;
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -883,9 +894,10 @@
 				PRODUCT_BUNDLE_IDENTIFIER = com.runwithbobby.app.BobbyTodayWidget;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
+				SUPPORTS_MACCATALYST = NO;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.9;
-				TARGETED_DEVICE_FAMILY = "1,2";
+				TARGETED_DEVICE_FAMILY = 1;
 			};
 			name = Release;
 		};
@@ -894,10 +906,10 @@
 			buildSettings = {
 				CODE_SIGN_ENTITLEMENTS = BobbyWatch/BobbyWatch.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 4;
-				DEVELOPMENT_TEAM = 4YW6S35MTZ;
-				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_KEY_CFBundleDisplayName = Bobby;
+                CURRENT_PROJECT_VERSION = 5;
+                DEVELOPMENT_TEAM = 4YW6S35MTZ;
+                GENERATE_INFOPLIST_FILE = YES;
+                INFOPLIST_KEY_CFBundleDisplayName = Bobby;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
 				INFOPLIST_KEY_WKCompanionAppBundleIdentifier = com.runwithbobby.app;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -921,10 +933,10 @@
 			buildSettings = {
 				CODE_SIGN_ENTITLEMENTS = BobbyWatch/BobbyWatch.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 4;
-				DEVELOPMENT_TEAM = 4YW6S35MTZ;
-				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_KEY_CFBundleDisplayName = Bobby;
+                CURRENT_PROJECT_VERSION = 5;
+                DEVELOPMENT_TEAM = 4YW6S35MTZ;
+                GENERATE_INFOPLIST_FILE = YES;
+                INFOPLIST_KEY_CFBundleDisplayName = Bobby;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
 				INFOPLIST_KEY_WKCompanionAppBundleIdentifier = com.runwithbobby.app;
 				LD_RUNPATH_SEARCH_PATHS = (

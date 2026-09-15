@@ -12,7 +12,17 @@ struct RunWithBobbyApp: App {
 
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            Group {
+                #if DEBUG
+                if AppStoreScreenshotMode.isEnabled {
+                    AppStoreScreenshotRoot()
+                } else {
+                    ContentView()
+                }
+                #else
+                ContentView()
+                #endif
+            }
                 .environmentObject(appState)
                 .environmentObject(aiSettings)
                 .environmentObject(planManager)
@@ -22,6 +32,16 @@ struct RunWithBobbyApp: App {
                 .environmentObject(habitCoordinator)
                 .preferredColorScheme(.none)
                 .onAppear {
+                    #if DEBUG
+                    if AppStoreScreenshotMode.isEnabled {
+                        AppStoreScreenshotSeed.apply(
+                            appState: appState,
+                            planManager: planManager,
+                            habitCoordinator: habitCoordinator,
+                            aiSettings: aiSettings
+                        )
+                    }
+                    #endif
                     setupApp()
                     habitCoordinator.refresh(plan: planManager.currentActivePlan)
                 }

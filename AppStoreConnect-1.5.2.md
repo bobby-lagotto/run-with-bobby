@@ -3,8 +3,8 @@
 Campi da impostare in App Store Connect prima della submission:
 
 - Versione: 1.5.2
-- Build: 4
-- Distribuzione iniziale: TestFlight
+- Build: 5 (listing pubblica; la 4 resta in TestFlight)
+- Distribuzione iniziale: TestFlight, poi App Store
 - Prezzo: Gratis
 - Privacy Policy URL: https://github.com/bobby-lagotto/run-with-bobby/blob/master/PRIVACY_AND_SECURITY.md
 - Support URL: https://github.com/bobby-lagotto/run-with-bobby/issues
@@ -18,12 +18,14 @@ What's New (suggerito):
 
 Note review suggerite:
 
-Run with Bobby e' gratuita. Il coaching locale resta disponibile senza acquisti, senza StoreKit e senza paywall. I provider cloud sono opzionali e funzionano solo con API key gia' possedute dall'utente, salvate nel Keychain. L'app non usa login consumer Claude.ai o ChatGPT. Apple Health viene letto in sola lettura; l'app non scrive dati in Salute. Quando un provider cloud e' selezionato, chat, profilo runner e riepiloghi Health necessari possono essere inviati al provider scelto per generare la risposta.
+Run with Bobby e' gratuita. Il coaching locale resta disponibile senza acquisti, senza StoreKit e senza paywall. I provider cloud sono opzionali e funzionano solo con API key gia' possedute dall'utente, salvate nel Keychain. L'app non usa login consumer Claude.ai o ChatGPT. Apple Health viene letto per personalizzare recupero e briefing; l'app scrive un workout in Salute solo se l'utente registra una seduta di corsa. Quando un provider cloud e' selezionato, chat, profilo runner e riepiloghi Health necessari possono essere inviati al provider scelto per generare la risposta.
 
 Privacy checklist:
 
 - Nessun tracking pubblicitario o analytics di terze parti.
 - Dati salvati localmente: conversazioni, profilo runner, piani allenamento e piani alimentari.
-- Dati HealthKit: lettura on-demand e in sola lettura; non vengono persistiti dall'app.
+- Dati HealthKit: lettura on-demand; scrittura workout solo se registri una seduta; i riepiloghi non vengono persistiti dall'app.
 - Segreti: API key utente nel Keychain; `.env` solo sviluppo locale.
 - Prima della submission eseguire `scripts/scan-secrets.sh` e verificare `PRIVACY_AND_SECURITY.md`.
+
+Listing pubblica (screenshot, descrizione, keyword, build 5): vedi `AppStoreConnect-public.md`.

@@ -167,21 +167,37 @@ I test automatici sono quelli in `RunWithBobbyTests`. I test UI e performance ML
 
 ## 🚀 Deployment
 
+### App Store listing
+
+La scheda pubblica (testo, screenshot 6.9", note review) è in [`AppStoreConnect-public.md`](AppStoreConnect-public.md).
+
+Prima di ogni upload: `scripts/scan-secrets.sh`.
+
 ### App Store Build
+
+Serve un **iPhone-only** archive della versione corrente (`MARKETING_VERSION` + `CURRENT_PROJECT_VERSION` in Xcode). La build già in TestFlight va sostituita se hai cambiato display name, device family o entitlements.
+
 ```bash
-# Build release firmato
+scripts/scan-secrets.sh
+
 xcodebuild archive \
     -project RunWithBobby.xcodeproj \
     -scheme RunWithBobby \
-    -archivePath "./RunWithBobby.xcarchive" \
+    -destination 'generic/platform=iOS' \
+    -archivePath "./build/RunWithBobby.xcarchive" \
     -configuration Release
-    
-# Upload ad App Store Connect
+
 xcodebuild -exportArchive \
-    -archivePath "./RunWithBobby.xcarchive" \
-    -exportOptionsPlist ExportOptions.plist \
-    -exportPath "./Release"
+    -archivePath "./build/RunWithBobby.xcarchive" \
+    -exportOptionsPlist ExportOptions-upload.plist \
+    -exportPath "./build/export"
 ```
+
+`ExportOptions-upload.plist` carica il binario su App Store Connect (team `4YW6S35MTZ`). Per un IPA locale senza upload usa `ExportOptions.plist`.
+
+In Apple Developer, sull’App ID `com.runwithbobby.app`, verifica HealthKit, App Groups `group.com.runwithbobby.app` e **Increased Memory Limit**.
+
+Dopo l’upload: App Store Connect → versione 1.5.2 → seleziona la nuova build → Media Manager iPhone 6.9" → Submit for Review.
 
 ### Privacy/Security  
 - **MLX Locale**: Enfatizza che l'AI locale non invia dati online

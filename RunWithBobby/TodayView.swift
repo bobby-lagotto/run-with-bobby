@@ -82,11 +82,16 @@ struct TodayView: View {
         .navigationTitle("Oggi")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
-            ToolbarItem(placement: .cancellationAction) {
-                Button("Chiudi") { dismiss() }
+            if !AppStoreScreenshotMode.isEnabled {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Chiudi") { dismiss() }
+                }
             }
         }
-        .task { await refreshFromHealth() }
+        .task {
+            if AppStoreScreenshotMode.isEnabled { return }
+            await refreshFromHealth()
+        }
         .sheet(isPresented: $showingRun) {
             RunSessionView()
         }

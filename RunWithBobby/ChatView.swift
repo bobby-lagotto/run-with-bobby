@@ -862,9 +862,11 @@ struct TrainingPlanDetailView: View {
             .navigationTitle("Dettagli Piano")
             .navigationBarTitleDisplayMode(.large)
             .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button("Chiudi") { dismiss() }
-                        .foregroundColor(.bobbyRed)
+                if !AppStoreScreenshotMode.isEnabled {
+                    ToolbarItem(placement: .navigationBarTrailing) {
+                        Button("Chiudi") { dismiss() }
+                            .foregroundColor(.bobbyRed)
+                    }
                 }
             }
             .sheet(isPresented: $showingEdit) {

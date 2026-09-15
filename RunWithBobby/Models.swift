@@ -386,6 +386,12 @@ class AppState: ObservableObject {
         currentConversation = Conversation()
         conversations.insert(currentConversation!, at: 0)
     }
+
+    func replaceConversations(_ newConversations: [Conversation]) {
+        conversations = newConversations
+        currentConversation = newConversations.first
+        saveConversations()
+    }
     
     func switchToConversation(_ conversation: Conversation) {
         currentConversation = conversation
