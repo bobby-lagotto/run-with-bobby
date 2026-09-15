@@ -197,7 +197,7 @@ xcodebuild -exportArchive \
 
 In Apple Developer, sull’App ID `com.runwithbobby.app`, verifica HealthKit, App Groups `group.com.runwithbobby.app` e **Increased Memory Limit**.
 
-Dopo l’upload: App Store Connect → versione 1.5.2 → seleziona la nuova build → Media Manager iPhone 6.9" → Submit for Review.
+Dopo l’upload: App Store Connect → versione 1.5.3 → seleziona la nuova build → Media Manager iPhone 6.9" → Submit for Review.
 
 ### Privacy/Security  
 - **MLX Locale**: Enfatizza che l'AI locale non invia dati online

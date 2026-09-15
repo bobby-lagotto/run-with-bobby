@@ -212,31 +212,30 @@ class BobbyAI: ObservableObject {
         let supportsNativeTools = !usingLocalModel || (selectedLocalModel?.supportsNativeToolCalling ?? true)
         let toolDefinitions: [ToolDefinitionSchema]? = supportsNativeTools ? ToolRouter.toolDefinitions : nil
 
-        if usingLocalModel {
-            let intent = CompactCoachIntent.detect(
-                userMessage,
-                hasPendingTrainingPlan: toolRouter.hasPendingTrainingPlan,
-                hasPendingNutritionPlan: toolRouter.hasPendingNutritionPlan
+        let intent = CompactCoachIntent.detect(
+            userMessage,
+            hasPendingTrainingPlan: toolRouter.hasPendingTrainingPlan,
+            hasPendingNutritionPlan: toolRouter.hasPendingNutritionPlan,
+            hasPendingOptimization: toolRouter.hasPendingOptimization
+        )
+        if let intent, intent.shouldGroundDeterministically() {
+            if let deterministic = await compactPlanner.respond(
+                to: userMessage,
+                userProfile: userProfile,
+                planManager: planManager,
+                nutritionManager: nutritionManager,
+                healthManager: healthManager
+            ) {
+                return deterministic
+            }
+        }
+        if usingLocalModel && !supportsNativeTools {
+            return compactModelFallback(
+                userMessage: userMessage,
+                userProfile: userProfile,
+                planManager: planManager,
+                nutritionManager: nutritionManager
             )
-            if let intent, intent.shouldGroundOnDevice(supportsNativeToolCalling: supportsNativeTools) {
-                if let deterministic = await compactPlanner.respond(
-                    to: userMessage,
-                    userProfile: userProfile,
-                    planManager: planManager,
-                    nutritionManager: nutritionManager,
-                    healthManager: healthManager
-                ) {
-                    return deterministic
-                }
-            }
-            if !supportsNativeTools {
-                return compactModelFallback(
-                    userMessage: userMessage,
-                    userProfile: userProfile,
-                    planManager: planManager,
-                    nutritionManager: nutritionManager
-                )
-            }
         }
 
         if usingLocalModel && !mlxProvider.isAvailable {
@@ -262,6 +261,8 @@ class BobbyAI: ObservableObject {
 
         // Build conversation messages
         var messages = buildMessages(userMessage: userMessage, userProfile: userProfile, nutritionManager: nutritionManager, conversationHistory: conversationHistory, usingMLX: usingLocalModel)
+        let userConfirmed = CompactCoachIntent.isExplicitConfirmation(userMessage)
+        let allowedFacts = CoachFactBag.empty.allowingProfile(userProfile)
 
         // Agent loop: generate (streaming) → tool calls → execute → re-generate
         for iteration in 0..<maxToolIterations {
@@ -280,6 +281,15 @@ class BobbyAI: ObservableObject {
 
                 guard let response = fullResponse else {
                     if let visible = visibleStreamingText() {
+                        if GenerationLoopGuard.shouldDiscardAsModelOutput(visible, allowedFacts: allowedFacts) {
+                            return await groundedOrOfflineFallback(
+                                userMessage: userMessage,
+                                userProfile: userProfile,
+                                planManager: planManager,
+                                nutritionManager: nutritionManager,
+                                reason: .providerDidNotAnswer
+                            )
+                        }
                         return visible
                     }
                     return await groundedOrOfflineFallback(
@@ -294,7 +304,7 @@ class BobbyAI: ObservableObject {
                 // If no tool calls, return the text response
                 if response.toolCalls.isEmpty {
                     let text = response.text.trimmingCharacters(in: .whitespacesAndNewlines)
-                    if GenerationLoopGuard.shouldDiscardAsModelOutput(text) {
+                    if GenerationLoopGuard.shouldDiscardAsModelOutput(text, allowedFacts: allowedFacts) {
                         return await groundedOrOfflineFallback(
                             userMessage: userMessage,
                             userProfile: userProfile,
@@ -309,7 +319,7 @@ class BobbyAI: ObservableObject {
                 // Tool calls detected — clear streaming text during tool processing
                 streamingText = ""
 
-                // Execute tool calls
+                let siblingNames = response.toolCalls.map(\.name)
                 var toolResults: [ToolResult] = []
                 for toolCall in response.toolCalls {
                     let result = await toolRouter.execute(
@@ -317,11 +327,17 @@ class BobbyAI: ObservableObject {
                         userProfile: userProfile,
                         planManager: planManager,
                         nutritionManager: nutritionManager,
-                        healthManager: healthManager
+                        healthManager: healthManager,
+                        userConfirmed: userConfirmed,
+                        siblingToolNames: siblingNames
                     )
                     toolResults.append(result)
 
                     PrivacyLog.debug("Tool call completed: \(toolCall.name)")
+                }
+
+                if let formatted = CompactCoachPlanner.formatToolResults(toolResults) {
+                    return formatted
                 }
 
                 // Append assistant message WITH tool_calls (required by OpenAI API)
@@ -368,7 +384,7 @@ class BobbyAI: ObservableObject {
                                 case .done(let response):
                                     if response.toolCalls.isEmpty {
                                         let text = response.text.trimmingCharacters(in: .whitespacesAndNewlines)
-                                        if GenerationLoopGuard.shouldDiscardAsModelOutput(text) {
+                                        if GenerationLoopGuard.shouldDiscardAsModelOutput(text, allowedFacts: allowedFacts) {
                                             discarded = true
                                         } else {
                                             return text
@@ -688,24 +704,7 @@ private struct OfflineCoachFallback {
             return text
         }
 
-        let weeklyKm = max(profile.weeklyKilometers, 6)
-        let workouts = min(max(profile.workoutsPerWeek, 2), 5)
-        let days = scheduleDays(for: workouts)
-        let shares = distanceShares(for: workouts)
-        let labels = workoutLabels(for: profile, workouts: workouts)
-
-        var lines = [
-            "Bozza minima sicura basata sul tuo profilo: \(Int(weeklyKm)) km/settimana, \(profile.experience.rawValue.lowercased()), obiettivo \(profile.primaryGoal.rawValue.lowercased())."
-        ]
-
-        for index in 0..<workouts {
-            let km = max(2, weeklyKm * shares[index])
-            lines.append("- \(days[index]): \(labels[index]) - \(formatKm(km)) km.")
-        }
-
-        lines.append("Mantieni almeno 1 giorno facile dopo qualità o lungo. Se dolore acuto o fatica insolita: riduci del 20-30% o riposa.")
-        lines.append("Questa è una proposta non salvata; posso trasformarla in piano solo dopo tua conferma.")
-        return lines.joined(separator: "\n")
+        return "Non ho un piano attivo e non invento i km. Dimmi «Crea un nuovo piano di allenamento» e ti calcolo una proposta da confermare."
     }
 
     private func nutritionAdvice(for profile: RunnerProfile, activePlan: TrainingPlan?, nutritionPlan: NutritionPlan?) -> String {
@@ -758,7 +757,7 @@ private struct OfflineCoachFallback {
             return "Posso aiutarti sul piano attivo \"\(activePlan.title)\". Prossimo passo utile: dimmi se vuoi analizzare una seduta, ridurre carico, preparare una gara o regolare nutrizione/recupero."
         }
 
-        return "Per partire in modo sicuro: questa settimana resta su \(Int(max(profile.weeklyKilometers, 6))) km circa, \(min(max(profile.workoutsPerWeek, 2), 5)) sedute, ritmo facile nella maggior parte dei km. Dimmi obiettivo, giorni disponibili e eventuali dolori: ti preparo una proposta non salvata."
+        return "Non ho un piano attivo. Dimmi «Crea un nuovo piano di allenamento» e ti preparo una proposta non salvata."
     }
 
     private func redFlagAdvice() -> String {
@@ -798,46 +797,6 @@ private struct OfflineCoachFallback {
             "dolore al petto", "pressione al petto", "sven", "svengo", "dispnea", "fiato corto forte",
             "capogiri", "vertigini", "dolore acuto", "dolore forte", "neurolog", "nausea marcata"
         ])
-    }
-
-    private func scheduleDays(for workouts: Int) -> [String] {
-        switch workouts {
-        case 2:
-            return ["Martedì", "Sabato"]
-        case 3:
-            return ["Martedì", "Giovedì", "Sabato"]
-        case 4:
-            return ["Lunedì", "Mercoledì", "Venerdì", "Domenica"]
-        default:
-            return ["Lunedì", "Martedì", "Giovedì", "Sabato", "Domenica"]
-        }
-    }
-
-    private func distanceShares(for workouts: Int) -> [Double] {
-        switch workouts {
-        case 2:
-            return [0.45, 0.55]
-        case 3:
-            return [0.30, 0.25, 0.45]
-        case 4:
-            return [0.20, 0.25, 0.20, 0.35]
-        default:
-            return [0.18, 0.22, 0.16, 0.18, 0.26]
-        }
-    }
-
-    private func workoutLabels(for profile: RunnerProfile, workouts: Int) -> [String] {
-        let quality = profile.experience == .beginner ? "Facile + 4 allunghi controllati" : "Qualità controllata RPE 6-7"
-        switch workouts {
-        case 2:
-            return ["Facile RPE 3-4", "Lungo facile RPE 3-4"]
-        case 3:
-            return ["Facile RPE 3-4", quality, "Lungo facile RPE 3-4"]
-        case 4:
-            return ["Facile RPE 3-4", quality, "Recupero RPE 2-3", "Lungo facile RPE 3-4"]
-        default:
-            return ["Facile RPE 3-4", quality, "Recupero RPE 2-3", "Facile + tecnica", "Lungo facile RPE 3-4"]
-        }
     }
 
     private func normalize(_ text: String) -> String {

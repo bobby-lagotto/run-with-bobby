@@ -55,8 +55,9 @@ final class GenerationLoopGuardTests: XCTestCase {
             .createNutritionPlan
         )
         XCTAssertNil(CompactCoachIntent.detect("ok"))
+        XCTAssertNil(CompactCoachIntent.detect("ok", hasPendingTrainingPlan: true))
         XCTAssertEqual(
-            CompactCoachIntent.detect("ok", hasPendingTrainingPlan: true),
+            CompactCoachIntent.detect("salva", hasPendingTrainingPlan: true),
             .savePendingTraining
         )
     }
@@ -86,15 +87,21 @@ final class GenerationLoopGuardTests: XCTestCase {
             CompactCoachIntent.detect("Cosa faccio oggi? Usa il briefing e l'aderenza."),
             .todayBriefing
         )
-        XCTAssertTrue(
-            CompactCoachIntent.healthStatus.shouldGroundOnDevice(supportsNativeToolCalling: true)
-        )
-        XCTAssertFalse(
-            CompactCoachIntent.createTrainingPlan.shouldGroundOnDevice(supportsNativeToolCalling: true)
-        )
-        XCTAssertTrue(
-            CompactCoachIntent.createTrainingPlan.shouldGroundOnDevice(supportsNativeToolCalling: false)
-        )
+        XCTAssertTrue(CompactCoachIntent.healthStatus.shouldGroundDeterministically())
+        XCTAssertTrue(CompactCoachIntent.createTrainingPlan.shouldGroundDeterministically())
+        XCTAssertEqual(CompactCoachIntent.detect("Come mi sento?"), .healthStatus)
+        XCTAssertEqual(CompactCoachIntent.detect("Cosa mi manca?"), .adherence)
+        XCTAssertEqual(CompactCoachIntent.detect("Vorrei ottimizzare il mio piano attuale"), .proposeOptimize)
+    }
+
+    func testUnverifiedKilometersAreDiscarded() {
+        let text = "Oggi corri 12 km a ritmo gara."
+        XCTAssertTrue(GenerationLoopGuard.containsUnverifiedNumericClaims(text, allowed: .empty))
+        XCTAssertTrue(GenerationLoopGuard.shouldDiscardAsModelOutput(text, allowedFacts: .empty))
+
+        var facts = CoachFactBag.empty
+        facts.kilometers.insert(12)
+        XCTAssertFalse(GenerationLoopGuard.containsUnverifiedNumericClaims(text, allowed: facts))
     }
 
     func testQwen15BDoesNotRotateKVAt2048() {

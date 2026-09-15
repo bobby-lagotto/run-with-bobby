@@ -137,9 +137,15 @@ class ToolRouter {
 
     private var lastCalculatedPlan: [DayTraining]?
     private var lastCalculatedNutritionPlan: NutritionPlan?
+    private var lastPendingOptimization: TrainingPlan?
 
     var hasPendingTrainingPlan: Bool { lastCalculatedPlan != nil }
     var hasPendingNutritionPlan: Bool { lastCalculatedNutritionPlan != nil }
+    var hasPendingOptimization: Bool { lastPendingOptimization != nil }
+
+    private static let mutatingTools: Set<String> = [
+        "save_training_plan", "save_nutrition_plan", "log_session"
+    ]
 
     // MARK: - Execute Tool Call
 
@@ -151,8 +157,15 @@ class ToolRouter {
         healthManager: HealthKitManager? = nil,
         loggedWorkouts: [LoggedWorkout] = [],
         healthSignals: HealthSignals? = nil,
-        referenceDate: Date = Date()
+        referenceDate: Date = Date(),
+        userConfirmed: Bool = false,
+        siblingToolNames: [String]? = nil
     ) async -> ToolResult {
+        let siblings = siblingToolNames ?? [toolCall.name]
+        if let blocked = mutationGate(for: toolCall.name, userConfirmed: userConfirmed, siblings: siblings) {
+            return ToolResult(toolCallId: toolCall.id, name: toolCall.name, content: blocked)
+        }
+
         switch toolCall.name {
         case "calculate_training_plan":
             return calculateTrainingPlan(arguments: toolCall.arguments, userProfile: userProfile, toolCallId: toolCall.id)
@@ -161,7 +174,7 @@ class ToolRouter {
         case "get_active_plan":
             return getActivePlan(planManager: planManager, toolCallId: toolCall.id)
         case "optimize_plan":
-            return optimizePlan(arguments: toolCall.arguments, planManager: planManager, nutritionManager: nutritionManager, userProfile: userProfile, toolCallId: toolCall.id)
+            return optimizePlan(arguments: toolCall.arguments, planManager: planManager, nutritionManager: nutritionManager, userProfile: userProfile, toolCallId: toolCall.id, userConfirmed: userConfirmed)
         case "save_training_plan":
             return saveTrainingPlan(arguments: toolCall.arguments, userProfile: userProfile, planManager: planManager, nutritionManager: nutritionManager, toolCallId: toolCall.id)
         case "get_health_summary":
@@ -181,6 +194,17 @@ class ToolRouter {
         default:
             return ToolResult(toolCallId: toolCall.id, name: toolCall.name, content: "{\"error\": \"Tool sconosciuto: \(toolCall.name)\"}")
         }
+    }
+
+    private func mutationGate(for name: String, userConfirmed: Bool, siblings: [String]) -> String? {
+        let calculatedThisBatch = siblings.contains("calculate_training_plan") || siblings.contains("calculate_nutrition_plan")
+        if calculatedThisBatch && (name == "save_training_plan" || name == "save_nutrition_plan") {
+            return "{\"errore\": \"Non salvo nello stesso turno in cui calcolo il piano. Conferma esplicitamente nel messaggio successivo.\"}"
+        }
+        if Self.mutatingTools.contains(name) && !userConfirmed {
+            return "{\"errore\": \"Serve una conferma esplicita (salva / confermo) prima di modificare piani o sedute.\"}"
+        }
+        return nil
     }
 
     // MARK: - Tool Implementations
@@ -265,11 +289,89 @@ class ToolRouter {
         return ToolResult(toolCallId: toolCallId, name: "get_active_plan", content: serializeJSON(result))
     }
 
-    private func optimizePlan(arguments: [String: JSONValue], planManager: TrainingPlanManager, nutritionManager: NutritionPlanManager?, userProfile: RunnerProfile, toolCallId: String) -> ToolResult {
+    private func optimizePlan(
+        arguments: [String: JSONValue],
+        planManager: TrainingPlanManager,
+        nutritionManager: NutritionPlanManager?,
+        userProfile: RunnerProfile,
+        toolCallId: String,
+        userConfirmed: Bool
+    ) -> ToolResult {
+        if userConfirmed {
+            return applyPendingOptimization(
+                planManager: planManager,
+                nutritionManager: nutritionManager,
+                userProfile: userProfile,
+                arguments: arguments,
+                toolCallId: toolCallId
+            )
+        }
+
         guard let plan = planManager.currentActivePlan else {
             return ToolResult(toolCallId: toolCallId, name: "optimize_plan", content: "{\"errore\": \"Nessun piano attivo da ottimizzare.\"}")
         }
 
+        let optimized = buildOptimizedPlan(from: plan, arguments: arguments)
+        lastPendingOptimization = optimized
+
+        let planData = optimized.weeklyPlan.map { day -> [String: Any] in
+            [
+                "giorno": day.dayOfWeek,
+                "tipo": day.workoutType.rawValue,
+                "distanza_km": day.distance,
+                "durata_min": day.estimatedDuration,
+                "descrizione": day.description
+            ]
+        }
+        let totalKm = optimized.weeklyPlan.reduce(0.0) { $0 + $1.distance }
+        let workouts = optimized.weeklyPlan.filter { $0.workoutType != .rest }.count
+        let result: [String: Any] = [
+            "titolo": optimized.title,
+            "proposta": true,
+            "piano_settimanale": planData,
+            "riepilogo": [
+                "km_totali": Int(totalKm),
+                "allenamenti": workouts
+            ],
+            "messaggio": "Proposta di ottimizzazione non applicata."
+        ]
+        return ToolResult(toolCallId: toolCallId, name: "optimize_plan", content: serializeJSON(result))
+    }
+
+    private func applyPendingOptimization(
+        planManager: TrainingPlanManager,
+        nutritionManager: NutritionPlanManager?,
+        userProfile: RunnerProfile,
+        arguments: [String: JSONValue],
+        toolCallId: String
+    ) -> ToolResult {
+        let optimized: TrainingPlan
+        if let pending = lastPendingOptimization {
+            optimized = pending
+        } else if let current = planManager.currentActivePlan {
+            optimized = buildOptimizedPlan(from: current, arguments: arguments)
+        } else {
+            return ToolResult(toolCallId: toolCallId, name: "optimize_plan", content: "{\"errore\": \"Nessuna ottimizzazione da applicare. Proponi prima una modifica.\"}")
+        }
+
+        planManager.savePlan(optimized)
+        planManager.setActivePlan(optimized)
+        lastPendingOptimization = nil
+
+        let stats = planManager.getWeeklyStats(for: optimized)
+        var result: [String: Any] = [
+            "titolo": optimized.title,
+            "km_totali": Int(stats.totalDistance),
+            "allenamenti": stats.workoutCount,
+            "messaggio": "Piano ottimizzato con successo!"
+        ]
+        if let nm = nutritionManager, nm.currentNutritionPlan != nil {
+            result["nota_piano_alimentare"] = "Il piano di allenamento è cambiato. Chiedi all'utente se vuole aggiornare anche il piano alimentare."
+        }
+        return ToolResult(toolCallId: toolCallId, name: "optimize_plan", content: serializeJSON(result))
+    }
+
+    private func buildOptimizedPlan(from plan: TrainingPlan, arguments: [String: JSONValue]) -> TrainingPlan {
         let modification = arguments["modification"]?.stringValue ?? "increase_volume"
         let percentage = arguments["percentage"]?.doubleValue ?? 10.0
         let factor = percentage / 100.0
@@ -316,20 +418,7 @@ class ToolRouter {
             break
         }
 
-        planManager.savePlan(optimized)
-        planManager.setActivePlan(optimized)
-
-        let stats = planManager.getWeeklyStats(for: optimized)
-        var result: [String: Any] = [
-            "titolo": optimized.title,
-            "km_totali": Int(stats.totalDistance),
-            "allenamenti": stats.workoutCount,
-            "messaggio": "Piano ottimizzato con successo!"
-        ]
-        if let nm = nutritionManager, nm.currentNutritionPlan != nil {
-            result["nota_piano_alimentare"] = "Il piano di allenamento è cambiato. Chiedi all'utente se vuole aggiornare anche il piano alimentare."
-        }
-        return ToolResult(toolCallId: toolCallId, name: "optimize_plan", content: serializeJSON(result))
+        return optimized
     }
 
     private func saveTrainingPlan(arguments: [String: JSONValue], userProfile: RunnerProfile, planManager: TrainingPlanManager, nutritionManager: NutritionPlanManager?, toolCallId: String) -> ToolResult {

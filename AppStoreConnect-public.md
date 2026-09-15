@@ -2,7 +2,7 @@
 
 Copia questi campi in App Store Connect per la scheda pubblica di **Run with Bobby** (`com.runwithbobby.app`, adamId `6761195463`).
 
-Versione binario da caricare: **1.5.2 (5)** — la build 4 in TestFlight è precedente a display name, iPhone-only e capability attuali.
+Versione binario da caricare: **1.5.3 (6)** — la build 5 in TestFlight è precedente al coach deterministico e ai gate di conferma.
 
 ## Informazioni app
 
@@ -16,7 +16,7 @@ Versione binario da caricare: **1.5.2 (5)** — la build 4 in TestFlight è prec
 - Marketing URL: https://bobby-lagotto.github.io/run-with-bobby/
 - Copyright: `2026 Francesco Saverio Mazzi`
 
-La landing GitHub Pages (hero Wimmelbild, screenshot, privacy) sta in `docs/`. Dopo il push: repo Settings → Pages → Deploy from branch `master` / folder `/docs`.
+La landing GitHub Pages (hero Wimmelbild, screenshot, privacy) sta in `docs/` e, perché Pages è su `master` / `/` (root), anche in `index.html` / `privacy.html` alla root. Se in Settings → Pages imposti folder `/docs`, gli URL restano gli stessi e le copie in root si possono togliere.
 
 ## Testo promozionale (170 caratteri)
 
@@ -48,11 +48,11 @@ Software libero (GPL-3.0): https://github.com/bobby-lagotto/run-with-bobby
 
 corsa,running,coach,allenamento,privacy,offline,5K,10K,maratona,fitness,nutrizione,AI,locale
 
-## Novità 1.5.2
+## Novità 1.5.3
 
-- Fix selezione modelli locali in Impostazioni AI: il tap sulla riga aggiorna il modello attivo.
-- Tap su un modello non scaricato avvia il download dalla riga.
-- Correzione persistenza dei modelli scaricati tra un avvio e l’altro.
+- Coach più preciso: salute, oggi, piani e aderenza dai tool/HealthKit, senza inventare km o HRV.
+- Modello locale: niente più rifiuti «privacy/legali» al posto del coaching.
+- Conferma esplicita prima di salvare o ottimizzare un piano.
 
 ## Screenshot
 
@@ -146,7 +146,7 @@ Open source: https://github.com/bobby-lagotto/run-with-bobby
 1. Esegui `scripts/scan-secrets.sh`.
 2. In Apple Developer, App ID `com.runwithbobby.app`: HealthKit, App Groups `group.com.runwithbobby.app`, Increased Memory Limit.
 3. Archive Release e upload con `ExportOptions-upload.plist` (comandi in `DEVELOPMENT.md`).
-4. Seleziona la build 5 sulla versione 1.5.2.
+4. Seleziona la build 6 sulla versione 1.5.3.
 5. Carica gli 8 PNG 6.5" (slot di default) da `AppStore/screenshots/iphone-6.5/`.
 6. Informazioni sull’app: categoria + classificazioni.
 7. Privacy dell’app: URL Pages + etichette.

@@ -1,5 +1,23 @@
 import Foundation
 
+struct CoachFactBag: Equatable {
+    var kilometers: Set<Double> = []
+    var heartRates: Set<Int> = []
+    var hrvMs: Set<Int> = []
+
+    static let empty = CoachFactBag()
+
+    func allowingProfile(_ profile: RunnerProfile) -> CoachFactBag {
+        var copy = self
+        copy.kilometers.insert(((profile.weeklyKilometers * 10).rounded()) / 10)
+        return copy
+    }
+
+    func allowsKilometer(_ value: Double) -> Bool {
+        kilometers.contains { abs($0 - value) < 0.15 }
+    }
+}
+
 enum GenerationLoopGuard {
     static let minNGramLength = 12
     static let maxNGramLength = 120
@@ -56,11 +74,38 @@ enum GenerationLoopGuard {
         return markers.contains { lower.contains($0) }
     }
 
+    static func looksLikeOffRole(_ text: String) -> Bool {
+        let lower = text.lowercased()
+        let markers = [
+            "as an ai",
+            "sono un modello",
+            "non sono un coach",
+            "consultare un avvocato",
+            "i am an ai"
+        ]
+        return markers.contains { lower.contains($0) }
+    }
+
+    static func containsUnverifiedNumericClaims(_ text: String, allowed: CoachFactBag) -> Bool {
+        if extractedKilometers(from: text).contains(where: { !allowed.allowsKilometer($0) }) {
+            return true
+        }
+        if extractedInts(from: text, pattern: #"(\d+)\s*bpm"#).contains(where: { !allowed.heartRates.contains($0) }) {
+            return true
+        }
+        let hrvPattern = #"hrv[^\d]{0,16}(\d+)"#
+        if extractedInts(from: text, pattern: hrvPattern).contains(where: { !allowed.hrvMs.contains($0) }) {
+            return true
+        }
+        return false
+    }
+
     /// Hide mid-stream so the chat stays on "Sta pensando..." instead of dumping loops.
     static func shouldHideFromStream(_ text: String) -> Bool {
         looksLikeLeakedToolJSON(text)
             || looksLikeEnglishSchemaDump(text)
             || looksLikeLegalPrivacyRefusal(text)
+            || looksLikeOffRole(text)
             || isRepeating(text)
     }
 
@@ -69,6 +114,32 @@ enum GenerationLoopGuard {
         let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
         if trimmed.isEmpty { return true }
         return shouldHideFromStream(trimmed)
+    }
+
+    static func shouldDiscardAsModelOutput(_ text: String, allowedFacts: CoachFactBag) -> Bool {
+        if shouldDiscardAsModelOutput(text) { return true }
+        return containsUnverifiedNumericClaims(text, allowed: allowedFacts)
+    }
+
+    private static func extractedKilometers(from text: String) -> [Double] {
+        let regex = try? NSRegularExpression(pattern: #"(\d+(?:[.,]\d+)?)\s*km"#, options: .caseInsensitive)
+        let ns = text as NSString
+        let matches = regex?.matches(in: text, range: NSRange(location: 0, length: ns.length)) ?? []
+        return matches.compactMap { match in
+            guard match.numberOfRanges > 1 else { return nil }
+            let raw = ns.substring(with: match.range(at: 1)).replacingOccurrences(of: ",", with: ".")
+            return Double(raw)
+        }
+    }
+
+    private static func extractedInts(from text: String, pattern: String) -> [Int] {
+        let regex = try? NSRegularExpression(pattern: pattern, options: .caseInsensitive)
+        let ns = text as NSString
+        let matches = regex?.matches(in: text, range: NSRange(location: 0, length: ns.length)) ?? []
+        return matches.compactMap { match in
+            guard match.numberOfRanges > 1 else { return nil }
+            return Int(ns.substring(with: match.range(at: 1)))
+        }
     }
 
     private static func hasConsecutiveNGrams(_ text: String) -> Bool {

@@ -28,7 +28,8 @@ final class ToolRouterIntegrationTests: XCTestCase {
         let save = await router.execute(
             ToolCall(name: "save_training_plan", arguments: ["title": .string("Piano Test")]),
             userProfile: profile,
-            planManager: manager
+            planManager: manager,
+            userConfirmed: true
         )
 
         XCTAssertTrue(save.content.contains("salvato"), save.content)
@@ -97,5 +98,114 @@ final class ToolRouterIntegrationTests: XCTestCase {
             text?.contains("HealthKit") == true || text?.contains("Salute") == true,
             text ?? ""
         )
+    }
+
+    func testSaveInSameTurnAsCalculateIsRejected() async {
+        let router = ToolRouter()
+        let manager = HabitFixtures.isolatedManager()
+        var profile = RunnerProfile()
+        profile.weeklyKilometers = 30
+        profile.workoutsPerWeek = 4
+
+        _ = await router.execute(
+            ToolCall(name: "calculate_training_plan", arguments: [
+                "weekly_km": .number(30),
+                "workouts_per_week": .int(4),
+                "goal": .string("speed"),
+                "experience": .string("intermediate")
+            ]),
+            userProfile: profile,
+            planManager: manager
+        )
+
+        let save = await router.execute(
+            ToolCall(name: "save_training_plan", arguments: ["title": .string("Too Soon")]),
+            userProfile: profile,
+            planManager: manager,
+            userConfirmed: true,
+            siblingToolNames: ["calculate_training_plan", "save_training_plan"]
+        )
+
+        XCTAssertTrue(save.content.contains("stesso turno") || save.content.contains("errore"), save.content)
+        XCTAssertNil(manager.currentActivePlan)
+        XCTAssertTrue(router.hasPendingTrainingPlan)
+    }
+
+    func testOptimizeWithoutConfirmationStaysPending() async {
+        let router = ToolRouter()
+        let manager = HabitFixtures.isolatedManager()
+        var profile = RunnerProfile()
+        profile.weeklyKilometers = 30
+        profile.workoutsPerWeek = 4
+
+        _ = await router.execute(
+            ToolCall(name: "calculate_training_plan", arguments: [
+                "weekly_km": .number(30),
+                "workouts_per_week": .int(4),
+                "goal": .string("speed"),
+                "experience": .string("intermediate")
+            ]),
+            userProfile: profile,
+            planManager: manager
+        )
+        _ = await router.execute(
+            ToolCall(name: "save_training_plan", arguments: ["title": .string("Base")]),
+            userProfile: profile,
+            planManager: manager,
+            userConfirmed: true
+        )
+        let originalTitle = manager.currentActivePlan?.title
+
+        let proposal = await router.execute(
+            ToolCall(name: "optimize_plan", arguments: [
+                "modification": .string("increase_volume"),
+                "percentage": .number(10)
+            ]),
+            userProfile: profile,
+            planManager: manager,
+            userConfirmed: false
+        )
+
+        XCTAssertTrue(proposal.content.contains("proposta") || proposal.content.contains("piano_settimanale"), proposal.content)
+        XCTAssertEqual(manager.currentActivePlan?.title, originalTitle)
+        XCTAssertTrue(router.hasPendingOptimization)
+
+        let planner = CompactCoachPlanner(toolRouter: router)
+        let applied = await planner.respond(
+            to: "confermo",
+            userProfile: profile,
+            planManager: manager,
+            nutritionManager: nil
+        )
+        XCTAssertTrue(applied?.contains("applicata") == true || applied?.contains("ottimizz") == true, applied ?? "")
+        XCTAssertNotEqual(manager.currentActivePlan?.title, originalTitle)
+        XCTAssertFalse(router.hasPendingOptimization)
+    }
+
+    func testFeelingAndMissingAreGrounded() async {
+        let router = ToolRouter()
+        let planner = CompactCoachPlanner(toolRouter: router)
+        let manager = HabitFixtures.isolatedManager()
+        var profile = RunnerProfile()
+        profile.weeklyKilometers = 20
+
+        let feeling = await planner.respond(
+            to: "Come mi sento?",
+            userProfile: profile,
+            planManager: manager,
+            nutritionManager: nil,
+            healthManager: nil
+        )
+        XCTAssertNotNil(feeling)
+        XCTAssertFalse(feeling?.contains("diritto alla privacy") == true, feeling ?? "")
+
+        let missing = await planner.respond(
+            to: "Cosa mi manca?",
+            userProfile: profile,
+            planManager: manager,
+            nutritionManager: nil
+        )
+        XCTAssertNotNil(missing)
+        XCTAssertTrue(missing?.contains("Nessun piano") == true || missing?.contains("Aderenza") == true, missing ?? "")
     }
 }

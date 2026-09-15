@@ -5,13 +5,18 @@ enum CompactCoachIntent: Equatable {
     case createNutritionPlan
     case savePendingTraining
     case savePendingNutrition
+    case savePendingOptimize
     case healthStatus
     case todayBriefing
+    case adherence
+    case activePlan
+    case proposeOptimize
 
     static func detect(
         _ raw: String,
         hasPendingTrainingPlan: Bool = false,
-        hasPendingNutritionPlan: Bool = false
+        hasPendingNutritionPlan: Bool = false,
+        hasPendingOptimization: Bool = false
     ) -> CompactCoachIntent? {
         let text = normalize(raw)
         if isNutritionCreate(text) { return .createNutritionPlan }
@@ -19,21 +24,22 @@ enum CompactCoachIntent: Equatable {
         if isSaveConfirmation(text) {
             if hasPendingTrainingPlan { return .savePendingTraining }
             if hasPendingNutritionPlan { return .savePendingNutrition }
+            if hasPendingOptimization { return .savePendingOptimize }
         }
+        if isProposeOptimize(text) { return .proposeOptimize }
         if isHealthStatus(text) { return .healthStatus }
         if isTodayBriefing(text) { return .todayBriefing }
+        if isAdherence(text) { return .adherence }
+        if isActivePlan(text) { return .activePlan }
         return nil
     }
 
-    /// Health and today must not go through small local LLMs: they ignore the
-    /// coach prompt and refuse with legal/privacy boilerplate.
-    func shouldGroundOnDevice(supportsNativeToolCalling: Bool) -> Bool {
-        switch self {
-        case .healthStatus, .todayBriefing:
-            return true
-        case .createTrainingPlan, .createNutritionPlan, .savePendingTraining, .savePendingNutrition:
-            return !supportsNativeToolCalling
-        }
+    func shouldGroundDeterministically() -> Bool {
+        true
+    }
+
+    static func isExplicitConfirmation(_ raw: String) -> Bool {
+        isSaveConfirmation(normalize(raw))
     }
 
     private static func isTrainingCreate(_ text: String) -> Bool {
@@ -54,14 +60,26 @@ enum CompactCoachIntent: Equatable {
 
     private static func isSaveConfirmation(_ text: String) -> Bool {
         let compact = text.trimmingCharacters(in: .whitespacesAndNewlines)
-        let exact = ["salva", "confermo", "si", "ok", "va bene", "ok salva", "si salva", "salva il piano", "confermo il piano"]
+        let exact = [
+            "salva",
+            "confermo",
+            "salva il piano",
+            "confermo il piano",
+            "ok salva",
+            "si salva",
+            "confermo la modifica",
+            "applica",
+            "applica la modifica"
+        ]
         if exact.contains(compact) { return true }
-        return compact.contains("salva") && compact.count < 40
+        return compact.contains("salva") && compact.contains("piano") && compact.count < 50
     }
 
     private static func isHealthStatus(_ text: String) -> Bool {
         containsAny(text, [
             "come sto",
+            "come mi sento",
+            "ho dormito",
             "dati di salute",
             "dati su salute",
             "dati salute",
@@ -75,8 +93,39 @@ enum CompactCoachIntent: Equatable {
     private static func isTodayBriefing(_ text: String) -> Bool {
         containsAny(text, [
             "cosa faccio oggi",
+            "devo correre oggi",
+            "seduta di oggi",
+            "pronto per allenarmi",
             "briefing",
             "prontezza"
+        ])
+    }
+
+    private static func isAdherence(_ text: String) -> Bool {
+        containsAny(text, [
+            "ho corso",
+            "cosa mi manca",
+            "aderenza",
+            "come sta andando la settimana",
+            "settimana come sta andando"
+        ])
+    }
+
+    private static func isActivePlan(_ text: String) -> Bool {
+        containsAny(text, [
+            "piano attivo",
+            "mostrami il piano",
+            "che piano ho"
+        ])
+    }
+
+    private static func isProposeOptimize(_ text: String) -> Bool {
+        containsAny(text, [
+            "ottimizza",
+            "ottimizzare",
+            "aumenta il volume",
+            "riduci il volume",
+            "ridurre il carico"
         ])
     }
 
@@ -102,7 +151,8 @@ struct CompactCoachPlanner {
         guard let intent = CompactCoachIntent.detect(
             userMessage,
             hasPendingTrainingPlan: toolRouter.hasPendingTrainingPlan,
-            hasPendingNutritionPlan: toolRouter.hasPendingNutritionPlan
+            hasPendingNutritionPlan: toolRouter.hasPendingNutritionPlan,
+            hasPendingOptimization: toolRouter.hasPendingOptimization
         ) else {
             return nil
         }
@@ -116,11 +166,61 @@ struct CompactCoachPlanner {
             return await saveTrainingPlan(userProfile: userProfile, planManager: planManager, nutritionManager: nutritionManager)
         case .savePendingNutrition:
             return await saveNutritionPlan(planManager: planManager, nutritionManager: nutritionManager)
+        case .savePendingOptimize:
+            return await applyOptimize(userProfile: userProfile, planManager: planManager, nutritionManager: nutritionManager)
         case .healthStatus:
             return await healthStatus(userProfile: userProfile, planManager: planManager, healthManager: healthManager)
         case .todayBriefing:
             return await todayBriefing(userProfile: userProfile, planManager: planManager, healthManager: healthManager)
+        case .adherence:
+            return await adherence(userProfile: userProfile, planManager: planManager, healthManager: healthManager)
+        case .activePlan:
+            return await activePlan(userProfile: userProfile, planManager: planManager)
+        case .proposeOptimize:
+            return await proposeOptimize(userMessage: userMessage, userProfile: userProfile, planManager: planManager, nutritionManager: nutritionManager)
         }
+    }
+
+    static func formatToolResults(_ results: [ToolResult]) -> String? {
+        guard !results.isEmpty else { return nil }
+        var parts: [String] = []
+        let health = results.first { $0.name == "get_health_summary" }?.content
+        let briefing = results.first { $0.name == "get_today_briefing" }?.content
+
+        for result in results {
+            switch result.name {
+            case "calculate_training_plan":
+                if let text = formatTrainingPlan(from: result.content) { parts.append(text) }
+            case "calculate_nutrition_plan":
+                if let text = formatNutritionPlan(from: result.content) { parts.append(text) }
+            case "get_health_summary":
+                parts.append(formatHealthStatus(healthJSON: result.content, briefingJSON: briefing))
+            case "get_today_briefing":
+                if health == nil {
+                    parts.append(formatTodayBriefing(from: result.content))
+                }
+            case "get_adherence":
+                parts.append(formatAdherence(from: result.content))
+            case "get_active_plan":
+                parts.append(formatActivePlan(from: result.content))
+            case "optimize_plan":
+                parts.append(formatOptimize(from: result.content))
+            case "save_training_plan", "save_nutrition_plan", "log_session":
+                if let root = parseObject(result.content), let error = stringValue(root["errore"]) {
+                    parts.append(error)
+                } else if let root = parseObject(result.content), let message = stringValue(root["messaggio"]) {
+                    parts.append(message)
+                }
+            default:
+                if let root = parseObject(result.content), let error = stringValue(root["errore"]) {
+                    parts.append(error)
+                }
+            }
+        }
+
+        let unique = parts.filter { !$0.isEmpty }
+        guard !unique.isEmpty else { return nil }
+        return unique.joined(separator: "\n\n")
     }
 
     static func formatTrainingPlan(from json: String) -> String? {
@@ -136,21 +236,7 @@ struct CompactCoachPlanner {
         var lines = [
             "Proposta di piano (non salvata), calcolata sul tuo profilo: \(totalKm) km/settimana, \(workouts) allenamenti."
         ]
-
-        for day in days {
-            let name = stringValue(day["giorno"]) ?? "Giorno"
-            let type = stringValue(day["tipo"]) ?? ""
-            let km = doubleValue(day["distanza_km"]) ?? 0
-            let minutes = intValue(day["durata_min"]) ?? 0
-            if type == "Riposo" || km == 0 {
-                lines.append("- \(name): Riposo.")
-            } else if minutes > 0 {
-                lines.append("- \(name): \(type) — \(formatKm(km)) km (\(minutes) min).")
-            } else {
-                lines.append("- \(name): \(type) — \(formatKm(km)) km.")
-            }
-        }
-
+        lines.append(contentsOf: dayLines(days))
         lines.append("Questa è una proposta non salvata. Confermi che vuoi salvare questo piano?")
         return lines.joined(separator: "\n")
     }
@@ -226,7 +312,9 @@ struct CompactCoachPlanner {
             lines.append("I numeri di sonno, HRV, FC o allenamenti non ci sono in questi giorni: non li invento. Se non hai ancora dato l'accesso, aprilo da Impostazioni > Salute.")
         } else {
             lines.append(contentsOf: facts.map { "- \($0)" })
-            lines.append(healthCoachingNote(health: health))
+            if let note = healthCoachingNote(health: health) {
+                lines.append(note)
+            }
         }
 
         if let briefingJSON, let briefing = parseObject(briefingJSON), let line = stringValue(briefing["briefing"]) {
@@ -245,6 +333,62 @@ struct CompactCoachPlanner {
             lines.append("Raccomandazione: \(recommendation).")
         }
         return lines.joined(separator: "\n")
+    }
+
+    static func formatAdherence(from json: String) -> String {
+        guard let root = parseObject(json) else {
+            return "Non riesco a leggere l'aderenza della settimana."
+        }
+        if let message = stringValue(root["messaggio"]) {
+            return message
+        }
+        let percent = intValue(root["percentuale"]) ?? 0
+        let planned = intValue(root["sedute_previste"]) ?? 0
+        let done = intValue(root["fatte"]) ?? 0
+        let remaining = intValue(root["rimaste"]) ?? 0
+        let context = stringValue(root["contesto_coach"]) ?? ""
+        var lines = [
+            "Aderenza settimana: \(percent)% (\(done)/\(planned) sedute fatte, \(remaining) rimaste)."
+        ]
+        if !context.isEmpty {
+            lines.append(context)
+        }
+        return lines.joined(separator: "\n")
+    }
+
+    static func formatActivePlan(from json: String) -> String {
+        if let root = parseObject(json), let message = stringValue(root["messaggio"]) {
+            return message
+        }
+        guard let root = parseObject(json),
+              let days = root["piano_settimanale"] as? [[String: Any]] else {
+            return "Nessun piano attivo al momento. Dimmi «Crea un nuovo piano di allenamento» per una proposta da confermare."
+        }
+        let title = stringValue(root["titolo"]) ?? "Piano attivo"
+        var lines = ["Piano attivo: \(title)."]
+        lines.append(contentsOf: dayLines(days))
+        return lines.joined(separator: "\n")
+    }
+
+    static func formatOptimize(from json: String) -> String {
+        if let root = parseObject(json), let error = stringValue(root["errore"]) {
+            return error
+        }
+        if let formatted = formatTrainingPlan(from: json) {
+            return formatted
+                .replacingOccurrences(
+                    of: "Proposta di piano (non salvata), calcolata sul tuo profilo",
+                    with: "Proposta di ottimizzazione (non applicata)"
+                )
+                .replacingOccurrences(
+                    of: "Questa è una proposta non salvata. Confermi che vuoi salvare questo piano?",
+                    with: "Questa è una proposta non applicata. Confermi che vuoi applicare questa ottimizzazione?"
+                )
+        }
+        if let root = parseObject(json), let message = stringValue(root["messaggio"]) {
+            return message
+        }
+        return "Non ho potuto ottimizzare il piano. Serve un piano attivo."
     }
 
     static func messagesForPrompt(
@@ -298,7 +442,8 @@ struct CompactCoachPlanner {
             ToolCall(name: "save_training_plan", arguments: [:]),
             userProfile: userProfile,
             planManager: planManager,
-            nutritionManager: nutritionManager
+            nutritionManager: nutritionManager,
+            userConfirmed: true
         )
         if let root = Self.parseObject(result.content), let error = Self.stringValue(root["errore"]) {
             return error
@@ -311,7 +456,8 @@ struct CompactCoachPlanner {
             ToolCall(name: "save_nutrition_plan", arguments: [:]),
             userProfile: RunnerProfile(),
             planManager: planManager,
-            nutritionManager: nutritionManager
+            nutritionManager: nutritionManager,
+            userConfirmed: true
         )
         if let root = Self.parseObject(result.content), let error = Self.stringValue(root["errore"]) {
             return error
@@ -353,15 +499,112 @@ struct CompactCoachPlanner {
         return Self.formatTodayBriefing(from: briefing.content)
     }
 
-    private static func healthCoachingNote(health: [String: Any]) -> String {
+    private func adherence(
+        userProfile: RunnerProfile,
+        planManager: TrainingPlanManager,
+        healthManager: HealthKitManager?
+    ) async -> String {
+        let result = await toolRouter.execute(
+            ToolCall(name: "get_adherence", arguments: [:]),
+            userProfile: userProfile,
+            planManager: planManager,
+            healthManager: healthManager
+        )
+        return Self.formatAdherence(from: result.content)
+    }
+
+    private func activePlan(userProfile: RunnerProfile, planManager: TrainingPlanManager) async -> String {
+        let result = await toolRouter.execute(
+            ToolCall(name: "get_active_plan", arguments: [:]),
+            userProfile: userProfile,
+            planManager: planManager
+        )
+        return Self.formatActivePlan(from: result.content)
+    }
+
+    private func proposeOptimize(
+        userMessage: String,
+        userProfile: RunnerProfile,
+        planManager: TrainingPlanManager,
+        nutritionManager: NutritionPlanManager?
+    ) async -> String {
+        let modification = Self.optimizeModification(from: userMessage)
+        let result = await toolRouter.execute(
+            ToolCall(name: "optimize_plan", arguments: [
+                "modification": .string(modification),
+                "percentage": .number(10)
+            ]),
+            userProfile: userProfile,
+            planManager: planManager,
+            nutritionManager: nutritionManager,
+            userConfirmed: false
+        )
+        return Self.formatOptimize(from: result.content)
+    }
+
+    private func applyOptimize(
+        userProfile: RunnerProfile,
+        planManager: TrainingPlanManager,
+        nutritionManager: NutritionPlanManager?
+    ) async -> String {
+        let result = await toolRouter.execute(
+            ToolCall(name: "optimize_plan", arguments: [:]),
+            userProfile: userProfile,
+            planManager: planManager,
+            nutritionManager: nutritionManager,
+            userConfirmed: true
+        )
+        if let root = Self.parseObject(result.content), let error = Self.stringValue(root["errore"]) {
+            return error
+        }
+        return "Ottimizzazione applicata al piano attivo. Non cambio altro senza una nuova conferma."
+    }
+
+    private static func optimizeModification(from raw: String) -> String {
+        let text = raw.folding(options: [.diacriticInsensitive, .caseInsensitive], locale: .current).lowercased()
+        if text.contains("riduci") || text.contains("ridurre") || text.contains("diminu") {
+            return "decrease_volume"
+        }
+        if text.contains("veloc") || text.contains("interval") {
+            return "add_speed"
+        }
+        if text.contains("resistenz") || text.contains("lungo") {
+            return "add_endurance"
+        }
+        return "increase_volume"
+    }
+
+    private static func dayLines(_ days: [[String: Any]]) -> [String] {
+        days.map { day in
+            let name = stringValue(day["giorno"]) ?? "Giorno"
+            let type = stringValue(day["tipo"]) ?? ""
+            let km = doubleValue(day["distanza_km"]) ?? 0
+            let minutes = intValue(day["durata_min"]) ?? 0
+            if type == "Riposo" || km == 0 {
+                return "- \(name): Riposo."
+            }
+            if minutes > 0 {
+                return "- \(name): \(type) — \(formatKm(km)) km (\(minutes) min)."
+            }
+            return "- \(name): \(type) — \(formatKm(km)) km."
+        }
+    }
+
+    private static func healthCoachingNote(health: [String: Any]) -> String? {
         let sleep = doubleValue(health["sonno_media_ore"])
         let hrv = intValue(health["variabilita_cardiaca_hrv_ms"])
         let resting = intValue(health["frequenza_cardiaca_riposo_bpm"])
-        let tired = (sleep ?? 8) < 6.5 || (hrv ?? 80) < 45 || (resting ?? 50) >= 68
+        guard sleep != nil || hrv != nil || resting != nil else { return nil }
+
+        var tired = false
+        if let sleep, sleep < 6.5 { tired = true }
+        if let hrv, hrv < 45 { tired = true }
+        if let resting, resting >= 68 { tired = true }
+
         if tired {
-            return "Segnale da monitorare: oggi tieni facile o riposa, niente qualità. Se il quadro resta così 48 ore, scala il carico."
+            return "Segnale da monitorare sui dati presenti: oggi tieni facile o riposa, niente qualità. Se il quadro resta così 48 ore, scala il carico."
         }
-        return "I segnali disponibili non gridano allarme: puoi seguire il piano, con i giorni facili davvero facili."
+        return "Sui dati presenti non c'è un allarme: puoi seguire il piano, con i giorni facili davvero facili."
     }
 
     private static func formatNumber(_ value: Double) -> String {
