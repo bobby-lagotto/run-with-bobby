@@ -43,21 +43,38 @@ enum ReadinessEngine {
         hasActivePlan: Bool
     ) -> String {
         if !hasActivePlan {
-            return "Nessun piano attivo. Chiedi a Bobby un piano prima di spingere."
+            return L10n.tr(
+                "Nessun piano attivo. Chiedi a Bobby un piano prima di spingere.",
+                english: "No active plan. Ask Bobby for a plan before you push."
+            )
         }
         guard let today else {
-            return "Oggi non c'è una seduta in calendario."
+            return L10n.tr("Oggi non c'è una seduta in calendario.", english: "There's no session on the calendar today.")
         }
         if today.workoutType == .rest {
-            return "Giorno di riposo. Recupera, non inventare un doppio."
+            return L10n.tr("Giorno di riposo. Recupera, non inventare un doppio.", english: "Rest day. Recover, don't invent a double.")
         }
         switch recommendation {
         case .go:
-            return "Oggi \(today.workoutType.rawValue.lowercased()) · \(formatted(today.distance)) km. I segnali vanno bene, vai."
+            return L10n.format(
+                "Oggi %@ · %@ km. I segnali vanno bene, vai.",
+                english: "Today %@ · %@ km. Signals look good, go.",
+                today.workoutType.displayName.lowercased(),
+                formatted(today.distance)
+            )
         case .easy:
-            return "Oggi era \(today.workoutType.rawValue.lowercased()) · \(formatted(today.distance)) km. Con questi segnali tieni facile o accorcia."
+            return L10n.format(
+                "Oggi era %@ · %@ km. Con questi segnali tieni facile o accorcia.",
+                english: "Today was %@ · %@ km. With these signals keep it easy or shorten.",
+                today.workoutType.displayName.lowercased(),
+                formatted(today.distance)
+            )
         case .rest:
-            return "I segnali dicono riposo. Se esci, cammina o jog molto blando al posto di \(today.workoutType.rawValue.lowercased())."
+            return L10n.format(
+                "I segnali dicono riposo. Se esci, cammina o jog molto blando al posto di %@.",
+                english: "Signals say rest. If you go out, walk or very easy jog instead of %@.",
+                today.workoutType.displayName.lowercased()
+            )
         }
     }
 

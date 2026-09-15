@@ -225,6 +225,17 @@ enum WorkoutType: String, CaseIterable, Codable {
         case .recovery: return "leaf.fill"
         }
     }
+
+    var displayName: String {
+        switch self {
+        case .rest: return L10n.tr("Riposo", english: "Rest")
+        case .easy: return L10n.tr("Corsa Facile", english: "Easy run")
+        case .tempo: return "Tempo Run"
+        case .intervals: return "Interval Training"
+        case .long: return L10n.tr("Lungo", english: "Long run")
+        case .recovery: return L10n.tr("Recupero", english: "Recovery")
+        }
+    }
 }
 
 struct PaceZone: Codable {
@@ -317,13 +328,23 @@ enum TrainingGoal: String, CaseIterable, Codable {
     case weightLoss = "Perdere Peso"
     case racePrep = "Preparazione Gara"
     
+    var displayName: String {
+        switch self {
+        case .speed: return L10n.tr("Migliorare Velocità", english: "Improve speed")
+        case .endurance: return L10n.tr("Aumentare Resistenza", english: "Build endurance")
+        case .fitness: return L10n.tr("Mantenersi in Forma", english: "Stay fit")
+        case .weightLoss: return L10n.tr("Perdere Peso", english: "Lose weight")
+        case .racePrep: return L10n.tr("Preparazione Gara", english: "Race prep")
+        }
+    }
+
     var description: String {
         switch self {
-        case .speed: return "Focus su allenamenti di velocità e interval training"
-        case .endurance: return "Costruire la base aerobica con corse lunghe"
-        case .fitness: return "Mantenere salute generale e benessere"
-        case .weightLoss: return "Bruciare calorie con volume moderato-alto"
-        case .racePrep: return "Preparazione specifica per una gara"
+        case .speed: return L10n.tr("Focus su allenamenti di velocità e interval training", english: "Focus on speed work and interval training")
+        case .endurance: return L10n.tr("Costruire la base aerobica con corse lunghe", english: "Build aerobic base with long runs")
+        case .fitness: return L10n.tr("Mantenere salute generale e benessere", english: "Maintain general health and wellbeing")
+        case .weightLoss: return L10n.tr("Bruciare calorie con volume moderato-alto", english: "Burn calories with moderate-high volume")
+        case .racePrep: return L10n.tr("Preparazione specifica per una gara", english: "Specific preparation for a race")
         }
     }
 }
@@ -341,6 +362,15 @@ enum ExperienceLevel: String, CaseIterable, Codable {
     case intermediate = "Intermedio"
     case advanced = "Avanzato"
     case elite = "Elite"
+
+    var displayName: String {
+        switch self {
+        case .beginner: return L10n.tr("Principiante", english: "Beginner")
+        case .intermediate: return L10n.tr("Intermedio", english: "Intermediate")
+        case .advanced: return L10n.tr("Avanzato", english: "Advanced")
+        case .elite: return "Elite"
+        }
+    }
 }
 
 // MARK: - App State Models

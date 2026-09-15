@@ -2,6 +2,11 @@ import XCTest
 @testable import RunWithBobby
 
 final class ToolRouterIntegrationTests: XCTestCase {
+    override func setUp() {
+        super.setUp()
+        AppLanguage.sync(from: .italian)
+    }
+
     func testCalculateThenSaveTrainingPlan() async throws {
         let router = ToolRouter()
         let manager = HabitFixtures.isolatedManager()
@@ -56,7 +61,11 @@ final class ToolRouterIntegrationTests: XCTestCase {
         )
 
         XCTAssertNotNil(text)
-        XCTAssertTrue(text?.contains("LUNEDÌ") == true || text?.contains("MARTEDÌ") == true, text ?? "")
+        XCTAssertTrue(
+            text?.localizedCaseInsensitiveContains("lunedì") == true
+                || text?.localizedCaseInsensitiveContains("martedì") == true,
+            text ?? ""
+        )
         XCTAssertTrue(text?.contains("non salvata") == true, text ?? "")
         XCTAssertTrue(text?.contains("Confermi") == true, text ?? "")
         XCTAssertFalse(text?.contains("Modalità gratuita") == true, text ?? "")

@@ -47,14 +47,21 @@ enum CompactCoachIntent: Equatable {
             "nuovo piano",
             "crea un nuovo piano",
             "piano di allenamento",
-            "crea un piano di allenamento"
+            "crea un piano di allenamento",
+            "new plan",
+            "create a new plan",
+            "training plan",
+            "create a training plan"
         ])
     }
 
     private static func isNutritionCreate(_ text: String) -> Bool {
         containsAny(text, [
             "piano alimentare",
-            "crea un piano alimentare"
+            "crea un piano alimentare",
+            "nutrition plan",
+            "meal plan",
+            "create a nutrition plan"
         ])
     }
 
@@ -69,10 +76,20 @@ enum CompactCoachIntent: Equatable {
             "si salva",
             "confermo la modifica",
             "applica",
-            "applica la modifica"
+            "applica la modifica",
+            "save",
+            "confirm",
+            "save the plan",
+            "confirm the plan",
+            "ok save",
+            "yes save",
+            "confirm the change",
+            "apply",
+            "apply the change"
         ]
         if exact.contains(compact) { return true }
-        return compact.contains("salva") && compact.contains("piano") && compact.count < 50
+        return (compact.contains("salva") && compact.contains("piano") && compact.count < 50)
+            || (compact.contains("save") && compact.contains("plan") && compact.count < 50)
     }
 
     private static func isHealthStatus(_ text: String) -> Bool {
@@ -86,7 +103,14 @@ enum CompactCoachIntent: Equatable {
             "analizza i miei dati",
             "riassunto completo",
             "sono affatic",
-            "stato fisico"
+            "stato fisico",
+            "how am i",
+            "how do i feel",
+            "health data",
+            "analyze my data",
+            "analyse my data",
+            "full summary",
+            "am i fatigued"
         ])
     }
 
@@ -97,7 +121,13 @@ enum CompactCoachIntent: Equatable {
             "seduta di oggi",
             "pronto per allenarmi",
             "briefing",
-            "prontezza"
+            "prontezza",
+            "what do i do today",
+            "should i run today",
+            "today's session",
+            "todays session",
+            "ready to train",
+            "readiness"
         ])
     }
 
@@ -107,7 +137,12 @@ enum CompactCoachIntent: Equatable {
             "cosa mi manca",
             "aderenza",
             "come sta andando la settimana",
-            "settimana come sta andando"
+            "settimana come sta andando",
+            "did i run",
+            "what's left",
+            "whats left",
+            "adherence",
+            "how is the week going"
         ])
     }
 
@@ -115,7 +150,10 @@ enum CompactCoachIntent: Equatable {
         containsAny(text, [
             "piano attivo",
             "mostrami il piano",
-            "che piano ho"
+            "che piano ho",
+            "active plan",
+            "show me the plan",
+            "what plan do i have"
         ])
     }
 
@@ -125,7 +163,12 @@ enum CompactCoachIntent: Equatable {
             "ottimizzare",
             "aumenta il volume",
             "riduci il volume",
-            "ridurre il carico"
+            "ridurre il carico",
+            "optimize",
+            "optimise",
+            "increase the volume",
+            "reduce the volume",
+            "decrease the load"
         ])
     }
 
@@ -234,17 +277,28 @@ struct CompactCoachPlanner {
         let workouts = intValue(summary?["allenamenti"]) ?? days.filter { stringValue($0["tipo"]) != "Riposo" }.count
 
         var lines = [
-            "Proposta di piano (non salvata), calcolata sul tuo profilo: \(totalKm) km/settimana, \(workouts) allenamenti."
+            L10n.format(
+                "Proposta di piano (non salvata), calcolata sul tuo profilo: %d km/settimana, %d allenamenti.",
+                english: "Draft plan (not saved), calculated from your profile: %d km/week, %d workouts.",
+                totalKm,
+                workouts
+            )
         ]
         lines.append(contentsOf: dayLines(days))
-        lines.append("Questa è una proposta non salvata. Confermi che vuoi salvare questo piano?")
+        lines.append(L10n.tr(
+            "Questa è una proposta non salvata. Confermi che vuoi salvare questo piano?",
+            english: "This is an unsaved draft. Confirm that you want to save this plan?"
+        ))
         return lines.joined(separator: "\n")
     }
 
     static func formatNutritionPlan(from json: String) -> String? {
         if let root = parseObject(json), let error = stringValue(root["errore"]) {
-            if error.contains("Nessun piano di allenamento") {
-                return "Per un piano alimentare mi serve prima un piano di allenamento attivo. Crea o attiva un piano corsa, poi chiedimi di nuovo il piano alimentare."
+            if error.contains("Nessun piano di allenamento") || error.lowercased().contains("no active training") {
+                return L10n.tr(
+                    "Per un piano alimentare mi serve prima un piano di allenamento attivo. Crea o attiva un piano corsa, poi chiedimi di nuovo il piano alimentare.",
+                    english: "I need an active training plan before a nutrition plan. Create or activate a run plan, then ask again for nutrition."
+                )
             }
             return error
         }
@@ -254,24 +308,37 @@ struct CompactCoachPlanner {
             return nil
         }
 
-        var lines = ["Proposta di piano alimentare (non salvata), calcolata sul piano di allenamento attivo."]
+        var lines = [L10n.tr(
+            "Proposta di piano alimentare (non salvata), calcolata sul piano di allenamento attivo.",
+            english: "Draft nutrition plan (not saved), calculated from the active training plan."
+        )]
 
         for day in days {
-            let name = stringValue(day["giorno"]) ?? "Giorno"
+            let name = WeekdayKey.displayName(fromStored: stringValue(day["giorno"]) ?? L10n.tr("Giorno", english: "Day"))
             let intensity = stringValue(day["intensita"]) ?? ""
             let protein = intValue(day["proteine_g"]) ?? 0
             let carbs = intValue(day["carboidrati_g"]) ?? 0
             let veg = intValue(day["verdure_frutta_g"]) ?? 0
-            lines.append("- \(name) (\(intensity)): proteine \(protein) g, carboidrati \(carbs) g, verdure/frutta \(veg) g.")
+            lines.append(L10n.format(
+                "- %@ (%@): proteine %d g, carboidrati %d g, verdure/frutta %d g.",
+                english: "- %@ (%@): protein %d g, carbs %d g, veg/fruit %d g.",
+                name, intensity, protein, carbs, veg
+            ))
         }
 
-        lines.append("Food-first: carboidrati intorno agli allenamenti, proteine nel post, acqua regolare. Confermi che vuoi salvare questo piano alimentare?")
+        lines.append(L10n.tr(
+            "Food-first: carboidrati intorno agli allenamenti, proteine nel post, acqua regolare. Confermi che vuoi salvare questo piano alimentare?",
+            english: "Food-first: carbs around workouts, protein afterwards, regular water. Confirm that you want to save this nutrition plan?"
+        ))
         return lines.joined(separator: "\n")
     }
 
     static func formatHealthStatus(healthJSON: String, briefingJSON: String?) -> String {
         guard let health = parseObject(healthJSON) else {
-            return "Non riesco a leggere i dati Salute in questo momento. Controlla l'autorizzazione in Impostazioni > Salute."
+            return L10n.tr(
+                "Non riesco a leggere i dati Salute in questo momento. Controlla l'autorizzazione in Impostazioni > Salute.",
+                english: "I can't read Health data right now. Check the permission in Settings > Health."
+            )
         }
         if let error = stringValue(health["errore"]) {
             return error
@@ -280,36 +347,42 @@ struct CompactCoachPlanner {
             return message
         }
 
-        var lines = ["Ecco come ti vedo dai dati Apple Health sul telefono. Non è una diagnosi."]
+        var lines = [L10n.tr(
+            "Ecco come ti vedo dai dati Apple Health sul telefono. Non è una diagnosi.",
+            english: "Here's how I see you from Apple Health data on the phone. This is not a diagnosis."
+        )]
         var facts: [String] = []
 
         if let sleep = doubleValue(health["sonno_media_ore"]) {
-            facts.append("Sonno medio: \(formatNumber(sleep)) ore/notte.")
+            facts.append(L10n.format("Sonno medio: %@ ore/notte.", english: "Average sleep: %@ hours/night.", formatNumber(sleep)))
         }
         if let hrv = intValue(health["variabilita_cardiaca_hrv_ms"]) {
-            facts.append("HRV: \(hrv) ms.")
+            facts.append(L10n.format("HRV: %d ms.", english: "HRV: %d ms.", hrv))
         }
         if let resting = intValue(health["frequenza_cardiaca_riposo_bpm"]) {
-            facts.append("FC a riposo: \(resting) bpm.")
+            facts.append(L10n.format("FC a riposo: %d bpm.", english: "Resting HR: %d bpm.", resting))
         }
         if let avgHR = intValue(health["frequenza_cardiaca_media_bpm"]) {
-            facts.append("FC media: \(avgHR) bpm.")
+            facts.append(L10n.format("FC media: %d bpm.", english: "Average HR: %d bpm.", avgHR))
         }
         if let vo2 = doubleValue(health["vo2max_ml_kg_min"]) {
-            facts.append("VO2 max: \(formatNumber(vo2)) ml/kg/min.")
+            facts.append(L10n.format("VO2 max: %@ ml/kg/min.", english: "VO2 max: %@ ml/kg/min.", formatNumber(vo2)))
         }
         if let steps = intValue(health["passi_media_giornaliera"]) {
-            facts.append("Passi medi: \(steps)/giorno.")
+            facts.append(L10n.format("Passi medi: %d/giorno.", english: "Average steps: %d/day.", steps))
         }
         if let km = doubleValue(health["distanza_totale_km"]) {
-            facts.append("Distanza ultimi giorni: \(formatKm(km)) km.")
+            facts.append(L10n.format("Distanza ultimi giorni: %@ km.", english: "Distance last days: %@ km.", formatKm(km)))
         }
         if let workouts = intValue(health["numero_allenamenti"]) {
-            facts.append("Allenamenti nel periodo: \(workouts).")
+            facts.append(L10n.format("Allenamenti nel periodo: %d.", english: "Workouts in the period: %d.", workouts))
         }
 
         if facts.isEmpty {
-            lines.append("I numeri di sonno, HRV, FC o allenamenti non ci sono in questi giorni: non li invento. Se non hai ancora dato l'accesso, aprilo da Impostazioni > Salute.")
+            lines.append(L10n.tr(
+                "I numeri di sonno, HRV, FC o allenamenti non ci sono in questi giorni: non li invento. Se non hai ancora dato l'accesso, aprilo da Impostazioni > Salute.",
+                english: "Sleep, HRV, heart-rate or workout numbers aren't here these days: I won't invent them. If you haven't granted access yet, open Settings > Health."
+            ))
         } else {
             lines.append(contentsOf: facts.map { "- \($0)" })
             if let note = healthCoachingNote(health: health) {
@@ -318,7 +391,7 @@ struct CompactCoachPlanner {
         }
 
         if let briefingJSON, let briefing = parseObject(briefingJSON), let line = stringValue(briefing["briefing"]) {
-            lines.append("Oggi: \(line)")
+            lines.append(L10n.format("Oggi: %@", english: "Today: %@", line))
         }
 
         return lines.joined(separator: "\n")
@@ -326,18 +399,21 @@ struct CompactCoachPlanner {
 
     static func formatTodayBriefing(from json: String) -> String {
         guard let root = parseObject(json), let line = stringValue(root["briefing"]) else {
-            return "Non ho un briefing affidabile. Dimmi se hai un piano attivo e come hai dormito."
+            return L10n.tr(
+                "Non ho un briefing affidabile. Dimmi se hai un piano attivo e come hai dormito.",
+                english: "I don't have a reliable briefing. Tell me if you have an active plan and how you slept."
+            )
         }
         var lines = [line]
         if let recommendation = stringValue(root["raccomandazione"]) {
-            lines.append("Raccomandazione: \(recommendation).")
+            lines.append(L10n.format("Raccomandazione: %@.", english: "Recommendation: %@.", recommendation))
         }
         return lines.joined(separator: "\n")
     }
 
     static func formatAdherence(from json: String) -> String {
         guard let root = parseObject(json) else {
-            return "Non riesco a leggere l'aderenza della settimana."
+            return L10n.tr("Non riesco a leggere l'aderenza della settimana.", english: "I can't read this week's adherence.")
         }
         if let message = stringValue(root["messaggio"]) {
             return message
@@ -348,7 +424,11 @@ struct CompactCoachPlanner {
         let remaining = intValue(root["rimaste"]) ?? 0
         let context = stringValue(root["contesto_coach"]) ?? ""
         var lines = [
-            "Aderenza settimana: \(percent)% (\(done)/\(planned) sedute fatte, \(remaining) rimaste)."
+            L10n.format(
+                "Aderenza settimana: %d%% (%d/%d sedute fatte, %d rimaste).",
+                english: "Week adherence: %d%% (%d/%d sessions done, %d left).",
+                percent, done, planned, remaining
+            )
         ]
         if !context.isEmpty {
             lines.append(context)
@@ -362,10 +442,13 @@ struct CompactCoachPlanner {
         }
         guard let root = parseObject(json),
               let days = root["piano_settimanale"] as? [[String: Any]] else {
-            return "Nessun piano attivo al momento. Dimmi «Crea un nuovo piano di allenamento» per una proposta da confermare."
+            return L10n.tr(
+                "Nessun piano attivo al momento. Dimmi «Crea un nuovo piano di allenamento» per una proposta da confermare.",
+                english: "No active plan right now. Say “Create a new training plan” for a draft to confirm."
+            )
         }
-        let title = stringValue(root["titolo"]) ?? "Piano attivo"
-        var lines = ["Piano attivo: \(title)."]
+        let title = stringValue(root["titolo"]) ?? L10n.tr("Piano attivo", english: "Active plan")
+        var lines = [L10n.format("Piano attivo: %@.", english: "Active plan: %@.", title)]
         lines.append(contentsOf: dayLines(days))
         return lines.joined(separator: "\n")
     }
@@ -377,18 +460,30 @@ struct CompactCoachPlanner {
         if let formatted = formatTrainingPlan(from: json) {
             return formatted
                 .replacingOccurrences(
-                    of: "Proposta di piano (non salvata), calcolata sul tuo profilo",
-                    with: "Proposta di ottimizzazione (non applicata)"
+                    of: L10n.tr(
+                        "Proposta di piano (non salvata), calcolata sul tuo profilo",
+                        english: "Draft plan (not saved), calculated from your profile"
+                    ),
+                    with: L10n.tr(
+                        "Proposta di ottimizzazione (non applicata)",
+                        english: "Optimisation draft (not applied)"
+                    )
                 )
                 .replacingOccurrences(
-                    of: "Questa è una proposta non salvata. Confermi che vuoi salvare questo piano?",
-                    with: "Questa è una proposta non applicata. Confermi che vuoi applicare questa ottimizzazione?"
+                    of: L10n.tr(
+                        "Questa è una proposta non salvata. Confermi che vuoi salvare questo piano?",
+                        english: "This is an unsaved draft. Confirm that you want to save this plan?"
+                    ),
+                    with: L10n.tr(
+                        "Questa è una proposta non applicata. Confermi che vuoi applicare questa ottimizzazione?",
+                        english: "This is a draft, not applied. Confirm that you want to apply this optimisation?"
+                    )
                 )
         }
         if let root = parseObject(json), let message = stringValue(root["messaggio"]) {
             return message
         }
-        return "Non ho potuto ottimizzare il piano. Serve un piano attivo."
+        return L10n.tr("Non ho potuto ottimizzare il piano. Serve un piano attivo.", english: "I couldn't optimise the plan. An active plan is required.")
     }
 
     static func messagesForPrompt(
@@ -415,7 +510,10 @@ struct CompactCoachPlanner {
             planManager: planManager
         )
         return Self.formatTrainingPlan(from: result.content)
-            ?? "Non sono riuscito a calcolare il piano. Riprova o dimmi km/settimana e giorni disponibili."
+            ?? L10n.tr(
+                "Non sono riuscito a calcolare il piano. Riprova o dimmi km/settimana e giorni disponibili.",
+                english: "I couldn't calculate the plan. Try again or tell me weekly km and available days."
+            )
     }
 
     private func createNutritionPlan(
@@ -430,7 +528,10 @@ struct CompactCoachPlanner {
             nutritionManager: nutritionManager
         )
         return Self.formatNutritionPlan(from: result.content)
-            ?? "Non sono riuscito a calcolare il piano alimentare. Serve un piano di allenamento attivo."
+            ?? L10n.tr(
+                "Non sono riuscito a calcolare il piano alimentare. Serve un piano di allenamento attivo.",
+                english: "I couldn't calculate the nutrition plan. An active training plan is required."
+            )
     }
 
     private func saveTrainingPlan(
@@ -448,7 +549,10 @@ struct CompactCoachPlanner {
         if let root = Self.parseObject(result.content), let error = Self.stringValue(root["errore"]) {
             return error
         }
-        return "Piano salvato e attivato. Dimmi se vuoi anche un piano alimentare collegato."
+        return L10n.tr(
+            "Piano salvato e attivato. Dimmi se vuoi anche un piano alimentare collegato.",
+            english: "Plan saved and activated. Tell me if you also want a linked nutrition plan."
+        )
     }
 
     private func saveNutritionPlan(planManager: TrainingPlanManager, nutritionManager: NutritionPlanManager?) async -> String {
@@ -462,7 +566,7 @@ struct CompactCoachPlanner {
         if let root = Self.parseObject(result.content), let error = Self.stringValue(root["errore"]) {
             return error
         }
-        return "Piano alimentare salvato e attivato."
+        return L10n.tr("Piano alimentare salvato e attivato.", english: "Nutrition plan saved and activated.")
     }
 
     private func healthStatus(
@@ -557,18 +661,22 @@ struct CompactCoachPlanner {
         if let root = Self.parseObject(result.content), let error = Self.stringValue(root["errore"]) {
             return error
         }
-        return "Ottimizzazione applicata al piano attivo. Non cambio altro senza una nuova conferma."
+        return L10n.tr(
+            "Ottimizzazione applicata al piano attivo. Non cambio altro senza una nuova conferma.",
+            english: "Optimisation applied to the active plan. I won't change anything else without a new confirmation."
+        )
     }
 
     private static func optimizeModification(from raw: String) -> String {
         let text = raw.folding(options: [.diacriticInsensitive, .caseInsensitive], locale: .current).lowercased()
-        if text.contains("riduci") || text.contains("ridurre") || text.contains("diminu") {
+        if text.contains("riduci") || text.contains("ridurre") || text.contains("diminu")
+            || text.contains("reduce") || text.contains("decrease") {
             return "decrease_volume"
         }
-        if text.contains("veloc") || text.contains("interval") {
+        if text.contains("veloc") || text.contains("interval") || text.contains("speed") {
             return "add_speed"
         }
-        if text.contains("resistenz") || text.contains("lungo") {
+        if text.contains("resistenz") || text.contains("lungo") || text.contains("endurance") || text.contains("long run") {
             return "add_endurance"
         }
         return "increase_volume"
@@ -576,17 +684,26 @@ struct CompactCoachPlanner {
 
     private static func dayLines(_ days: [[String: Any]]) -> [String] {
         days.map { day in
-            let name = stringValue(day["giorno"]) ?? "Giorno"
-            let type = stringValue(day["tipo"]) ?? ""
+            let name = WeekdayKey.displayName(fromStored: stringValue(day["giorno"]) ?? L10n.tr("Giorno", english: "Day"))
+            let typeRaw = stringValue(day["tipo"]) ?? ""
+            let type = WorkoutType(rawValue: typeRaw)?.displayName ?? typeRaw
             let km = doubleValue(day["distanza_km"]) ?? 0
             let minutes = intValue(day["durata_min"]) ?? 0
-            if type == "Riposo" || km == 0 {
-                return "- \(name): Riposo."
+            if typeRaw == "Riposo" || km == 0 {
+                return L10n.format("- %@: Riposo.", english: "- %@: Rest.", name)
             }
             if minutes > 0 {
-                return "- \(name): \(type) — \(formatKm(km)) km (\(minutes) min)."
+                return L10n.format(
+                    "- %@: %@ — %@ km (%d min).",
+                    english: "- %@: %@ — %@ km (%d min).",
+                    name, type, formatKm(km), minutes
+                )
             }
-            return "- \(name): \(type) — \(formatKm(km)) km."
+            return L10n.format(
+                "- %@: %@ — %@ km.",
+                english: "- %@: %@ — %@ km.",
+                name, type, formatKm(km)
+            )
         }
     }
 
@@ -602,9 +719,15 @@ struct CompactCoachPlanner {
         if let resting, resting >= 68 { tired = true }
 
         if tired {
-            return "Segnale da monitorare sui dati presenti: oggi tieni facile o riposa, niente qualità. Se il quadro resta così 48 ore, scala il carico."
+            return L10n.tr(
+                "Segnale da monitorare sui dati presenti: oggi tieni facile o riposa, niente qualità. Se il quadro resta così 48 ore, scala il carico.",
+                english: "Signal to watch on the available data: keep today easy or rest, no quality. If this holds 48 hours, cut the load."
+            )
         }
-        return "Sui dati presenti non c'è un allarme: puoi seguire il piano, con i giorni facili davvero facili."
+        return L10n.tr(
+            "Sui dati presenti non c'è un allarme: puoi seguire il piano, con i giorni facili davvero facili.",
+            english: "No alarm on the available data: you can follow the plan, with easy days truly easy."
+        )
     }
 
     private static func formatNumber(_ value: Double) -> String {

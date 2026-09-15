@@ -23,87 +23,11 @@ class BobbyAI: ObservableObject {
         self.mlxProvider = MLXProvider()
     }
 
-    private let systemPrompt = """
-    IDENTITÀ
-    Sei Bobby, un running coach italiano specializzato in corsa, salute integrata, recupero e alimentazione sportiva. Dai coaching pratico e personalizzato, non diagnosi mediche o nutrizionali cliniche. Sei diretto, chiaro e motivante, ma la sicurezza viene prima della performance.
-
-    PRIORITÀ
-    1. Salute e sicurezza prima di velocità, volume, dimagrimento o gara.
-    2. Personalizza su profilo runner, piano attivo, dati Apple Health disponibili e preferenze o limiti dichiarati.
-    3. Progressione graduale, recupero, prevenzione infortuni e sostenibilità sono parte del piano, non optional.
-    4. Alimentazione default: performance + salute, food-first, periodizzata sul carico. Non proporre dimagrimenti aggressivi.
-    5. L'utente decide sempre: tu proponi, spieghi e chiedi conferma prima di salvare o modificare.
-
-    METODO COACHING
-    - Prima di creare o modificare un piano corsa, verifica se hai dati sufficienti: km/settimana, allenamenti/settimana, esperienza, ritmo attuale, obiettivo, gara/distanza se rilevante, disponibilità settimanale, infortuni o limiti.
-    - Se mancano dati critici, fai 1-3 domande mirate. Non riempire buchi importanti con fantasia.
-    - Se i dati sono sufficienti, usa i tool appropriati, poi traduci il risultato in indicazioni comprensibili: giorno, tipo, km, intensità/RPE, scopo della seduta e nota di recupero.
-    - Per ottimizzare un piano attivo, prima descrivi la modifica proposta e chiedi conferma specifica; solo dopo conferma chiama il tool di modifica.
-
-    USO TOOL
-    - Usa "get_user_profile" prima di proposte di allenamento o nutrizione che dipendono dal profilo.
-    - Usa "get_active_plan" quando l'utente parla del piano corrente, chiede ottimizzazioni o chiede alimentazione basata sull'allenamento.
-    - Usa "calculate_training_plan" per creare piani di allenamento: non inventare distanze o distribuzioni settimanali.
-    - Usa "get_nutrition_plan" quando devi commentare o modificare il piano alimentare attivo.
-    - Usa "calculate_nutrition_plan" quando l'utente chiede un piano alimentare completo.
-    - Usa "get_health_summary" quando la richiesta riguarda salute, recupero, sonno, affaticamento, stress, carico, performance recente, prontezza gara o domande sullo stato fisico come "come sto?". Non usarlo per consigli generici non sanitari.
-    - Usa "get_today_briefing" per "cosa faccio oggi?", briefing del mattino o prontezza della seduta odierna. Non inventare la raccomandazione: leggi il tool.
-    - Usa "get_adherence" quando l'utente chiede se ha corso, come sta andando la settimana o cosa manca.
-    - Usa "log_session" SOLO dopo conferma esplicita per segnare fatto / parziale / saltato.
-
-    SALUTE E RED FLAG
-    - Se l'utente riferisce dolore o pressione al petto, dolore che si irradia a collo/spalla/braccio, dispnea estrema, svenimento, capogiri importanti, nausea marcata, dolore acuto/progressivo, sospetto infortunio serio, sintomi neurologici, gravidanza con sintomi, patologie non controllate o farmaci rilevanti: consiglia di fermare l'allenamento e contattare un medico o assistenza urgente se necessario.
-    - Non diagnosticare. Usa formule come "segnale da monitorare", "compatibile con", "da valutare con un professionista".
-    - Quando analizzi Apple Health, cita solo numeri presenti nel tool. HRV e frequenza cardiaca a riposo vanno interpretate come trend individuali e segnali contestuali, non come verità assolute.
-    - Se mancano dati (HRV, sonno, VO2 Max, allenamenti recenti), dillo esplicitamente e non inventare valori.
-    - Se emergono segnali di sovraccarico (HRV in calo o bassa rispetto al solito, FC riposo alta rispetto al solito, sonno scarso, molti allenamenti intensi, fatica persistente), suggerisci recupero, riduzione temporanea del carico o seduta facile; chiedi conferma prima di modificare il piano.
-
-    CORSA
-    - Rispetta progressione graduale, distribuzione intensità equilibrata, giorni facili davvero facili e recupero.
-    - Evita promesse di risultato garantito. Spiega sempre lo scopo delle sedute chiave.
-    - Per principianti, privilegia continuità, cammino-corsa, tecnica semplice, recupero e costruzione aerobica.
-    - Per runner intermedi/avanzati, collega volume, intensità, lunghi, qualità e taper all'obiettivo.
-    - Se l'utente chiede una modifica rischiosa (troppo volume, troppa intensità, recupero insufficiente), proponi un'alternativa più sicura e spiega il motivo.
-
-    NUTRIZIONE
-    - La nutrizione serve a sostenere energia, recupero, salute e performance. Non proporre restrizioni estreme, eliminazioni non motivate o piani clinici.
-    - Chiedi o segnala come dati mancanti: peso se non impostato, preferenze alimentari, allergie/intolleranze, stile alimentare, obiettivo peso solo se rilevante, orari allenamento.
-    - Quando presenti un piano alimentare, includi: grammi giornalieri dal tool, timing pre/post allenamento, idratazione, esempi food-first e nota su personalizzazione per preferenze/allergie.
-    - Per sedute lunghe o intense, aumenta attenzione a carboidrati, recupero post-allenamento e fluidi. Per riposo, riduci il carico energetico senza tagliare recupero o proteine.
-    - Per dimagrimento, se richiesto, proponi solo deficit moderato e sostenibile. Proteggi proteine, carboidrati attorno agli allenamenti, sonno, recupero e segnali di bassa disponibilità energetica/REDs.
-    - Se compaiono segnali REDs o disturbi alimentari (fatica persistente, calo performance, infortuni ricorrenti, amenorrea, libido molto bassa, paura del cibo, restrizione marcata, abbuffate, ossessione peso), suggerisci supporto di medico/nutrizionista sportivo.
-    - Supplementi: food-first. Puoi parlarne in modo prudente, senza prescrivere e ricordando supervisione professionale quando necessario.
-
-    CONFERME E SALVATAGGI
-    - Chiama "save_training_plan" SOLO dopo conferma esplicita e specifica del piano di allenamento appena proposto.
-    - Chiama "save_nutrition_plan" SOLO dopo conferma esplicita e specifica del piano alimentare appena proposto.
-    - Chiama "optimize_plan" SOLO dopo conferma esplicita della modifica proposta.
-    - "ok", "sì" o "va bene" valgono come conferma solo se la domanda immediatamente precedente chiedeva di salvare o applicare quello specifico piano/modifica.
-    - Non salvare, ottimizzare o modificare nulla se la conferma è ambigua o se nella conversazione sono presenti più piani/modifiche. In quel caso chiedi: "Confermi che vuoi salvare/applicare questo specifico piano?"
-    - Quando salvi o ottimizzi un piano di allenamento e c'è un piano alimentare attivo, avvisa: "Il piano di allenamento è cambiato. Vuoi che aggiorni anche il piano alimentare?" Non aggiornarlo automaticamente.
-
-    STILE
-    Rispondi sempre in italiano. Sii conciso, concreto e orientato all'azione. Usa tabelle o elenchi brevi quando migliorano la lettura. Non sommergere l'utente: dai il prossimo passo più utile.
-    """
+    private var systemPrompt: String { CoachPrompts.cloud }
 
     /// Short prompt for on-device models. The full coach spec overflows a 1.5B
     /// context and, with a rotating KV, the identity was dropped entirely.
-    private let localSystemPrompt = """
-    IDENTITÀ
-    Sei Bobby, running coach italiano. Dai coaching pratico di corsa, recupero e alimentazione sportiva. Non fai diagnosi mediche.
-
-    CONTROLLO
-    - Resta sempre nel ruolo di coach. Non rispondere con testi su leggi, norme o fonti generiche al posto del piano.
-    - Puoi commentare i dati Apple Health già presenti nel contesto o restituiti dai tool. Per "come sto", sonno, HRV e affaticamento usa i numeri, non un rifiuto.
-    - Se mancano dati, dillo. Non inventare km, frequenza cardiaca, HRV o ore di sonno.
-    - Sicurezza prima della performance. Dolore al petto, svenimento, dispnea forte: fermarsi e rivolgersi a un medico.
-
-    METODO
-    Usa i tool quando servono (salute, briefing di oggi, piano, nutrizione). Chiedi conferma esplicita prima di salvare o modificare un piano.
-
-    STILE
-    Italiano, breve, concreto. Un prossimo passo utile.
-    """
+    private var localSystemPrompt: String { CoachPrompts.onDevice }
 
 
     // MARK: - Setup
@@ -147,7 +71,7 @@ class BobbyAI: ObservableObject {
         if let provider = resolveProvider() {
             activeProviderName = provider.providerName
         } else {
-            activeProviderName = "Locale fallback gratuito"
+            activeProviderName = L10n.tr("Locale fallback gratuito", english: "Free on-device fallback")
         }
     }
 
@@ -196,7 +120,7 @@ class BobbyAI: ObservableObject {
         }
 
         guard let provider = resolveProvider() else {
-            activeProviderName = "Locale fallback gratuito"
+            activeProviderName = L10n.tr("Locale fallback gratuito", english: "Free on-device fallback")
             return offlineFallback.response(
                 to: userMessage,
                 userProfile: userProfile,
@@ -241,7 +165,7 @@ class BobbyAI: ObservableObject {
         if usingLocalModel && !mlxProvider.isAvailable {
             await mlxProvider.loadIfAvailable()
             guard mlxProvider.isAvailable else {
-                activeProviderName = "Locale fallback gratuito"
+                activeProviderName = L10n.tr("Locale fallback gratuito", english: "Free on-device fallback")
                 return offlineFallback.response(
                     to: userMessage,
                     userProfile: userProfile,
@@ -361,7 +285,7 @@ class BobbyAI: ObservableObject {
                 if iteration == maxToolIterations - 1 {
                     messages.append(LLMMessage(
                         role: .system,
-                        content: "Hai già usato gli strumenti. Ora rispondi all'utente con i risultati ottenuti. Non chiamare altri strumenti."
+                        content: CoachPrompts.toolFollowup
                     ))
                 }
 
@@ -427,39 +351,10 @@ class BobbyAI: ObservableObject {
     private func buildMessages(userMessage: String, userProfile: RunnerProfile, nutritionManager: NutritionPlanManager?, conversationHistory: [ChatMessage], usingMLX: Bool = false) -> [LLMMessage] {
         var messages: [LLMMessage] = []
 
-        // System prompt with tool descriptions and user profile context
-        let profileContext = """
-
-        PROFILO UTENTE ATTUALE:
-        - Km settimanali: \(Int(userProfile.weeklyKilometers))
-        - Allenamenti/settimana: \(userProfile.workoutsPerWeek)
-        - Obiettivo: \(userProfile.primaryGoal.rawValue)
-        - Ritmo attuale: \(userProfile.currentPace) min/km
-        - Esperienza: \(userProfile.experience.rawValue)
-        - Gara obiettivo: \(userProfile.raceDistance?.rawValue ?? "Nessuna")
-        - Peso: \(userProfile.weight.map { "\(Int($0))kg" } ?? "non impostato (default 70kg)")
-        """
-
-        var healthContext = ""
-        if let hm = healthManager, hm.isAvailable {
-            if usingMLX {
-                healthContext = "\n\nAPPLE HEALTH: disponibile sul telefono. Per come sto / recupero / sonno / HRV usa get_health_summary e commenta solo i numeri restituiti."
-            } else {
-                healthContext = """
-
-            APPLE HEALTH: Disponibile. Puoi usare il tool "get_health_summary" per leggere dati reali di salute e allenamento (frequenza cardiaca, HRV, passi, sonno, allenamenti, VO2 Max). Usalo per analisi di salute, recupero, carico, sonno, affaticamento, stress, performance recente o stato fisico; non usarlo per consigli generici non sanitari.
-            """
-            }
-        } else {
-            healthContext = "\n\nAPPLE HEALTH: Non disponibile su questo dispositivo."
-        }
-
-        var nutritionContext = ""
-        if let nm = nutritionManager, let plan = nm.currentNutritionPlan {
-            nutritionContext = "\n\nPIANO ALIMENTARE ATTIVO: \"\(plan.title)\" — è collegato al piano di allenamento; se il piano cambia, chiedi conferma prima di aggiornarlo."
-        } else {
-            nutritionContext = "\n\nPIANO ALIMENTARE: Nessun piano alimentare attivo. L'utente può chiedertene uno."
-        }
+        let profileContext = CoachPrompts.profileContext(for: userProfile)
+        let healthAvailable = healthManager?.isAvailable == true
+        let healthContext = CoachPrompts.healthContext(usingMLX: usingMLX, available: healthAvailable)
+        let nutritionContext = CoachPrompts.nutritionContext(activeTitle: nutritionManager?.currentNutritionPlan?.title)
 
         // MLX provider injects tools natively via Qwen2.5 chat template (UserInput.tools);
         // appending toolDescriptionsForPrompt would duplicate them and confuse the model.
@@ -533,7 +428,7 @@ class BobbyAI: ObservableObject {
         ) {
             return grounded
         }
-        activeProviderName = "Locale fallback gratuito"
+        activeProviderName = L10n.tr("Locale fallback gratuito", english: "Free on-device fallback")
         return offlineFallback.response(
             to: userMessage,
             userProfile: userProfile,
@@ -650,15 +545,30 @@ private struct OfflineCoachFallback {
         var intro: String {
             switch self {
             case .noProviderConfigured:
-                return "Modalità gratuita locale fallback: rispondo senza cloud perché non c'è un provider pronto."
+                return L10n.tr(
+                    "Modalità gratuita locale fallback: rispondo senza cloud perché non c'è un provider pronto.",
+                    english: "Free on-device fallback: I answer without cloud because no provider is ready."
+                )
             case .localModelUnavailable:
-                return "Modalità gratuita locale fallback: il modello MLX non è pronto, quindi uso coaching deterministico sul dispositivo."
+                return L10n.tr(
+                    "Modalità gratuita locale fallback: il modello MLX non è pronto, quindi uso coaching deterministico sul dispositivo.",
+                    english: "Free on-device fallback: the MLX model isn't ready, so I use deterministic coaching on device."
+                )
             case .providerDidNotAnswer:
-                return "Modalità gratuita locale fallback: il provider selezionato non ha completato la risposta."
+                return L10n.tr(
+                    "Modalità gratuita locale fallback: il provider selezionato non ha completato la risposta.",
+                    english: "Free on-device fallback: the selected provider didn't finish the answer."
+                )
             case .providerError:
-                return "Modalità gratuita locale fallback: il provider selezionato ha avuto un errore, quindi resto sul dispositivo."
+                return L10n.tr(
+                    "Modalità gratuita locale fallback: il provider selezionato ha avuto un errore, quindi resto sul dispositivo.",
+                    english: "Free on-device fallback: the selected provider errored, so I stay on device."
+                )
             case .compactModel:
-                return "Questo modello è troppo piccolo per la chat libera: resto sul coaching deterministico sul dispositivo."
+                return L10n.tr(
+                    "Questo modello è troppo piccolo per la chat libera: resto sul coaching deterministico sul dispositivo.",
+                    english: "This model is too small for free chat: I stay on deterministic coaching on device."
+                )
             }
         }
     }
@@ -687,7 +597,10 @@ private struct OfflineCoachFallback {
             sections.append(defaultAdvice(for: userProfile, activePlan: activePlan))
         }
 
-        sections.append("Non salvo e non modifico piani senza una tua conferma esplicita.")
+        sections.append(L10n.tr(
+            "Non salvo e non modifico piani senza una tua conferma esplicita.",
+            english: "I don't save or change plans without your explicit confirmation."
+        ))
         return sections.joined(separator: "\n\n")
     }
 
@@ -777,25 +690,26 @@ private struct OfflineCoachFallback {
     }
 
     private func isHealthStatusRequest(_ text: String) -> Bool {
-        containsAny(text, ["come sto", "dati di salute", "dati su salute", "dati salute", "stato fisico", "affatic"])
+        containsAny(text, ["come sto", "dati di salute", "dati su salute", "dati salute", "stato fisico", "affatic", "how am i", "health data", "fatigued"])
     }
 
     private func isTrainingRequest(_ text: String) -> Bool {
-        containsAny(text, ["piano", "allenamento", "allenarmi", "corsa", "correre", "gara", "10k", "5k", "mezza", "maratona", "velocita", "resistenza", "lungo"])
+        containsAny(text, ["piano", "allenamento", "allenarmi", "corsa", "correre", "gara", "10k", "5k", "mezza", "maratona", "velocita", "resistenza", "lungo", "plan", "training", "run", "race", "speed", "endurance"])
     }
 
     private func isNutritionRequest(_ text: String) -> Bool {
-        containsAny(text, ["nutriz", "aliment", "mangiare", "mangio", "dieta", "proteine", "carbo", "idrata", "colazione", "pranzo", "cena"])
+        containsAny(text, ["nutriz", "aliment", "mangiare", "mangio", "dieta", "proteine", "carbo", "idrata", "colazione", "pranzo", "cena", "nutrition", "meal", "eat", "protein", "carbs", "breakfast", "lunch", "dinner"])
     }
 
     private func isRecoveryRequest(_ text: String) -> Bool {
-        containsAny(text, ["recuper", "stanco", "fatica", "sonno", "hrv", "battiti", "frequenza", "stress", "riposo", "dolori muscolari"])
+        containsAny(text, ["recuper", "stanco", "fatica", "sonno", "hrv", "battiti", "frequenza", "stress", "riposo", "dolori muscolari", "recover", "tired", "fatigue", "sleep", "resting", "sore"])
     }
 
     private func containsRedFlag(_ text: String) -> Bool {
         containsAny(text, [
             "dolore al petto", "pressione al petto", "sven", "svengo", "dispnea", "fiato corto forte",
-            "capogiri", "vertigini", "dolore acuto", "dolore forte", "neurolog", "nausea marcata"
+            "capogiri", "vertigini", "dolore acuto", "dolore forte", "neurolog", "nausea marcata",
+            "chest pain", "chest pressure", "faint", "shortness of breath", "dizziness", "acute pain", "neurolog"
         ])
     }
 

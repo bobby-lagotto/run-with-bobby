@@ -24,15 +24,15 @@ struct TodayView: View {
                         .font(.title3.weight(.semibold))
                         .foregroundColor(.bobbyRed)
                     if state.plannedKm > 0 {
-                        Text(String(format: "%.1f km previsti", state.plannedKm))
+                        Text(String(format: L10n.tr("%.1f km previsti", english: "%.1f km planned"), state.plannedKm))
                             .font(.headline)
                             .foregroundColor(BobbyTheme.secondaryText(for: colorScheme))
                     }
                 }
 
                 HStack(spacing: 12) {
-                    StatPill(icon: "checkmark.circle", value: "\(state.sessionStatus.italianLabel)")
-                    StatPill(icon: "heart.text.square", value: state.recommendation.italianLabel)
+                    StatPill(icon: "checkmark.circle", value: "\(state.sessionStatus.localizedLabel)")
+                    StatPill(icon: "heart.text.square", value: state.recommendation.localizedLabel)
                     StatPill(icon: "percent", value: "\(state.weeklyAdherencePercent)%")
                 }
 
@@ -58,18 +58,18 @@ struct TodayView: View {
                         .buttonStyle(.borderedProminent)
                         .tint(.bobbyRed)
 
-                        Button("Segna saltato") {
+                        Button(L10n.tr("Segna saltato", english: "Mark skipped")) {
                             mark(.skipped)
                         }
                         .buttonStyle(.bordered)
 
-                        Button("Registra corsa") {
+                        Button(L10n.tr("Registra corsa", english: "Log run")) {
                             showingRun = true
                         }
                         .buttonStyle(.bordered)
                     }
 
-                    Button("Parla con Bobby") {
+                    Button(L10n.tr("Parla con Bobby", english: "Talk to Bobby")) {
                         onTalkToBobby()
                     }
                     .buttonStyle(.bordered)
@@ -79,12 +79,12 @@ struct TodayView: View {
             .padding(20)
         }
         .background(BobbyTheme.background(for: colorScheme).ignoresSafeArea())
-        .navigationTitle("Oggi")
+        .navigationTitle(L10n.tr("Oggi", english: "Today"))
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             if !AppStoreScreenshotMode.isEnabled {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("Chiudi") { dismiss() }
+                    Button(L10n.tr("Chiudi", english: "Close")) { dismiss() }
                 }
             }
         }

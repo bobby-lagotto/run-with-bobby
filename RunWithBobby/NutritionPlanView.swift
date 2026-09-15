@@ -20,7 +20,7 @@ struct NutritionPlanView: View {
                         // Ask Bobby button
                         if let onAskBobby {
                             Button(action: onAskBobby) {
-                                Label("Chiedi a Bobby di modificare", systemImage: "bubble.left.fill")
+                                Label(L10n.tr("Chiedi a Bobby di modificare", english: "Ask Bobby to change it"), systemImage: "bubble.left.fill")
                                     .font(.subheadline.weight(.medium))
                                     .foregroundColor(.white)
                                     .frame(maxWidth: .infinity)
@@ -32,7 +32,7 @@ struct NutritionPlanView: View {
                         }
 
                         // Weekly nutrition
-                        SectionHeader(title: "Piano Settimanale")
+                        SectionHeader(title: L10n.tr("Piano Settimanale", english: "Weekly plan"))
                             .padding(.horizontal, 16)
 
                         ForEach(plan.weeklyNutrition) { day in
@@ -47,11 +47,11 @@ struct NutritionPlanView: View {
                 }
             }
             .background(BobbyTheme.background(for: colorScheme).ignoresSafeArea())
-            .navigationTitle("Piano Alimentare")
+            .navigationTitle(L10n.tr("Piano Alimentare", english: "Nutrition plan"))
             .navigationBarTitleDisplayMode(.large)
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
-                    Button("Chiudi") { dismiss() }
+                    Button(L10n.tr("Chiudi", english: "Close")) { dismiss() }
                         .foregroundColor(.bobbyRed)
                 }
             }
@@ -78,9 +78,9 @@ struct NutritionPlanView: View {
             // Weekly totals
             let totals = weeklyTotals(for: plan)
             HStack(spacing: 16) {
-                MacroTotalPill(label: "Proteine", grams: totals.proteine, color: .bobbyRed)
-                MacroTotalPill(label: "Carbo", grams: totals.carboidrati, color: .bobbyCaramel)
-                MacroTotalPill(label: "Verd/Fr", grams: totals.verdure, color: .workoutEasy)
+                MacroTotalPill(label: L10n.tr("Proteine", english: "Protein"), grams: totals.proteine, color: .bobbyRed)
+                MacroTotalPill(label: L10n.tr("Carbo", english: "Carbs"), grams: totals.carboidrati, color: .bobbyCaramel)
+                MacroTotalPill(label: L10n.tr("Verd/Fr", english: "Veg/Fruit"), grams: totals.verdure, color: .workoutEasy)
             }
         }
     }
@@ -90,10 +90,10 @@ struct NutritionPlanView: View {
             Image(systemName: "fork.knife")
                 .font(.system(size: 40))
                 .foregroundColor(.bobbyWarmGray.opacity(0.5))
-            Text("Nessun piano alimentare")
+            Text(L10n.tr("Nessun piano alimentare", english: "No nutrition plan"))
                 .font(.subheadline)
                 .foregroundColor(.bobbyWarmGray)
-            Text("Chiedi a Bobby di crearne uno!")
+            Text(L10n.tr("Chiedi a Bobby di crearne uno!", english: "Ask Bobby to create one!"))
                 .font(.caption)
                 .foregroundColor(.bobbyWarmGray)
         }

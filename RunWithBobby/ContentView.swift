@@ -34,32 +34,46 @@ struct WelcomeView: View {
     @Binding var isFirstLaunch: Bool
     @State private var currentStep = 0
 
-    private let welcomeSteps = [
+    private var welcomeSteps: [WelcomeStep] {
+        [
         WelcomeStep(
             icon: "figure.run",
-            title: "Benvenuto in Run with Bobby",
-            description: "Il tuo personal trainer di corsa con intelligenza artificiale locale",
+            title: L10n.tr("Benvenuto in Run with Bobby", english: "Welcome to Run with Bobby"),
+            description: L10n.tr(
+                "Il tuo personal trainer di corsa con intelligenza artificiale locale",
+                english: "Your running coach with on-device AI"
+            ),
             color: .bobbyRed
         ),
         WelcomeStep(
             icon: "lock.shield.fill",
-            title: "Privacy sotto controllo",
-            description: "Puoi usare il modello locale sul tuo iPhone. I provider cloud sono opzionali e inviano solo il contesto necessario quando li attivi",
+            title: L10n.tr("Privacy sotto controllo", english: "Privacy under your control"),
+            description: L10n.tr(
+                "Puoi usare il modello locale sul tuo iPhone. I provider cloud sono opzionali e inviano solo il contesto necessario quando li attivi",
+                english: "You can use the on-device model on your iPhone. Cloud providers are optional and only send the needed context when you turn them on"
+            ),
             color: .bobbyCaramel
         ),
         WelcomeStep(
             icon: "list.clipboard.fill",
-            title: "Piani Personalizzati",
-            description: "Bobby crea piani di allenamento su misura per i tuoi obiettivi e livello",
+            title: L10n.tr("Piani Personalizzati", english: "Personalised plans"),
+            description: L10n.tr(
+                "Bobby crea piani di allenamento su misura per i tuoi obiettivi e livello",
+                english: "Bobby builds training plans around your goals and level"
+            ),
             color: .bobbyRed
         ),
         WelcomeStep(
             icon: "bubble.left.and.bubble.right.fill",
-            title: "Conversazione Naturale",
-            description: "Parla con Bobby come faresti con un vero coach. Chiedi consigli, ottimizza i piani",
+            title: L10n.tr("Conversazione Naturale", english: "Natural conversation"),
+            description: L10n.tr(
+                "Parla con Bobby come faresti con un vero coach. Chiedi consigli, ottimizza i piani",
+                english: "Talk to Bobby like a real coach. Ask for advice, optimise plans"
+            ),
             color: .bobbyCaramel
         )
-    ]
+        ]
+    }
 
     var body: some View {
         VStack(spacing: 40) {
@@ -112,7 +126,7 @@ struct WelcomeView: View {
             // Navigation buttons
             HStack {
                 if currentStep > 0 {
-                    Button("Indietro") {
+                    Button(L10n.tr("Indietro", english: "Back")) {
                         withAnimation(.easeInOut(duration: 0.3)) {
                             currentStep -= 1
                         }
@@ -123,7 +137,7 @@ struct WelcomeView: View {
 
                 Spacer()
 
-                Button(currentStep < welcomeSteps.count - 1 ? "Avanti" : "Inizia a Correre!") {
+                Button(currentStep < welcomeSteps.count - 1 ? L10n.tr("Avanti", english: "Next") : L10n.tr("Inizia a Correre!", english: "Start running!")) {
                     withAnimation(.easeInOut(duration: 0.3)) {
                         if currentStep < welcomeSteps.count - 1 {
                             currentStep += 1

@@ -2,6 +2,11 @@ import XCTest
 @testable import RunWithBobby
 
 final class TodayPresenterTests: XCTestCase {
+    override func setUp() {
+        super.setUp()
+        AppLanguage.sync(from: .italian)
+    }
+
     func testMissingPlan() {
         let state = TodayPresenter.make(plan: nil, now: HabitFixtures.wednesday, calendar: HabitFixtures.calendar)
         XCTAssertFalse(state.hasActivePlan)

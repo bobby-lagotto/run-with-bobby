@@ -12,6 +12,12 @@
 		3D92FB2E2C8E4B2B00123456 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 3D92FB2D2C8E4B2B00123456 /* Assets.xcassets */; };
 		3D92FB312C8E4B2B00123456 /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 3D92FB302C8E4B2B00123456 /* Preview Assets.xcassets */; };
 		EE15000100000001AABBCCDD /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = EE15000200000001AABBCCDD /* PrivacyInfo.xcprivacy */; };
+		L10N0002AAAA0006BBBB0001 /* AppLanguage.swift in Sources */ = {isa = PBXBuildFile; fileRef = L10N0001AAAA0006BBBB0001 /* AppLanguage.swift */; };
+		L10N0004AAAA0006BBBB0001 /* CoachPrompts.swift in Sources */ = {isa = PBXBuildFile; fileRef = L10N0003AAAA0006BBBB0001 /* CoachPrompts.swift */; };
+		L10N0005AAAA0006BBBB0001 /* AppLanguage.swift in Sources */ = {isa = PBXBuildFile; fileRef = L10N0001AAAA0006BBBB0001 /* AppLanguage.swift */; };
+		L10N0006AAAA0006BBBB0001 /* AppLanguage.swift in Sources */ = {isa = PBXBuildFile; fileRef = L10N0001AAAA0006BBBB0001 /* AppLanguage.swift */; };
+		L10N0008AAAA0006BBBB0001 /* AppLanguageTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = L10N0007AAAA0006BBBB0001 /* AppLanguageTests.swift */; };
+		L10N000BAAAA0006BBBB0001 /* InfoPlist.xcstrings in Resources */ = {isa = PBXBuildFile; fileRef = L10N0009AAAA0006BBBB0001 /* InfoPlist.xcstrings */; };
 		3D92FB382C8E4B5600123456 /* ChatView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D92FB372C8E4B5600123456 /* ChatView.swift */; };
 		3D92FB3A2C8E4B6700123456 /* TrainingPlanManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D92FB392C8E4B6700123456 /* TrainingPlanManager.swift */; };
 		3D92FB3C2C8E4B7800123456 /* Models.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D92FB3B2C8E4B7800123456 /* Models.swift */; };
@@ -123,6 +129,10 @@
 		3D92FB2D2C8E4B2B00123456 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		3D92FB302C8E4B2B00123456 /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
 		EE15000200000001AABBCCDD /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
+		L10N0001AAAA0006BBBB0001 /* AppLanguage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppLanguage.swift; sourceTree = "<group>"; };
+		L10N0003AAAA0006BBBB0001 /* CoachPrompts.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CoachPrompts.swift; sourceTree = "<group>"; };
+		L10N0007AAAA0006BBBB0001 /* AppLanguageTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppLanguageTests.swift; sourceTree = "<group>"; };
+		L10N0009AAAA0006BBBB0001 /* InfoPlist.xcstrings */ = {isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; path = InfoPlist.xcstrings; sourceTree = "<group>"; };
 		3D92FB372C8E4B5600123456 /* ChatView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatView.swift; sourceTree = "<group>"; };
 		3D92FB392C8E4B6700123456 /* TrainingPlanManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrainingPlanManager.swift; sourceTree = "<group>"; };
 		3D92FB3B2C8E4B7800123456 /* Models.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Models.swift; sourceTree = "<group>"; };
@@ -238,6 +248,9 @@
 			children = (
 				AA00000200000009AABBCCDD /* RunWithBobby.entitlements */,
 				EE15000200000001AABBCCDD /* PrivacyInfo.xcprivacy */,
+				L10N0009AAAA0006BBBB0001 /* InfoPlist.xcstrings */,
+				L10N0001AAAA0006BBBB0001 /* AppLanguage.swift */,
+				L10N0003AAAA0006BBBB0001 /* CoachPrompts.swift */,
 				3D92FB292C8E4B2A00123456 /* RunWithBobbyApp.swift */,
 				F4S00001AAAA0005BBBB0001 /* AppStoreScreenshotSeed.swift */,
 				3D92FB2B2C8E4B2A00123456 /* ContentView.swift */,
@@ -315,6 +328,7 @@
 			isa = PBXGroup;
 			children = (
 				F1T0000EAAAA0002BBBB0007 /* HabitFixtures.swift */,
+				L10N0007AAAA0006BBBB0001 /* AppLanguageTests.swift */,
 				F1T00020AAAA0002BBBB0008 /* GenerationLoopGuardTests.swift */,
 				F1T00002AAAA0002BBBB0001 /* ToolRouterIntegrationTests.swift */,
 				F1T00004AAAA0002BBBB0002 /* AdherenceIntegrationTests.swift */,
@@ -487,6 +501,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				EE15000100000001AABBCCDD /* PrivacyInfo.xcprivacy in Resources */,
+				L10N000BAAAA0006BBBB0001 /* InfoPlist.xcstrings in Resources */,
 				3D92FB312C8E4B2B00123456 /* Preview Assets.xcassets in Resources */,
 				3D92FB2E2C8E4B2B00123456 /* Assets.xcassets in Resources */,
 			);
@@ -521,6 +536,8 @@
 			buildActionMask = 2147483647;
 			files = (
 				3D92FB2C2C8E4B2A00123456 /* ContentView.swift in Sources */,
+				L10N0002AAAA0006BBBB0001 /* AppLanguage.swift in Sources */,
+				L10N0004AAAA0006BBBB0001 /* CoachPrompts.swift in Sources */,
 				3D92FB382C8E4B5600123456 /* ChatView.swift in Sources */,
 				3D92FB3E2C8E4B8900123456 /* BobbyAI.swift in Sources */,
 				3D92FB2A2C8E4B2A00123456 /* RunWithBobbyApp.swift in Sources */,
@@ -563,6 +580,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				F1T0000FAAAA0002BBBB0007 /* HabitFixtures.swift in Sources */,
+				L10N0008AAAA0006BBBB0001 /* AppLanguageTests.swift in Sources */,
 				F1T00003AAAA0002BBBB0001 /* ToolRouterIntegrationTests.swift in Sources */,
 				F1T00021AAAA0002BBBB0008 /* GenerationLoopGuardTests.swift in Sources */,
 				F1T00005AAAA0002BBBB0002 /* AdherenceIntegrationTests.swift in Sources */,
@@ -578,6 +596,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				F2W00003AAAA0003BBBB0001 /* BobbyTodayWidget.swift in Sources */,
+				L10N0005AAAA0006BBBB0001 /* AppLanguage.swift in Sources */,
 				F2W00004AAAA0003BBBB0002 /* HabitModels.swift in Sources */,
 				F2W00005AAAA0003BBBB0003 /* TodaySnapshot.swift in Sources */,
 			);
@@ -588,6 +607,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				F3A00003AAAA0004BBBB0001 /* BobbyWatchApp.swift in Sources */,
+				L10N0006AAAA0006BBBB0001 /* AppLanguage.swift in Sources */,
 				F3A00004AAAA0004BBBB0002 /* HabitModels.swift in Sources */,
 				F3A00005AAAA0004BBBB0003 /* TodaySnapshot.swift in Sources */,
 			);
@@ -746,6 +766,7 @@
                 ENABLE_PREVIEWS = YES;
                 GENERATE_INFOPLIST_FILE = YES;
                 INFOPLIST_KEY_CFBundleDisplayName = "Run with Bobby";
+                INFOPLIST_KEY_CFBundleLocalizations = "en it";
                 INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
                 INFOPLIST_KEY_NSHealthShareUsageDescription = "Run with Bobby legge dati di salute e allenamento per personalizzare coaching, recupero e piani. Puoi revocare l'accesso in Impostazioni > Salute.";
 				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "Run with Bobby puo' salvare un allenamento di corsa in Salute quando registri una seduta. Puoi revocare l'accesso in Impostazioni > Salute.";
@@ -783,6 +804,7 @@
                 ENABLE_PREVIEWS = YES;
                 GENERATE_INFOPLIST_FILE = YES;
                 INFOPLIST_KEY_CFBundleDisplayName = "Run with Bobby";
+                INFOPLIST_KEY_CFBundleLocalizations = "en it";
                 INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
                 INFOPLIST_KEY_NSHealthShareUsageDescription = "Run with Bobby legge dati di salute e allenamento per personalizzare coaching, recupero e piani. Puoi revocare l'accesso in Impostazioni > Salute.";
 				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "Run with Bobby puo' salvare un allenamento di corsa in Salute quando registri una seduta. Puoi revocare l'accesso in Impostazioni > Salute.";

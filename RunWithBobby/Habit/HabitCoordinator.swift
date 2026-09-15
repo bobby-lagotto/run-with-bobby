@@ -58,7 +58,10 @@ final class HabitCoordinator: ObservableObject {
     ) -> TrainingPlan {
         let comparison = RunSessionLogic.finish(plannedKm: plannedKm, loggedKm: loggedKm, durationMinutes: durationMinutes)
         lastOptimizeSuggestion = comparison.shouldSuggestOptimize
-            ? "Seduta molto sotto il previsto. Chiedi a Bobby di valutare optimize_plan, senza applicarlo da solo."
+            ? L10n.tr(
+                "Seduta molto sotto il previsto. Chiedi a Bobby di valutare optimize_plan, senza applicarlo da solo.",
+                english: "Session well under the plan. Ask Bobby to consider optimize_plan, without applying it on his own."
+            )
             : nil
         let updated = RunSessionLogic.apply(
             to: plan,

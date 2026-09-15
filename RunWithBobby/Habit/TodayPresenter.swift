@@ -41,14 +41,14 @@ enum TodayPresenter {
             return TodayViewState(
                 hasActivePlan: false,
                 isRestDay: true,
-                dayTitle: WeekdayKey.italianName(for: now, calendar: calendar).capitalized,
-                workoutType: "Nessun piano",
+                dayTitle: WeekdayKey.displayName(for: now, calendar: calendar),
+                workoutType: L10n.tr("Nessun piano", english: "No plan"),
                 plannedKm: 0,
                 sessionStatus: .planned,
                 recommendation: .easy,
                 briefingLine: ReadinessEngine.briefingLine(recommendation: .easy, today: nil, hasActivePlan: false),
                 weeklyAdherencePercent: 0,
-                ctaTitle: "Parla con Bobby",
+                ctaTitle: L10n.tr("Parla con Bobby", english: "Talk to Bobby"),
                 canLog: false
             )
         }
@@ -61,18 +61,18 @@ enum TodayPresenter {
 
         let cta: String
         if isRest {
-            cta = "Parla con Bobby"
+            cta = L10n.tr("Parla con Bobby", english: "Talk to Bobby")
         } else if today?.sessionStatus == .completed {
-            cta = "Parla con Bobby"
+            cta = L10n.tr("Parla con Bobby", english: "Talk to Bobby")
         } else {
-            cta = "Segna fatto"
+            cta = L10n.tr("Segna fatto", english: "Mark done")
         }
 
         return TodayViewState(
             hasActivePlan: true,
             isRestDay: isRest,
-            dayTitle: today?.dayOfWeek.capitalized ?? WeekdayKey.italianName(for: now, calendar: calendar).capitalized,
-            workoutType: today?.workoutType.rawValue ?? "Riposo",
+            dayTitle: today.map { WeekdayKey.displayName(fromStored: $0.dayOfWeek) } ?? WeekdayKey.displayName(for: now, calendar: calendar),
+            workoutType: today?.workoutType.displayName ?? L10n.tr("Riposo", english: "Rest"),
             plannedKm: today?.distance ?? 0,
             sessionStatus: today?.sessionStatus ?? .planned,
             recommendation: recommendation,

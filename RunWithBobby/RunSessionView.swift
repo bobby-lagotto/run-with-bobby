@@ -14,7 +14,7 @@ struct RunSessionView: View {
     var body: some View {
         NavigationView {
             VStack(spacing: 24) {
-                Text(session.isRunning ? "In corso" : "Registra la corsa")
+                Text(session.isRunning ? L10n.tr("In corso", english: "In progress") : L10n.tr("Registra la corsa", english: "Log the run"))
                     .font(.title2.weight(.semibold))
 
                 Text(String(format: "%.2f km", session.distanceKm))
@@ -26,28 +26,28 @@ struct RunSessionView: View {
                     .foregroundColor(BobbyTheme.secondaryText(for: colorScheme))
 
                 if session.authorizationDenied {
-                    Text("GPS non autorizzato. Puoi inserire i km a mano.")
+                    Text(L10n.tr("GPS non autorizzato. Puoi inserire i km a mano.", english: "GPS not authorised. You can enter km by hand."))
                         .font(.footnote)
                         .foregroundColor(.bobbyCaramel)
                 }
 
                 HStack {
                     if session.isRunning {
-                        Button("Termina") { finish(usingGPS: true) }
+                        Button(L10n.tr("Termina", english: "Finish")) { finish(usingGPS: true) }
                             .buttonStyle(.borderedProminent)
                             .tint(.bobbyRed)
                     } else {
-                        Button("Avvia GPS") { session.start() }
+                        Button(L10n.tr("Avvia GPS", english: "Start GPS")) { session.start() }
                             .buttonStyle(.borderedProminent)
                             .tint(.bobbyRed)
                     }
                 }
 
                 HStack {
-                    TextField("Km manuali", text: $manualKm)
+                    TextField(L10n.tr("Km manuali", english: "Manual km"), text: $manualKm)
                         .keyboardType(.decimalPad)
                         .textFieldStyle(.roundedBorder)
-                    Button("Salva") { finish(usingGPS: false) }
+                    Button(L10n.tr("Salva", english: "Save")) { finish(usingGPS: false) }
                         .buttonStyle(.bordered)
                         .disabled(manualKm.isEmpty)
                 }
@@ -62,10 +62,10 @@ struct RunSessionView: View {
             }
             .padding(24)
             .background(BobbyTheme.background(for: colorScheme).ignoresSafeArea())
-            .navigationTitle("Sessione")
+            .navigationTitle(L10n.tr("Sessione", english: "Session"))
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("Chiudi") { dismiss() }
+                    Button(L10n.tr("Chiudi", english: "Close")) { dismiss() }
                 }
             }
         }
@@ -112,7 +112,7 @@ struct RunSessionView: View {
         if let suggestion = habitCoordinator.lastOptimizeSuggestion {
             resultNote = suggestion
         } else {
-            resultNote = "Seduta registrata."
+            resultNote = L10n.tr("Seduta registrata.", english: "Session logged.")
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) {
                 dismiss()
             }

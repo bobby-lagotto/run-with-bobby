@@ -1,0 +1,54 @@
+{
+  "sourceLanguage" : "it",
+  "strings" : {
+    "NSHealthShareUsageDescription" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Run with Bobby reads health and workout data to personalise coaching, recovery and plans. You can revoke access in Settings > Health."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Run with Bobby legge dati di salute e allenamento per personalizzare coaching, recupero e piani. Puoi revocare l'accesso in Impostazioni > Salute."
+          }
+        }
+      }
+    },
+    "NSHealthUpdateUsageDescription" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Run with Bobby can save a running workout to Health when you log a session. You can revoke access in Settings > Health."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Run with Bobby puo' salvare un allenamento di corsa in Salute quando registri una seduta. Puoi revocare l'accesso in Impostazioni > Salute."
+          }
+        }
+      }
+    },
+    "NSLocationWhenInUseUsageDescription" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Run with Bobby uses location only during a run session to calculate distance and route."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Run with Bobby usa la posizione solo durante una sessione di corsa per calcolare distanza e percorso."
+          }
+        }
+      }
+    }
+  },
+  "version" : "1.0"
+}

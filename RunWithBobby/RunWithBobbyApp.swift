@@ -30,6 +30,8 @@ struct RunWithBobbyApp: App {
                 .environmentObject(healthManager)
                 .environmentObject(bobbyAI)
                 .environmentObject(habitCoordinator)
+                .environment(\.locale, aiSettings.resolvedLocale)
+                .id(aiSettings.languagePreference)
                 .preferredColorScheme(.none)
                 .onAppear {
                     #if DEBUG

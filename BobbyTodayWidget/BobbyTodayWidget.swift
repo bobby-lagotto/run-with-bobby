@@ -35,7 +35,7 @@ struct BobbyTodayWidgetView: View {
                 Text(String(format: "%.1f km", entry.snapshot.plannedKm))
                     .font(.subheadline)
             }
-            Text(entry.snapshot.sessionStatus.italianLabel.capitalized)
+            Text(entry.snapshot.sessionStatus.localizedLabel.capitalized)
                 .font(.caption)
             Text(entry.snapshot.briefingLine)
                 .font(.caption2)
@@ -56,8 +56,8 @@ struct BobbyTodayWidget: Widget {
                 BobbyTodayWidgetView(entry: entry)
             }
         }
-        .configurationDisplayName("Oggi con Bobby")
-        .description("La seduta di oggi, senza dati extra.")
+        .configurationDisplayName(L10n.tr("Oggi con Bobby", english: "Today with Bobby"))
+        .description(L10n.tr("La seduta di oggi, senza dati extra.", english: "Today's session, no extra data."))
         .supportedFamilies([.systemSmall, .systemMedium, .accessoryRectangular])
     }
 }

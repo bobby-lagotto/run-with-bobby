@@ -85,11 +85,15 @@ enum AdherenceEngine {
         let percent = workoutDays.isEmpty ? 0 : Int((Double(credited) / Double(workoutDays.count) * 100).rounded())
 
         let dayLines = plan.weeklyPlan.map { day in
-            let logged = day.loggedDistance.map { String(format: " (%.1f km loggati)", $0) } ?? ""
-            return "\(day.dayOfWeek): \(day.workoutType.rawValue) \(day.distance)km — \(day.sessionStatus.italianLabel)\(logged)"
+            let logged = day.loggedDistance.map { String(format: L10n.tr(" (%.1f km loggati)", english: " (%.1f km logged)"), $0) } ?? ""
+            return "\(WeekdayKey.displayName(fromStored: day.dayOfWeek)): \(day.workoutType.displayName) \(day.distance)km — \(day.sessionStatus.localizedLabel)\(logged)"
         }.joined(separator: "; ")
 
-        let context = "Aderenza \(percent)%: \(credited)/\(workoutDays.count) sedute avviate (fatte \(completed), parziali \(partial), saltate \(skipped), previste \(remaining)). \(dayLines)"
+        let context = L10n.format(
+            "Aderenza %d%%: %d/%d sedute avviate (fatte %d, parziali %d, saltate %d, previste %d). %@",
+            english: "Adherence %d%%: %d/%d sessions started (done %d, partial %d, skipped %d, planned %d). %@",
+            percent, credited, workoutDays.count, completed, partial, skipped, remaining, dayLines
+        )
 
         return AdherenceSummary(
             plannedWorkouts: workoutDays.count,

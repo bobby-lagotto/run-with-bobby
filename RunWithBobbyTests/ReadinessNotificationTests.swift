@@ -2,6 +2,11 @@ import XCTest
 @testable import RunWithBobby
 
 final class ReadinessNotificationTests: XCTestCase {
+    override func setUp() {
+        super.setUp()
+        AppLanguage.sync(from: .italian)
+    }
+
     func testPoorSleepAndLowHRVOnQualityDayIsRest() async throws {
         let router = ToolRouter()
         let manager = HabitFixtures.isolatedManager()

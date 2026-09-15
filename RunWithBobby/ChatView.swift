@@ -70,26 +70,32 @@ struct ChatView: View {
                     TodayView(onTalkToBobby: { showingToday = false })
                 }
             }
-            .alert("Cancellare i dati locali?", isPresented: $showingDeleteDataConfirm) {
-                Button("Annulla", role: .cancel) {}
-                Button("Cancella", role: .destructive) {
+            .alert(L10n.tr("Cancellare i dati locali?", english: "Delete local data?"), isPresented: $showingDeleteDataConfirm) {
+                Button(L10n.tr("Annulla", english: "Cancel"), role: .cancel) {}
+                Button(L10n.tr("Cancella", english: "Delete"), role: .destructive) {
                     deleteLocalUserData()
                 }
             } message: {
-                Text("Verranno rimossi chat, profilo runner, piani di allenamento e piani alimentari salvati su questo dispositivo. Le API key restano nel Keychain e puoi rimuoverle dalle impostazioni AI.")
+                Text(L10n.tr(
+                    "Verranno rimossi chat, profilo runner, piani di allenamento e piani alimentari salvati su questo dispositivo. Le API key restano nel Keychain e puoi rimuoverle dalle impostazioni AI.",
+                    english: "Chat, runner profile, training plans and nutrition plans saved on this device will be removed. API keys stay in the Keychain and you can remove them from AI Settings."
+                ))
             }
-            .alert("Inviare riepilogo Health al provider cloud?", isPresented: $showingCloudHealthConfirm) {
-                Button("Annulla", role: .cancel) {
+            .alert(L10n.tr("Inviare riepilogo Health al provider cloud?", english: "Send Health summary to the cloud provider?"), isPresented: $showingCloudHealthConfirm) {
+                Button(L10n.tr("Annulla", english: "Cancel"), role: .cancel) {
                     pendingCloudHealthMessage = nil
                 }
-                Button("Continua") {
+                Button(L10n.tr("Continua", english: "Continue")) {
                     if let message = pendingCloudHealthMessage {
                         pendingCloudHealthMessage = nil
                         sendMessageToBobby(message)
                     }
                 }
             } message: {
-                Text("Per questa richiesta Bobby potrebbe leggere un riepilogo Apple Health e inviarlo al provider cloud selezionato insieme al contesto della chat. Usa il provider Locale per restare on-device.")
+                Text(L10n.tr(
+                    "Per questa richiesta Bobby potrebbe leggere un riepilogo Apple Health e inviarlo al provider cloud selezionato insieme al contesto della chat. Usa il provider Locale per restare on-device.",
+                    english: "For this request Bobby may read an Apple Health summary and send it to the selected cloud provider with the chat context. Use the On-device provider to stay on-device."
+                ))
             }
             .onAppear {
                 bobbyAI.configure(with: aiSettings, healthManager: healthConnected ? healthManager : nil)
@@ -117,12 +123,12 @@ struct ChatView: View {
                         .foregroundColor(BobbyTheme.primaryText(for: colorScheme))
 
                     if bobbyAI.isLoading {
-                        Text(bobbyAI.streamingText.isEmpty ? "Sta pensando..." : "Sta scrivendo...")
+                        Text(bobbyAI.streamingText.isEmpty ? L10n.tr("Sta pensando...", english: "Thinking...") : L10n.tr("Sta scrivendo...", english: "Writing..."))
                             .font(.caption)
                             .foregroundColor(.bobbyWarmGray)
                     } else {
                         HStack(spacing: 4) {
-                            Text("Il tuo running coach")
+                            Text(L10n.tr("Il tuo running coach", english: "Your running coach"))
                             if !bobbyAI.activeProviderName.isEmpty {
                                 Text("·")
                                 Image(systemName: aiSettings.providerType.icon)
@@ -144,25 +150,25 @@ struct ChatView: View {
 
                 Menu {
                     Button(action: { showingPlansArchive = true }) {
-                        Label("Archivio Piani", systemImage: "list.clipboard")
+                        Label(L10n.tr("Archivio Piani", english: "Plan archive"), systemImage: "list.clipboard")
                     }
                     Button(action: { showingNutritionPlan = true }) {
-                        Label("Piano Alimentare", systemImage: "fork.knife")
+                        Label(L10n.tr("Piano Alimentare", english: "Nutrition plan"), systemImage: "fork.knife")
                     }
                     Button(action: { showingConversationHistory = true }) {
-                        Label("Storico Chat", systemImage: "clock.arrow.circlepath")
+                        Label(L10n.tr("Storico Chat", english: "Chat history"), systemImage: "clock.arrow.circlepath")
                     }
                     Button(action: { showingProfileSetup = true }) {
-                        Label("Profilo Runner", systemImage: "person.crop.circle")
+                        Label(L10n.tr("Profilo Runner", english: "Runner profile"), systemImage: "person.crop.circle")
                     }
                     Button(action: { showingSettings = true }) {
-                        Label("Impostazioni AI", systemImage: "gearshape")
+                        Label(L10n.tr("Impostazioni AI", english: "AI Settings"), systemImage: "gearshape")
                     }
                     Button(action: { appState.startNewConversation() }) {
-                        Label("Nuova Chat", systemImage: "plus.bubble")
+                        Label(L10n.tr("Nuova Chat", english: "New chat"), systemImage: "plus.bubble")
                     }
                     Button(role: .destructive, action: { showingDeleteDataConfirm = true }) {
-                        Label("Cancella dati locali", systemImage: "trash")
+                        Label(L10n.tr("Cancella dati locali", english: "Delete local data"), systemImage: "trash")
                     }
                 } label: {
                     Image(systemName: "ellipsis.circle")
@@ -175,8 +181,8 @@ struct ChatView: View {
             if appState.isProfileComplete {
                 HStack(spacing: 16) {
                     StatPill(icon: "figure.run", value: "\(Int(appState.userProfile.weeklyKilometers))km/sett")
-                    StatPill(icon: "calendar", value: "\(appState.userProfile.workoutsPerWeek) allenamenti")
-                    StatPill(icon: "target", value: appState.userProfile.primaryGoal.rawValue)
+                    StatPill(icon: "calendar", value: L10n.format("%d allenamenti", english: "%d workouts", appState.userProfile.workoutsPerWeek))
+                    StatPill(icon: "target", value: appState.userProfile.primaryGoal.displayName)
                 }
             }
 
@@ -206,7 +212,7 @@ struct ChatView: View {
                     HStack(spacing: 6) {
                         Image(systemName: "fork.knife")
                             .font(.caption)
-                        Text("Alimentare")
+                        Text(L10n.tr("Alimentare", english: "Nutrition"))
                             .font(.caption.weight(.medium))
                     }
                     .foregroundColor(.bobbyCaramel)
@@ -284,7 +290,7 @@ struct ChatView: View {
 
             HStack(spacing: 12) {
                 HStack {
-                    TextField("Scrivi a Bobby...", text: $messageText, axis: .vertical)
+                    TextField(L10n.tr("Scrivi a Bobby...", english: "Write to Bobby..."), text: $messageText, axis: .vertical)
                         .lineLimit(1...4)
                         .font(.body)
                         .padding(.horizontal, 12)
@@ -319,10 +325,30 @@ struct ChatView: View {
     private var quickSetupButtons: some View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: 8) {
-                QuickButton("Sono un principiante") { sendQuickMessage("Sono un principiante, voglio iniziare a correre") }
-                QuickButton("Corro già 20km/sett") { sendQuickMessage("Corro già circa 20km alla settimana") }
-                QuickButton("Voglio correre una 10K") { sendQuickMessage("Il mio obiettivo è correre una 10K") }
-                QuickButton("Voglio perdere peso") { sendQuickMessage("Voglio correre per perdere peso") }
+                QuickButton(L10n.tr("Sono un principiante", english: "I'm a beginner")) {
+                    sendQuickMessage(L10n.tr(
+                        "Sono un principiante, voglio iniziare a correre",
+                        english: "I'm a beginner, I want to start running"
+                    ))
+                }
+                QuickButton(L10n.tr("Corro già 20km/sett", english: "I already run 20km/week")) {
+                    sendQuickMessage(L10n.tr(
+                        "Corro già circa 20km alla settimana",
+                        english: "I already run about 20km a week"
+                    ))
+                }
+                QuickButton(L10n.tr("Voglio correre una 10K", english: "I want to run a 10K")) {
+                    sendQuickMessage(L10n.tr(
+                        "Il mio obiettivo è correre una 10K",
+                        english: "My goal is to run a 10K"
+                    ))
+                }
+                QuickButton(L10n.tr("Voglio perdere peso", english: "I want to lose weight")) {
+                    sendQuickMessage(L10n.tr(
+                        "Voglio correre per perdere peso",
+                        english: "I want to run to lose weight"
+                    ))
+                }
             }
             .padding(.horizontal)
         }
@@ -332,12 +358,42 @@ struct ChatView: View {
     private var quickActionButtons: some View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: 8) {
-                QuickButton("Nuovo piano") { sendQuickMessage("Crea un nuovo piano di allenamento per me") }
-                QuickButton("Piano alimentare") { sendQuickMessage("Crea un piano alimentare basato sul mio allenamento") }
-                QuickButton("Cosa faccio oggi?") { sendQuickMessage("Cosa faccio oggi? Usa il briefing e l'aderenza.") }
-                QuickButton("Come sto?") { sendQuickMessage("Analizza i miei dati di salute e dimmi come sto. Sono affaticato? Fammi un riassunto completo.") }
-                QuickButton("Ottimizza piano") { sendQuickMessage("Vorrei ottimizzare il mio piano attuale") }
-                QuickButton("Consigli recupero") { sendQuickMessage("Dammi consigli per il recupero") }
+                QuickButton(L10n.tr("Nuovo piano", english: "New plan")) {
+                    sendQuickMessage(L10n.tr(
+                        "Crea un nuovo piano di allenamento per me",
+                        english: "Create a new training plan for me"
+                    ))
+                }
+                QuickButton(L10n.tr("Piano alimentare", english: "Nutrition plan")) {
+                    sendQuickMessage(L10n.tr(
+                        "Crea un piano alimentare basato sul mio allenamento",
+                        english: "Create a nutrition plan based on my training"
+                    ))
+                }
+                QuickButton(L10n.tr("Cosa faccio oggi?", english: "What do I do today?")) {
+                    sendQuickMessage(L10n.tr(
+                        "Cosa faccio oggi? Usa il briefing e l'aderenza.",
+                        english: "What do I do today? Use the briefing and adherence."
+                    ))
+                }
+                QuickButton(L10n.tr("Come sto?", english: "How am I?")) {
+                    sendQuickMessage(L10n.tr(
+                        "Analizza i miei dati di salute e dimmi come sto. Sono affaticato? Fammi un riassunto completo.",
+                        english: "Analyze my health data and tell me how I am. Am I fatigued? Give me a full summary."
+                    ))
+                }
+                QuickButton(L10n.tr("Ottimizza piano", english: "Optimize plan")) {
+                    sendQuickMessage(L10n.tr(
+                        "Vorrei ottimizzare il mio piano attuale",
+                        english: "I'd like to optimize my current plan"
+                    ))
+                }
+                QuickButton(L10n.tr("Consigli recupero", english: "Recovery tips")) {
+                    sendQuickMessage(L10n.tr(
+                        "Dammi consigli per il recupero",
+                        english: "Give me recovery advice"
+                    ))
+                }
             }
             .padding(.horizontal)
         }
@@ -351,14 +407,14 @@ struct ChatView: View {
             Text(state.workoutType)
                 .font(.caption.weight(.semibold))
             Text("·")
-            Text(state.sessionStatus.italianLabel)
+            Text(state.sessionStatus.localizedLabel)
                 .font(.caption)
             if state.plannedKm > 0 {
                 Text(String(format: "· %.1f km", state.plannedKm))
                     .font(.caption)
             }
             Spacer()
-            Text(state.recommendation.italianLabel)
+            Text(state.recommendation.localizedLabel)
                 .font(.caption.weight(.medium))
                 .foregroundColor(.bobbyRed)
         }
@@ -372,16 +428,28 @@ struct ChatView: View {
 
     // MARK: - Helper Methods
     private func showWelcomeMessage() {
-        let welcomeMessage = """
-        Ciao! Sono Bobby, il tuo personal trainer di corsa! 🏃‍♂️
+        let welcomeMessage = L10n.tr(
+            """
+            Ciao! Sono Bobby, il tuo personal trainer di corsa! 🏃‍♂️
 
-        Sono qui per aiutarti a:
-        • Creare piani di allenamento personalizzati
-        • Migliorare le tue performance
-        • Raggiungere i tuoi obiettivi di corsa
+            Sono qui per aiutarti a:
+            • Creare piani di allenamento personalizzati
+            • Migliorare le tue performance
+            • Raggiungere i tuoi obiettivi di corsa
 
-        Per iniziare, dimmi qualcosa sui tuoi allenamenti attuali!
-        """
+            Per iniziare, dimmi qualcosa sui tuoi allenamenti attuali!
+            """,
+            english: """
+            Hi! I'm Bobby, your running coach! 🏃‍♂️
+
+            I'm here to help you:
+            • Build personalised training plans
+            • Improve your performance
+            • Hit your running goals
+
+            To start, tell me something about your current training!
+            """
+        )
 
         appState.addMessage(welcomeMessage, isFromUser: false)
     }
@@ -543,6 +611,7 @@ struct MessageBubbleView: View {
 
     private func timeString(from date: Date) -> String {
         let formatter = DateFormatter()
+        formatter.locale = AppLanguage.locale
         formatter.timeStyle = .short
         return formatter.string(from: date)
     }
@@ -642,7 +711,7 @@ struct TrainingPlansArchiveView: View {
                             Image(systemName: "list.clipboard")
                                 .font(.system(size: 40))
                                 .foregroundColor(.bobbyWarmGray.opacity(0.5))
-                            Text("Nessun piano salvato")
+                            Text(L10n.tr("Nessun piano salvato", english: "No saved plans"))
                                 .font(.subheadline)
                                 .foregroundColor(.bobbyWarmGray)
                         }
@@ -658,11 +727,11 @@ struct TrainingPlansArchiveView: View {
                 .padding(.vertical, 16)
             }
             .background(BobbyTheme.background(for: colorScheme).ignoresSafeArea())
-            .navigationTitle("Archivio Piani")
+            .navigationTitle(L10n.tr("Archivio Piani", english: "Plan archive"))
             .navigationBarTitleDisplayMode(.large)
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
-                    Button("Chiudi") { dismiss() }
+                    Button(L10n.tr("Chiudi", english: "Close")) { dismiss() }
                         .foregroundColor(.bobbyRed)
                 }
             }
@@ -689,7 +758,7 @@ struct TrainingPlanRowView: View {
                 Spacer()
 
                 if plan.id == planManager.currentActivePlan?.id {
-                    Text("ATTIVO")
+                    Text(L10n.tr("ATTIVO", english: "ACTIVE"))
                         .font(.caption2.weight(.bold))
                         .padding(.horizontal, 8)
                         .padding(.vertical, 3)
@@ -708,7 +777,7 @@ struct TrainingPlanRowView: View {
             .foregroundColor(.bobbyWarmGray)
 
             HStack(spacing: 8) {
-                Button("Visualizza") { showingDetails = true }
+                Button(L10n.tr("Visualizza", english: "View")) { showingDetails = true }
                     .font(.subheadline.weight(.medium))
                     .foregroundColor(.bobbyCaramel)
                     .padding(.horizontal, 16)
@@ -717,7 +786,7 @@ struct TrainingPlanRowView: View {
                     .clipShape(Capsule())
 
                 if plan.id != planManager.currentActivePlan?.id {
-                    Button("Attiva") {
+                    Button(L10n.tr("Attiva", english: "Activate")) {
                         planManager.setActivePlan(plan)
                     }
                     .font(.subheadline.weight(.semibold))
@@ -741,13 +810,13 @@ struct TrainingPlanRowView: View {
         .sheet(isPresented: $showingDetails) {
             TrainingPlanDetailView(planId: plan.id, planManager: planManager, onAskBobby: onAskBobby)
         }
-        .alert("Eliminare questo piano?", isPresented: $showingDeleteConfirm) {
-            Button("Annulla", role: .cancel) {}
-            Button("Elimina", role: .destructive) {
+        .alert(L10n.tr("Eliminare questo piano?", english: "Delete this plan?"), isPresented: $showingDeleteConfirm) {
+            Button(L10n.tr("Annulla", english: "Cancel"), role: .cancel) {}
+            Button(L10n.tr("Elimina", english: "Delete"), role: .destructive) {
                 planManager.deletePlan(plan)
             }
         } message: {
-            Text("Questa azione non può essere annullata.")
+            Text(L10n.tr("Questa azione non può essere annullata.", english: "This action cannot be undone."))
         }
     }
 }
@@ -803,7 +872,7 @@ struct TrainingPlanDetailView: View {
                                 Button {
                                     onAskBobby?(plan)
                                 } label: {
-                                    Label("Chiedi a Bobby", systemImage: "bubble.left.fill")
+                                    Label(L10n.tr("Chiedi a Bobby", english: "Ask Bobby"), systemImage: "bubble.left.fill")
                                         .font(.subheadline.weight(.medium))
                                         .foregroundColor(.white)
                                         .frame(maxWidth: .infinity)
@@ -813,7 +882,7 @@ struct TrainingPlanDetailView: View {
                                 }
 
                                 Button { showingEdit = true } label: {
-                                    Label("Modifica", systemImage: "pencil")
+                                    Label(L10n.tr("Modifica", english: "Edit"), systemImage: "pencil")
                                         .font(.subheadline.weight(.medium))
                                         .foregroundColor(.bobbyCaramel)
                                         .frame(maxWidth: .infinity)
@@ -836,7 +905,7 @@ struct TrainingPlanDetailView: View {
 
                             // Delete button
                             Button { showingDeleteConfirm = true } label: {
-                                Label("Elimina Piano", systemImage: "trash")
+                                Label(L10n.tr("Elimina Piano", english: "Delete plan"), systemImage: "trash")
                                     .font(.subheadline.weight(.medium))
                                     .foregroundColor(.red)
                                     .frame(maxWidth: .infinity)
@@ -859,12 +928,12 @@ struct TrainingPlanDetailView: View {
                 }
             }
             .background(BobbyTheme.background(for: colorScheme).ignoresSafeArea())
-            .navigationTitle("Dettagli Piano")
+            .navigationTitle(L10n.tr("Dettagli Piano", english: "Plan details"))
             .navigationBarTitleDisplayMode(.large)
             .toolbar {
                 if !AppStoreScreenshotMode.isEnabled {
                     ToolbarItem(placement: .navigationBarTrailing) {
-                        Button("Chiudi") { dismiss() }
+                        Button(L10n.tr("Chiudi", english: "Close")) { dismiss() }
                             .foregroundColor(.bobbyRed)
                     }
                 }
@@ -874,16 +943,16 @@ struct TrainingPlanDetailView: View {
                     TrainingPlanEditView(planManager: planManager, plan: plan)
                 }
             }
-            .alert("Eliminare questo piano?", isPresented: $showingDeleteConfirm) {
-                Button("Annulla", role: .cancel) {}
-                Button("Elimina", role: .destructive) {
+            .alert(L10n.tr("Eliminare questo piano?", english: "Delete this plan?"), isPresented: $showingDeleteConfirm) {
+                Button(L10n.tr("Annulla", english: "Cancel"), role: .cancel) {}
+                Button(L10n.tr("Elimina", english: "Delete"), role: .destructive) {
                     if let plan = plan {
                         planManager.deletePlan(plan)
                     }
                     dismiss()
                 }
             } message: {
-                Text("Questa azione non può essere annullata.")
+                Text(L10n.tr("Questa azione non può essere annullata.", english: "This action cannot be undone."))
             }
         }
     }
@@ -904,9 +973,9 @@ struct DayTrainingRowView: View {
 
                 HStack(spacing: 4) {
                     Image(systemName: dayTraining.workoutType.sfSymbol)
-                    Text(dayTraining.workoutType.rawValue)
+                    Text(dayTraining.workoutType.displayName)
                     Text("·")
-                    Text(dayTraining.sessionStatus.italianLabel)
+                    Text(dayTraining.sessionStatus.localizedLabel)
                 }
                 .font(.caption.weight(.medium))
                 .padding(.horizontal, 10)
@@ -959,7 +1028,7 @@ struct TrainingPlanEditView: View {
                             ForEach(WorkoutType.allCases, id: \.self) { type in
                                 HStack {
                                     Image(systemName: type.sfSymbol)
-                                    Text(type.rawValue)
+                                    Text(type.displayName)
                                 }.tag(type)
                             }
                         }
@@ -1014,15 +1083,15 @@ struct TrainingPlanEditView: View {
             }
             .scrollContentBackground(.hidden)
             .background(BobbyTheme.background(for: colorScheme).ignoresSafeArea())
-            .navigationTitle("Modifica Piano")
+            .navigationTitle(L10n.tr("Modifica Piano", english: "Edit plan"))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
-                    Button("Annulla") { dismiss() }
+                    Button(L10n.tr("Annulla", english: "Cancel")) { dismiss() }
                         .foregroundColor(.bobbyWarmGray)
                 }
                 ToolbarItem(placement: .navigationBarTrailing) {
-                    Button("Salva") {
+                    Button(L10n.tr("Salva", english: "Save")) {
                         plan.lastModified = Date()
                         planManager.savePlan(plan)
                         if planManager.currentActivePlan?.id == plan.id {
@@ -1052,7 +1121,7 @@ struct RunnerProfileView: View {
                         Image(systemName: "road.lanes")
                             .foregroundColor(.bobbyCaramel)
                             .frame(width: 28)
-                        Text("Km alla settimana")
+                        Text(L10n.tr("Km alla settimana", english: "Km per week"))
                         Spacer()
                         TextField("20", value: $appState.userProfile.weeklyKilometers, format: .number)
                             .textFieldStyle(.roundedBorder)
@@ -1063,14 +1132,14 @@ struct RunnerProfileView: View {
                         Image(systemName: "calendar.badge.clock")
                             .foregroundColor(.bobbyCaramel)
                             .frame(width: 28)
-                        Stepper("Allenamenti/sett: \(appState.userProfile.workoutsPerWeek)", value: $appState.userProfile.workoutsPerWeek, in: 1...7)
+                        Stepper(L10n.format("Allenamenti/sett: %d", english: "Workouts/week: %d", appState.userProfile.workoutsPerWeek), value: $appState.userProfile.workoutsPerWeek, in: 1...7)
                     }
 
                     HStack(spacing: 12) {
                         Image(systemName: "speedometer")
                             .foregroundColor(.bobbyCaramel)
                             .frame(width: 28)
-                        Text("Ritmo attuale")
+                        Text(L10n.tr("Ritmo attuale", english: "Current pace"))
                         Spacer()
                         TextField("5:30", text: $appState.userProfile.currentPace)
                             .textFieldStyle(.roundedBorder)
@@ -1081,7 +1150,7 @@ struct RunnerProfileView: View {
                         Image(systemName: "scalemass.fill")
                             .foregroundColor(.bobbyCaramel)
                             .frame(width: 28)
-                        Text("Peso (kg)")
+                        Text(L10n.tr("Peso (kg)", english: "Weight (kg)"))
                         Spacer()
                         TextField("70", value: $appState.userProfile.weight, format: .number)
                             .textFieldStyle(.roundedBorder)
@@ -1089,7 +1158,7 @@ struct RunnerProfileView: View {
                             .keyboardType(.decimalPad)
                     }
                 } header: {
-                    Label("Allenamento Attuale", systemImage: "figure.run")
+                    Label(L10n.tr("Allenamento Attuale", english: "Current training"), systemImage: "figure.run")
                         .foregroundColor(.bobbyRed)
                 }
 
@@ -1098,9 +1167,9 @@ struct RunnerProfileView: View {
                         Image(systemName: "flag.fill")
                             .foregroundColor(.bobbyCaramel)
                             .frame(width: 28)
-                        Picker("Obiettivo principale", selection: $appState.userProfile.primaryGoal) {
+                        Picker(L10n.tr("Obiettivo principale", english: "Main goal"), selection: $appState.userProfile.primaryGoal) {
                             ForEach(TrainingGoal.allCases, id: \.self) { goal in
-                                Text(goal.rawValue).tag(goal)
+                                Text(goal.displayName).tag(goal)
                             }
                         }
                     }
@@ -1109,14 +1178,14 @@ struct RunnerProfileView: View {
                         Image(systemName: "chart.bar.fill")
                             .foregroundColor(.bobbyCaramel)
                             .frame(width: 28)
-                        Picker("Livello esperienza", selection: $appState.userProfile.experience) {
+                        Picker(L10n.tr("Livello esperienza", english: "Experience level"), selection: $appState.userProfile.experience) {
                             ForEach(ExperienceLevel.allCases, id: \.self) { level in
-                                Text(level.rawValue).tag(level)
+                                Text(level.displayName).tag(level)
                             }
                         }
                     }
                 } header: {
-                    Label("Obiettivi", systemImage: "target")
+                    Label(L10n.tr("Obiettivi", english: "Goals"), systemImage: "target")
                         .foregroundColor(.bobbyRed)
                 }
 
@@ -1125,29 +1194,29 @@ struct RunnerProfileView: View {
                         Image(systemName: "flag.checkered")
                             .foregroundColor(.bobbyCaramel)
                             .frame(width: 28)
-                        Picker("Distanza gara", selection: $appState.userProfile.raceDistance) {
-                            Text("Nessuna gara specifica").tag(nil as RaceDistance?)
+                        Picker(L10n.tr("Distanza gara", english: "Race distance"), selection: $appState.userProfile.raceDistance) {
+                            Text(L10n.tr("Nessuna gara specifica", english: "No specific race")).tag(nil as RaceDistance?)
                             ForEach(RaceDistance.allCases, id: \.self) { distance in
                                 Text(distance.rawValue).tag(distance as RaceDistance?)
                             }
                         }
                     }
                 } header: {
-                    Label("Gara Obiettivo", systemImage: "medal.fill")
+                    Label(L10n.tr("Gara Obiettivo", english: "Target race"), systemImage: "medal.fill")
                         .foregroundColor(.bobbyRed)
                 }
             }
             .scrollContentBackground(.hidden)
             .background(BobbyTheme.background(for: colorScheme).ignoresSafeArea())
-            .navigationTitle("Il Tuo Profilo Runner")
+            .navigationTitle(L10n.tr("Il Tuo Profilo Runner", english: "Your runner profile"))
             .navigationBarTitleDisplayMode(.large)
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
-                    Button("Annulla") { dismiss() }
+                    Button(L10n.tr("Annulla", english: "Cancel")) { dismiss() }
                         .foregroundColor(.bobbyWarmGray)
                 }
                 ToolbarItem(placement: .navigationBarTrailing) {
-                    Button("Salva") {
+                    Button(L10n.tr("Salva", english: "Save")) {
                         appState.saveUserProfile()
                         dismiss()
                     }

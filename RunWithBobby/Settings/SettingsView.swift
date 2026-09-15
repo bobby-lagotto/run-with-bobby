@@ -48,6 +48,7 @@ struct SettingsView: View {
     var body: some View {
         NavigationView {
             Form {
+                languageSection
                 providerSection
                 openAISection
                 anthropicSection
@@ -59,15 +60,15 @@ struct SettingsView: View {
             }
             .scrollContentBackground(.hidden)
             .background(BobbyTheme.background(for: colorScheme).ignoresSafeArea())
-            .navigationTitle("Impostazioni AI")
+            .navigationTitle(L10n.tr("Impostazioni AI", english: "AI Settings"))
             .navigationBarTitleDisplayMode(.large)
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
-                    Button("Annulla") { dismiss() }
+                    Button(L10n.tr("Annulla", english: "Cancel")) { dismiss() }
                         .foregroundColor(.bobbyWarmGray)
                 }
                 ToolbarItem(placement: .navigationBarTrailing) {
-                    Button("Salva") {
+                    Button(L10n.tr("Salva", english: "Save")) {
                         saveSettings()
                         dismiss()
                     }
@@ -80,6 +81,51 @@ struct SettingsView: View {
                 anthropicKeyInput = aiSettings.anthropicAPIKey ?? ""
                 openRouterKeyInput = aiSettings.openRouterAPIKey ?? ""
             }
+        }
+    }
+
+    // MARK: - Language
+
+    private var languageSection: some View {
+        Section {
+            ForEach(AppLanguagePreference.allCases) { preference in
+                Button {
+                    aiSettings.languagePreference = preference
+                } label: {
+                    HStack(spacing: 12) {
+                        Image(systemName: preference == .system ? "iphone" : "globe")
+                            .foregroundColor(aiSettings.languagePreference == preference ? .bobbyRed : .bobbyWarmGray)
+                            .frame(width: 28)
+
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(preference.title)
+                                .font(.body)
+                                .foregroundColor(.primary)
+                            Text(preference.subtitle)
+                                .font(.caption)
+                                .foregroundColor(.bobbyWarmGray)
+                        }
+
+                        Spacer()
+
+                        if aiSettings.languagePreference == preference {
+                            Image(systemName: "checkmark.circle.fill")
+                                .foregroundColor(.bobbyRed)
+                        }
+                    }
+                    .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+            }
+        } header: {
+            Label(L10n.tr("Lingua", english: "Language"), systemImage: "character.bubble")
+                .foregroundColor(.bobbyRed)
+        } footer: {
+            Text(L10n.tr(
+                "Di default Bobby segue la lingua dell'iPhone (italiano o inglese). Puoi forzarla qui: vale per l'interfaccia e per le risposte del coach.",
+                english: "By default Bobby follows the iPhone language (Italian or English). You can override it here: it applies to the UI and to coach replies."
+            ))
+            .font(.caption)
         }
     }
 
@@ -107,12 +153,12 @@ struct SettingsView: View {
     private var providerSection: some View {
         Section {
             Button(action: detectClipboardKey) {
-                Label("Controlla appunti per API key", systemImage: "doc.on.clipboard")
+                Label(L10n.tr("Controlla appunti per API key", english: "Check clipboard for API key"), systemImage: "doc.on.clipboard")
                     .foregroundColor(.bobbyRed)
             }
 
             if clipboardChecked && clipboardKey == nil {
-                Text("Nessuna API key riconosciuta negli appunti.")
+                Text(L10n.tr("Nessuna API key riconosciuta negli appunti.", english: "No API key recognised on the clipboard."))
                     .font(.caption)
                     .foregroundColor(.bobbyWarmGray)
             }
@@ -127,7 +173,7 @@ struct SettingsView: View {
                             .frame(width: 28)
 
                         VStack(alignment: .leading, spacing: 2) {
-                            Text(type.rawValue)
+                            Text(type.displayName)
                                 .font(.body)
                                 .foregroundColor(.primary)
                             Text(providerDescription(for: type))
@@ -147,10 +193,13 @@ struct SettingsView: View {
                 .buttonStyle(.plain)
             }
         } header: {
-            Label("Provider AI", systemImage: "cpu")
+            Label(L10n.tr("Provider AI", english: "AI provider"), systemImage: "cpu")
                 .foregroundColor(.bobbyRed)
         } footer: {
-            Text("Gli appunti vengono letti solo quando tocchi il pulsante. Le API key salvate restano nel Keychain.")
+            Text(L10n.tr(
+                "Gli appunti vengono letti solo quando tocchi il pulsante. Le API key salvate restano nel Keychain.",
+                english: "The clipboard is read only when you tap the button. Saved API keys stay in the Keychain."
+            ))
                 .font(.caption)
         }
     }
@@ -447,7 +496,7 @@ struct SettingsView: View {
                     .foregroundColor(.red)
             }
         } header: {
-            Label("Modello locale (Qwen)", systemImage: "iphone")
+            Label(L10n.tr("Modello locale (Qwen)", english: "On-device model (Qwen)"), systemImage: "iphone")
                 .foregroundColor(.bobbyRed)
         } footer: {
             Text("Tocca un modello per selezionarlo o avviare il download. I Qwen 1.5B+ fanno tool-calling per i piani. Il 0.5B resta per iPhone più vecchi: chat semplice e piani dal motore deterministico. Puoi tenerne più di uno scaricato.")
@@ -515,7 +564,7 @@ struct SettingsView: View {
                                     .background(Color.bobbyWarmGray.opacity(0.15))
                                     .clipShape(Capsule())
                                 if isRecommended {
-                                    Text("⭐ Consigliato")
+                                    Text(L10n.tr("⭐ Consigliato", english: "⭐ Recommended"))
                                         .font(.caption.weight(.medium))
                                         .foregroundColor(.bobbyCaramel)
                                 }
@@ -550,7 +599,7 @@ struct SettingsView: View {
                             Image(systemName: "checkmark.circle.fill")
                                 .foregroundColor(.green)
                                 .font(.caption)
-                            Text(isSelected ? "Scaricato · Attivo" : "Scaricato")
+                            Text(isSelected ? L10n.tr("Scaricato · Attivo", english: "Downloaded · Active") : L10n.tr("Scaricato", english: "Downloaded"))
                                 .font(.caption.weight(.medium))
                                 .foregroundColor(.green)
                             Spacer()
@@ -568,7 +617,7 @@ struct SettingsView: View {
                     Spacer()
                     if isDownloaded {
                         if !isSelected {
-                            Button("Elimina") {
+                            Button(L10n.tr("Elimina", english: "Delete")) {
                                 mlxProvider.deleteModelFiles(option.id)
                                 aiSettings.markDeleted(option.id)
                             }
@@ -576,7 +625,7 @@ struct SettingsView: View {
                             .foregroundColor(.bobbyRed)
                         }
                     } else {
-                        Button("Scarica") {
+                        Button(L10n.tr("Scarica", english: "Download")) {
                             downloadModel(option)
                         }
                         .font(.subheadline.weight(.semibold))
@@ -681,7 +730,7 @@ struct SettingsView: View {
                 }
             }
         } header: {
-            Label("Salute", systemImage: "heart.text.clipboard")
+            Label(L10n.tr("Salute", english: "Health"), systemImage: "heart.text.clipboard")
                 .foregroundColor(.bobbyRed)
         } footer: {
             if healthConnected {
@@ -742,7 +791,7 @@ struct SettingsView: View {
                     .frame(width: 28)
 
                 VStack(alignment: .leading, spacing: 4) {
-                    Text("Provider attivo")
+                    Text(L10n.tr("Provider attivo", english: "Active provider"))
                         .font(.caption)
                         .foregroundColor(.bobbyWarmGray)
 
@@ -751,7 +800,7 @@ struct SettingsView: View {
                 }
             }
         } header: {
-            Label("Stato", systemImage: "gauge.with.dots.needle.33percent")
+            Label(L10n.tr("Stato", english: "Status"), systemImage: "gauge.with.dots.needle.33percent")
                 .foregroundColor(.bobbyRed)
         }
     }
@@ -800,11 +849,11 @@ struct SettingsView: View {
 
     private func providerDescription(for type: LLMProviderType) -> String {
         switch type {
-        case .local: return "Modello on-device o fallback gratuito"
-        case .openai: return "Cloud OpenAI con API key utente"
-        case .anthropic: return "Cloud Anthropic con API key utente"
-        case .openrouter: return "Router cloud con API key utente"
-        case .auto: return "Locale se disponibile; altrimenti cloud configurato"
+        case .local: return L10n.tr("Modello on-device o fallback gratuito", english: "On-device model or free fallback")
+        case .openai: return L10n.tr("Cloud OpenAI con API key utente", english: "OpenAI cloud with your API key")
+        case .anthropic: return L10n.tr("Cloud Anthropic con API key utente", english: "Anthropic cloud with your API key")
+        case .openrouter: return L10n.tr("Router cloud con API key utente", english: "Cloud router with your API key")
+        case .auto: return L10n.tr("Locale se disponibile; altrimenti cloud configurato", english: "On-device if available; otherwise configured cloud")
         }
     }
 

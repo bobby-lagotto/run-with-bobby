@@ -260,7 +260,7 @@ class HealthKitManager: ObservableObject {
         let dateFormatter = DateFormatter()
         dateFormatter.dateStyle = .medium
         dateFormatter.timeStyle = .short
-        dateFormatter.locale = Locale(identifier: "it_IT")
+        dateFormatter.locale = AppLanguage.locale
 
         return records.map { workout in
             [

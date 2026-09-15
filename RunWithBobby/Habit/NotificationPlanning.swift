@@ -20,8 +20,8 @@ enum NotificationPlanning {
             return PlannedNotification(
                 id: "bobby.today.\(WeekdayKey.normalized(day.dayOfWeek))",
                 fireDate: fireDate,
-                title: "Oggi con Bobby",
-                body: "\(day.workoutType.rawValue) · \(formatted(day.distance)) km"
+                title: L10n.tr("Oggi con Bobby", english: "Today with Bobby"),
+                body: "\(day.workoutType.displayName) · \(formatted(day.distance)) km"
             )
         }
     }

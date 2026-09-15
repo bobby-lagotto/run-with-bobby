@@ -22,14 +22,14 @@ struct WatchTodayView: View {
                 if snapshot.plannedKm > 0 {
                     Text(String(format: "%.1f km", snapshot.plannedKm))
                 }
-                Text(snapshot.sessionStatus.italianLabel)
+                Text(snapshot.sessionStatus.localizedLabel)
                     .foregroundStyle(.secondary)
                 Text(snapshot.briefingLine)
                     .font(.footnote)
 
                 if snapshot.canMark {
-                    Button("Fatto") { mark(.completed) }
-                    Button("Salta") { mark(.skipped) }
+                    Button(L10n.tr("Fatto", english: "Done")) { mark(.completed) }
+                    Button(L10n.tr("Salta", english: "Skip")) { mark(.skipped) }
                 }
 
                 if let note {
@@ -49,7 +49,9 @@ struct WatchTodayView: View {
             PendingHabitAction(status: status, loggedDistance: status == .completed ? snapshot.plannedKm : nil)
         )
         snapshot.sessionStatus = status
-        note = status == .skipped ? "Saltato. Si sincronizza con iPhone." : "Fatto. Si sincronizza con iPhone."
+        note = status == .skipped
+            ? L10n.tr("Saltato. Si sincronizza con iPhone.", english: "Skipped. Syncs with iPhone.")
+            : L10n.tr("Fatto. Si sincronizza con iPhone.", english: "Done. Syncs with iPhone.")
     }
 }
 

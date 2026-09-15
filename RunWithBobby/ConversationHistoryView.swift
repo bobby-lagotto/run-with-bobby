@@ -36,11 +36,11 @@ struct ConversationHistoryView: View {
                 .padding(.vertical, 16)
             }
             .background(BobbyTheme.background(for: colorScheme).ignoresSafeArea())
-            .navigationTitle("Storico Chat")
+            .navigationTitle(L10n.tr("Storico Chat", english: "Chat history"))
             .navigationBarTitleDisplayMode(.large)
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
-                    Button("Chiudi") { dismiss() }
+                    Button(L10n.tr("Chiudi", english: "Close")) { dismiss() }
                         .foregroundColor(.bobbyRed)
                 }
             }
@@ -52,7 +52,7 @@ struct ConversationHistoryView: View {
             Image(systemName: "bubble.left.and.bubble.right")
                 .font(.system(size: 40))
                 .foregroundColor(.bobbyWarmGray.opacity(0.5))
-            Text("Nessuna conversazione")
+            Text(L10n.tr("Nessuna conversazione", english: "No conversations"))
                 .font(.subheadline)
                 .foregroundColor(.bobbyWarmGray)
         }
@@ -81,7 +81,7 @@ struct ConversationRowView: View {
                     Spacer()
 
                     if isActive {
-                        Text("ATTIVA")
+                        Text(L10n.tr("ATTIVA", english: "ACTIVE"))
                             .font(.caption2.weight(.bold))
                             .padding(.horizontal, 8)
                             .padding(.vertical, 3)
@@ -103,7 +103,7 @@ struct ConversationRowView: View {
                         .font(.caption2)
                         .foregroundColor(.bobbyWarmGray)
 
-                    Text("\(conversation.messages.count) messaggi")
+                    Text(L10n.format("%d messaggi", english: "%d messages", conversation.messages.count))
                         .font(.caption2)
                         .foregroundColor(.bobbyWarmGray)
 
@@ -119,17 +119,17 @@ struct ConversationRowView: View {
             }
         }
         .buttonStyle(.plain)
-        .alert("Eliminare questa conversazione?", isPresented: $showingDeleteConfirm) {
-            Button("Annulla", role: .cancel) {}
-            Button("Elimina", role: .destructive) { onDelete() }
+        .alert(L10n.tr("Eliminare questa conversazione?", english: "Delete this conversation?"), isPresented: $showingDeleteConfirm) {
+            Button(L10n.tr("Annulla", english: "Cancel"), role: .cancel) {}
+            Button(L10n.tr("Elimina", english: "Delete"), role: .destructive) { onDelete() }
         } message: {
-            Text("Questa azione non può essere annullata.")
+            Text(L10n.tr("Questa azione non può essere annullata.", english: "This action cannot be undone."))
         }
     }
 
     private func relativeDateString(from date: Date) -> String {
         let formatter = RelativeDateTimeFormatter()
-        formatter.locale = Locale(identifier: "it_IT")
+        formatter.locale = AppLanguage.locale
         formatter.unitsStyle = .short
         return formatter.localizedString(for: date, relativeTo: Date())
     }
