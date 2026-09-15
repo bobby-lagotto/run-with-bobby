@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Privacy — Run with Bobby</title>
+  <meta name="description" content="Informativa sulla privacy di Run with Bobby: dati locali, HealthKit e provider cloud opzionali.">
+  <link rel="icon" href="docs/assets/icon.png">
+  <link rel="stylesheet" href="docs/styles.css">
+</head>
+<body>
+  <nav class="nav">
+    <a class="brand" href="index.html">
+      <img src="docs/assets/icon.png" alt="Bobby">
+      Run with Bobby
+    </a>
+    <div class="nav-links">
+      <a href="index.html">Home</a>
+      <a href="https://github.com/bobby-lagotto/run-with-bobby">GitHub</a>
+    </div>
+  </nav>
+
+  <article class="prose">
+    <p class="kicker" style="color: var(--red);">Informativa</p>
+    <h1>Privacy</h1>
+    <p class="muted">Ultimo aggiornamento: 15 settembre 2026. Titolare: Francesco Saverio Mazzi — <a href="mailto:francemazzi@gmail.com">francemazzi@gmail.com</a>.</p>
+    <p>Run with Bobby è un coach di corsa per iPhone. Il percorso predefinito è <strong>locale</strong>: chat, profilo runner, piani di allenamento e piani alimentari restano sul dispositivo. L’app non fa tracking pubblicitario e non vende dati.</p>
+
+    <h2>Dati sul dispositivo</h2>
+    <table>
+      <thead>
+        <tr><th>Dato</th><th>Dove sta</th><th>Rete</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Conversazioni</td><td>Documenti dell’app, protetti</td><td>Solo se attivi un provider cloud</td></tr>
+        <tr><td>Profilo runner</td><td>Documenti dell’app, protetti</td><td>Solo se attivi un provider cloud</td></tr>
+        <tr><td>Piani corsa e nutrizione</td><td>Documenti dell’app, protetti</td><td>Solo se attivi un provider cloud</td></tr>
+        <tr><td>Chiavi API (OpenAI, Anthropic, OpenRouter)</td><td>Keychain iOS</td><td>Solo come autorizzazione verso il provider che hai scelto</td></tr>
+        <tr><td>Modelli MLX</td><td>Cache locale</td><td>Download del file modello, non sono dati personali</td></tr>
+      </tbody>
+    </table>
+    <p>Puoi cancellare chat, profilo e piani dall’app («Cancella dati locali»). Le chiavi API si rimuovono da Impostazioni AI.</p>
+
+    <h2>Apple Health (HealthKit)</h2>
+    <p>Run with Bobby può leggere, col tuo consenso, metriche di salute e allenamento (per esempio frequenza cardiaca, HRV, sonno, passi, workout) per personalizzare briefing di recupero e matching delle corse. Questi riepiloghi <strong>non vengono salvati</strong> dall’app: vengono letti on-demand da Apple Health.</p>
+    <p>L’app può <strong>scrivere un workout</strong> in Salute solo se registri tu una seduta di corsa. Puoi revocare l’accesso in Impostazioni iOS → Salute.</p>
+    <p>In modalità Locale i dati HealthKit non escono dal telefono. Se selezioni un provider cloud, un riepilogo Health necessario alla risposta può essere inviato a quel provider, dopo conferma in-app quando previsto.</p>
+
+    <h2>Posizione</h2>
+    <p>La posizione è usata solo durante una sessione di corsa, per distanza e percorso, e resta sul dispositivo. Non viene usata per pubblicità.</p>
+
+    <h2>Provider cloud opzionali</h2>
+    <p>OpenAI, Anthropic e OpenRouter non sono il default. Funzionano solo se inserisci una tua API key. In quel caso il provider riceve il contesto necessario (chat recente, profilo, piano e, se richiesto, riepilogo Health) per generare la risposta. Quei servizi hanno informative proprie. L’app non usa login Claude.ai o ChatGPT.</p>
+    <p>La modalità Locale non fa fallback sul cloud. La modalità Automatico usa il modello locale quando è disponibile.</p>
+
+    <h2>Cosa non facciamo</h2>
+    <ul>
+      <li>Nessun tracking pubblicitario, nessun identificatore pubblicitario, nessuna analytics di terze parti.</li>
+      <li>Nessun account obbligatorio, nessun paywall, nessuno StoreKit.</li>
+      <li>Nessuna vendita di dati a broker.</li>
+    </ul>
+
+    <h2>Minori</h2>
+    <p>L’app non è destinata a bambini sotto i 13 anni e non raccoglie consapevolmente dati di minori.</p>
+
+    <h2>Diritti e contatti</h2>
+    <p>I dati locali li controlli tu: visualizzazione, modifica del profilo/piani e cancellazione dall’app. Per domande: <a href="mailto:francemazzi@gmail.com">francemazzi@gmail.com</a> oppure <a href="https://github.com/bobby-lagotto/run-with-bobby/issues">GitHub Issues</a>.</p>
+    <p>Mappa tecnica: <a href="https://github.com/bobby-lagotto/run-with-bobby/blob/master/PRIVACY_AND_SECURITY.md">PRIVACY_AND_SECURITY.md</a>.</p>
+  </article>
+
+  <footer>
+    <span>© 2026 Francesco Saverio Mazzi</span>
+    <a href="index.html">Torna alla home</a>
+  </footer>
+</body>
+</html>
