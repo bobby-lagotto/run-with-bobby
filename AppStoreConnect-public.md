@@ -2,7 +2,7 @@
 
 Copia questi campi in App Store Connect per la scheda pubblica di **Run with Bobby** (`com.runwithbobby.app`, adamId `6761195463`).
 
-Versione binario da caricare: **1.5.3 (6)** — la build 5 in TestFlight è precedente al coach deterministico e ai gate di conferma.
+Versione binario da reinviare: **1.5.3 (8)** — stesso binario già in review. Non creare 1.5.4. La build 5 in TestFlight è precedente al coach deterministico e ai gate di conferma.
 
 ## Informazioni app
 
@@ -102,9 +102,13 @@ Esito atteso: 4+ o 12+ a seconda del questionario Apple.
 
 **Informazioni sull’app** → Categoria primaria: **Salute e fitness**. Secondaria: **Sport**.
 
-## Prezzi
+## Prezzi e disponibilità
 
-Sidebar **Prezzi e disponibilità** → prezzo **Gratis** (0) per tutti i paesi. Nessun IAP.
+Sidebar **Prezzi e disponibilità**:
+
+- Prezzo **Gratis** (0) sui paesi in cui l’app è in vendita. Nessun IAP.
+- **China mainland deselezionato.** Hong Kong e Macao restano. Non usare “tutti i paesi”: i metadata citano OpenAI e Apple respinge Guideline 5 se la Cina continentale è inclusa (1.5.3 (8), 15 settembre 2026).
+- I metadata possono citare OpenAI / Anthropic / OpenRouter **solo** se China mainland è fuori. Per vendere in Cina servirebbero altro percorso (geo-block + scrub metadata + licenza MIIT), fuori scope.
 
 ## App Privacy (etichette)
 
@@ -135,6 +139,16 @@ Allineata a `PRIVACY_AND_SECURITY.md`:
 
 ## Note per la review
 
+Incolla in testa (inglese, per il reviewer):
+
+```
+China mainland storefront is deselected. Run with Bobby is not distributed in mainland China.
+
+Optional OpenAI / Anthropic / OpenRouter remain available only outside China, and only if the user pastes their own API key. There is no ChatGPT or Claude.ai consumer login. Default coaching is on-device (MLX).
+```
+
+Poi il resto:
+
 Run with Bobby è gratuita. Il coaching locale resta disponibile senza acquisti, senza StoreKit e senza paywall. I provider cloud sono opzionali e funzionano solo con API key già possedute dall’utente, salvate nel Keychain. L’app non usa login consumer Claude.ai o ChatGPT.
 
 Apple Health: lettura di metriche di recupero e allenamento per personalizzare il briefing. L’app scrive un workout in Salute solo se l’utente registra una seduta di corsa. In modalità Locale questi dati non escono dal dispositivo. Quando un provider cloud è selezionato, chat, profilo runner e i riepiloghi Health necessari possono essere inviati al provider scelto per generare la risposta.
@@ -143,16 +157,31 @@ Account demo: non richiesto. Al primo avvio si può saltare il profilo e parlare
 
 Open source: https://github.com/bobby-lagotto/run-with-bobby
 
+## Risposta al messaggio Apple (Guideline 5)
+
+Thread Messaggi della submission `ec406992-4537-4119-869a-98cc584a1b8e`:
+
+```
+Hello,
+
+China mainland has been deselected in App Availability. Run with Bobby is not distributed in mainland China.
+
+Optional OpenAI / Anthropic / OpenRouter stay available only outside China, and only if the user pastes their own API key. There is no ChatGPT consumer login. We are resubmitting the same build 1.5.3 (8).
+
+Thank you.
+```
+
 ## Checklist prima di Submit for Review
 
 1. Esegui `scripts/scan-secrets.sh`.
 2. In Apple Developer, App ID `com.runwithbobby.app`: HealthKit, App Groups `group.com.runwithbobby.app`, Increased Memory Limit.
-3. Archive Release e upload con `ExportOptions-upload.plist` (comandi in `DEVELOPMENT.md`).
-4. Seleziona la build 6 sulla versione 1.5.3.
-5. Carica gli 8 PNG 6.5" (slot di default) da `AppStore/screenshots/iphone-6.5/`.
+3. Archive Release e upload con `ExportOptions-upload.plist` (comandi in `DEVELOPMENT.md`). Per questo resubmit Guideline 5: **salta l’archive**, usa la build **8** già caricata.
+4. Seleziona la build **8** sulla versione 1.5.3. Non cambiare nome, sottotitolo, descrizione, screenshot, keyword.
+5. Carica gli 8 PNG 6.5" (slot di default) da `AppStore/screenshots/iphone-6.5/` se non sono già in scheda.
 6. Informazioni sull’app: categoria + classificazioni.
 7. Privacy dell’app: URL Pages + etichette.
-8. Prezzi: Gratis.
-9. Submit for Review.
+8. Prezzi: Gratis. **Availability: China mainland deselezionato** (obbligatorio se i metadata citano OpenAI).
+9. Review Notes: conferma EN che la Cina continentale è esclusa (vedi sopra).
+10. Rispondi al thread Messaggi Apple, poi Submit for Review / Invia di nuovo.
 
 Da questo repository non si può cliccare Submit: servono le credenziali App Store Connect.

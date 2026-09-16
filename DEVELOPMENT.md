@@ -197,7 +197,7 @@ xcodebuild -exportArchive \
 
 In Apple Developer, sull’App ID `com.runwithbobby.app`, verifica HealthKit, App Groups `group.com.runwithbobby.app` e **Increased Memory Limit**.
 
-Dopo l’upload: App Store Connect → versione 1.5.3 → seleziona la nuova build → Media Manager iPhone 6.9" → Submit for Review.
+Dopo l’upload: App Store Connect → versione corrente → seleziona la build → Media Manager iPhone 6.9" se serve → **Prezzi e disponibilità: deseleziona China mainland** (i metadata citano OpenAI; Guideline 5) → Review Notes con conferma EN → Submit for Review. Dettaglio listing e testo da incollare: [`AppStoreConnect-public.md`](AppStoreConnect-public.md). Resubmit 1.5.3 (8) senza nuovo archive: [`AppStoreConnect-1.5.3.md`](AppStoreConnect-1.5.3.md).
 
 ### Privacy/Security  
 - **MLX Locale**: Enfatizza che l'AI locale non invia dati online
