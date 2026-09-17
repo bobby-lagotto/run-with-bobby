@@ -556,8 +556,8 @@ private struct OfflineCoachFallback {
                 )
             case .providerDidNotAnswer:
                 return L10n.tr(
-                    "Modalità gratuita locale fallback: il provider selezionato non ha completato la risposta.",
-                    english: "Free on-device fallback: the selected provider didn't finish the answer."
+                    "Non ho completato la risposta col modello. Ti do un consiglio conservativo sul dispositivo.",
+                    english: "I didn't finish the model reply. Here's conservative on-device advice."
                 )
             case .providerError:
                 return L10n.tr(

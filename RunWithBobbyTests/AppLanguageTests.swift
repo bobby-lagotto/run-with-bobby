@@ -35,6 +35,7 @@ final class AppLanguageTests: XCTestCase {
             .createNutritionPlan
         )
         XCTAssertEqual(CompactCoachIntent.detect("How am I?"), .healthStatus)
+        XCTAssertEqual(CompactCoachIntent.detect("I'm tired"), .healthStatus)
         XCTAssertEqual(
             CompactCoachIntent.detect("What do I do today? Use the briefing and adherence."),
             .todayBriefing

@@ -182,7 +182,8 @@ class MLXProvider: @MainActor LLMService, ObservableObject {
             maxKVSize: config.maxKVSize,
             kvBits: config.kvBits,
             temperature: 0.3,
-            repetitionPenalty: 1.15,
+            topP: 0.9,
+            repetitionPenalty: 1.08,
             repetitionContextSize: 64
         )
     }

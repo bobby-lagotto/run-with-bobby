@@ -547,6 +547,44 @@ struct ChatView: View {
     }
 }
 
+// MARK: - Coach bubble markdown
+/// Parses inline Markdown only when needed. Foundation's markdown renderer can
+/// drop spaces on plain coach copy (health recap, fallback), so those stay as `Text`.
+enum ChatMarkdown {
+    static func containsInlineMarkup(_ text: String) -> Bool {
+        if text.contains("**") || text.contains("`") { return true }
+        if text.contains("*") { return true }
+        return hasMarkdownLink(text)
+    }
+
+    static func attributedString(from text: String) -> AttributedString {
+        guard containsInlineMarkup(text) else {
+            return AttributedString(text)
+        }
+        let options = AttributedString.MarkdownParsingOptions(
+            interpretedSyntax: .inlineOnlyPreservingWhitespace
+        )
+        guard let attributed = try? AttributedString(markdown: text, options: options) else {
+            return AttributedString(text)
+        }
+        let originalSpaces = spaceCount(text)
+        let parsedSpaces = spaceCount(String(attributed.characters))
+        if originalSpaces > 0 && parsedSpaces * 10 < originalSpaces * 8 {
+            return AttributedString(text)
+        }
+        return attributed
+    }
+
+    static func spaceCount(_ text: String) -> Int {
+        text.reduce(0) { $0 + ($1 == " " ? 1 : 0) }
+    }
+
+    private static func hasMarkdownLink(_ text: String) -> Bool {
+        guard let bracket = text.range(of: "](") else { return false }
+        return text[..<bracket.lowerBound].contains("[")
+    }
+}
+
 // MARK: - Message Bubble View
 struct MessageBubbleView: View {
     let message: ChatMessage
@@ -580,7 +618,7 @@ struct MessageBubbleView: View {
                     .clipShape(Circle())
 
                 VStack(alignment: .leading, spacing: 4) {
-                    Text(markdownAttributedString(from: message.content))
+                    coachBubbleText(message.content)
                         .font(.body)
                         .padding(.horizontal, 14)
                         .padding(.vertical, 10)
@@ -599,14 +637,13 @@ struct MessageBubbleView: View {
         }
     }
 
-    private func markdownAttributedString(from text: String) -> AttributedString {
-        let options = AttributedString.MarkdownParsingOptions(
-            interpretedSyntax: .inlineOnlyPreservingWhitespace
-        )
-        if let attributed = try? AttributedString(markdown: text, options: options) {
-            return attributed
+    @ViewBuilder
+    private func coachBubbleText(_ text: String) -> some View {
+        if ChatMarkdown.containsInlineMarkup(text) {
+            Text(ChatMarkdown.attributedString(from: text))
+        } else {
+            Text(text)
         }
-        return AttributedString(text)
     }
 
     private func timeString(from date: Date) -> String {

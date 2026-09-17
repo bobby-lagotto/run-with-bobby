@@ -90,6 +90,10 @@ final class GenerationLoopGuardTests: XCTestCase {
         XCTAssertTrue(CompactCoachIntent.healthStatus.shouldGroundDeterministically())
         XCTAssertTrue(CompactCoachIntent.createTrainingPlan.shouldGroundDeterministically())
         XCTAssertEqual(CompactCoachIntent.detect("Come mi sento?"), .healthStatus)
+        XCTAssertEqual(CompactCoachIntent.detect("Sono stanco?"), .healthStatus)
+        XCTAssertEqual(CompactCoachIntent.detect("sono stanco"), .healthStatus)
+        XCTAssertEqual(CompactCoachIntent.detect("I'm tired"), .healthStatus)
+        XCTAssertEqual(CompactCoachIntent.detect("ho troppa fatica"), .healthStatus)
         XCTAssertEqual(CompactCoachIntent.detect("Cosa mi manca?"), .adherence)
         XCTAssertEqual(CompactCoachIntent.detect("Vorrei ottimizzare il mio piano attuale"), .proposeOptimize)
     }
@@ -164,5 +168,54 @@ final class GenerationLoopGuardTests: XCTestCase {
         XCTAssertEqual(window.count, 1)
         XCTAssertEqual(window.first?.content, "Ciao")
         XCTAssertFalse(window.contains(where: { $0.isFromUser && $0.content == "Come sto?" }))
+    }
+
+    func testHealthStatusCopyKeepsSpacesWithoutMarkdown() {
+        AppLanguage.sync(from: .italian)
+        let json = """
+        {
+          "periodo": "ultimi 7 giorni",
+          "sonno_media_ore": 5.9,
+          "variabilita_cardiaca_hrv_ms": 63,
+          "frequenza_cardiaca_riposo_bpm": 57
+        }
+        """
+        let text = CompactCoachPlanner.formatHealthStatus(healthJSON: json, briefingJSON: nil)
+
+        XCTAssertTrue(text.contains("Ecco come ti vedo dai dati"))
+        XCTAssertFalse(ChatMarkdown.containsInlineMarkup(text))
+        XCTAssertGreaterThan(ChatMarkdown.spaceCount(text), 10)
+
+        let attributed = ChatMarkdown.attributedString(from: text)
+        XCTAssertEqual(
+            ChatMarkdown.spaceCount(String(attributed.characters)),
+            ChatMarkdown.spaceCount(text)
+        )
+    }
+
+    func testFallbackCopyKeepsSpacesWithoutMarkdown() {
+        let text = """
+        Non ho completato la risposta col modello. Ti do un consiglio conservativo sul dispositivo.
+
+        Senza dati Health live in questa modalità, usa una regola conservativa: se sonno scarso, FC a riposo più alta del solito o gambe pesanti, trasforma la seduta in facile.
+        """
+        XCTAssertFalse(ChatMarkdown.containsInlineMarkup(text))
+        let attributed = ChatMarkdown.attributedString(from: text)
+        XCTAssertEqual(
+            ChatMarkdown.spaceCount(String(attributed.characters)),
+            ChatMarkdown.spaceCount(text)
+        )
+    }
+
+    func testInlineMarkdownStillParsesBold() {
+        let text = "Oggi fai **facile** e poi riposo completo."
+        XCTAssertTrue(ChatMarkdown.containsInlineMarkup(text))
+        let attributed = ChatMarkdown.attributedString(from: text)
+        let rendered = String(attributed.characters)
+        XCTAssertTrue(rendered.contains("facile"))
+        XCTAssertGreaterThanOrEqual(
+            ChatMarkdown.spaceCount(rendered) * 10,
+            ChatMarkdown.spaceCount(text) * 8
+        )
     }
 }

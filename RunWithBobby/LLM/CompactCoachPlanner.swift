@@ -103,6 +103,9 @@ enum CompactCoachIntent: Equatable {
             "analizza i miei dati",
             "riassunto completo",
             "sono affatic",
+            "sono stanco",
+            "stanco",
+            "fatica",
             "stato fisico",
             "how am i",
             "how do i feel",
@@ -110,7 +113,8 @@ enum CompactCoachIntent: Equatable {
             "analyze my data",
             "analyse my data",
             "full summary",
-            "am i fatigued"
+            "am i fatigued",
+            "tired"
         ])
     }
 

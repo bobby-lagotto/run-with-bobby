@@ -40,6 +40,7 @@ struct SettingsView: View {
     @State private var showingHealthError = false
     @State private var healthErrorMessage = ""
     @State private var downloadError: String?
+    @State private var showAdvancedSettings = false
 
     enum ClipboardKeyType {
         case openai, anthropic, openrouter
@@ -48,15 +49,18 @@ struct SettingsView: View {
     var body: some View {
         NavigationView {
             Form {
-                languageSection
-                providerSection
-                openAISection
-                anthropicSection
-                openRouterSection
                 qwenModelSection
                 bonsaiModelSection
-                healthSection
-                infoSection
+                advancedToggleSection
+                if showAdvancedSettings {
+                    languageSection
+                    providerSection
+                    openAISection
+                    anthropicSection
+                    openRouterSection
+                    healthSection
+                    infoSection
+                }
             }
             .scrollContentBackground(.hidden)
             .background(BobbyTheme.background(for: colorScheme).ignoresSafeArea())
@@ -524,6 +528,29 @@ struct SettingsView: View {
         }
     }
 
+    private var advancedToggleSection: some View {
+        Section {
+            Button {
+                showAdvancedSettings.toggle()
+            } label: {
+                Text(showAdvancedSettings
+                     ? L10n.tr("Nascondi", english: "Hide")
+                     : L10n.tr("Avanzate", english: "Advanced"))
+                    .font(.body)
+                    .foregroundColor(.bobbyRed)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+            }
+        } footer: {
+            if !showAdvancedSettings {
+                Text(L10n.tr(
+                    "Lingua, provider cloud e chiavi API sono in Avanzate.",
+                    english: "Language, cloud providers and API keys are under Advanced."
+                ))
+                .font(.caption)
+            }
+        }
+    }
+
     private func isDownloadError(for options: [LocalModelOption]) -> Bool {
         options.contains { $0.id == mlxProvider.modelId }
     }
@@ -645,11 +672,16 @@ struct SettingsView: View {
         guard option.isSupportedOnThisDevice, !mlxProvider.isDownloading else { return }
 
         if aiSettings.downloadedModelIds.contains(option.id) {
-            aiSettings.selectedModelId = option.id
-            onProviderChanged?()
+            activateLocalModel(option)
         } else {
             downloadModel(option)
         }
+    }
+
+    private func activateLocalModel(_ option: LocalModelOption) {
+        aiSettings.selectedModelId = option.id
+        aiSettings.providerType = .local
+        onProviderChanged?()
     }
 
     private func downloadModel(_ option: LocalModelOption) {
@@ -660,9 +692,8 @@ struct SettingsView: View {
             do {
                 try await mlxProvider.downloadModel()
                 aiSettings.markDownloaded(option.id)
-                aiSettings.selectedModelId = option.id
                 aiSettings.isDownloading = false
-                onProviderChanged?()
+                activateLocalModel(option)
             } catch {
                 aiSettings.isDownloading = false
                 downloadError = error.localizedDescription

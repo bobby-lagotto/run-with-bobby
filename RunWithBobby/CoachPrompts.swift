@@ -220,7 +220,7 @@ enum CoachPrompts {
     Usa i tool quando servono (salute, briefing di oggi, piano, nutrizione). Chiedi conferma esplicita prima di salvare o modificare un piano.
 
     STILE
-    Italiano, breve, concreto. Un prossimo passo utile.
+    Italiano, breve, concreto. Frasi complete, con spazi e punteggiatura normali: non attaccare le parole. Un prossimo passo utile.
     """
 
     private static let onDeviceEnglish = """
@@ -237,6 +237,6 @@ enum CoachPrompts {
     Use tools when needed (health, today's briefing, plan, nutrition). Ask for explicit confirmation before saving or changing a plan.
 
     STYLE
-    English, short, concrete. One useful next step.
+    English, short, concrete. Complete sentences, with normal spaces and punctuation: do not glue words together. One useful next step.
     """
 }
