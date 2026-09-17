@@ -11,6 +11,7 @@ struct ContentView: View {
                 WelcomeView(appState: appState, isFirstLaunch: $isFirstLaunch)
             } else {
                 ChatView()
+                    .id(aiSettings.languagePreference)
             }
         }
         .onAppear {
@@ -32,7 +33,12 @@ struct ContentView: View {
 struct WelcomeView: View {
     @ObservedObject var appState: AppState
     @Binding var isFirstLaunch: Bool
+    @EnvironmentObject var aiSettings: AISettings
     @State private var currentStep = 0
+
+    private let languageStep = 0
+    private let sourcesStep = 1
+    private var introOffset: Int { 2 }
 
     private var welcomeSteps: [WelcomeStep] {
         [
@@ -75,45 +81,29 @@ struct WelcomeView: View {
         ]
     }
 
-    var body: some View {
-        VStack(spacing: 40) {
-            Spacer()
+    private var totalStepCount: Int { introOffset + welcomeSteps.count }
+    private var isLastStep: Bool { currentStep >= totalStepCount - 1 }
 
-            // Progress indicator
+    var body: some View {
+        VStack(spacing: 24) {
             HStack(spacing: 8) {
-                ForEach(0..<welcomeSteps.count, id: \.self) { index in
+                ForEach(0..<totalStepCount, id: \.self) { index in
                     Capsule()
                         .fill(index <= currentStep ? Color.bobbyRed : Color.bobbyWarmGray.opacity(0.3))
                         .frame(width: index == currentStep ? 24 : 8, height: 8)
                         .animation(.spring(response: 0.4), value: currentStep)
                 }
             }
+            .padding(.top, 16)
 
-            // Current step content
-            let step = welcomeSteps[currentStep]
-
-            VStack(spacing: 24) {
-                ZStack {
-                    Circle()
-                        .fill(step.color.opacity(0.12))
-                        .frame(width: 120, height: 120)
-                    Image(systemName: step.icon)
-                        .font(.system(size: 48, weight: .medium))
-                        .foregroundStyle(step.color)
+            Group {
+                if currentStep == languageStep {
+                    languageStepContent
+                } else if currentStep == sourcesStep {
+                    sourcesStepContent
+                } else {
+                    introStepContent(welcomeSteps[currentStep - introOffset])
                 }
-                .scaleEffect(currentStep == 0 ? 1.1 : 1.0)
-                .animation(.spring(response: 0.6, dampingFraction: 0.7), value: currentStep)
-
-                Text(step.title)
-                    .font(.title2.weight(.bold))
-                    .multilineTextAlignment(.center)
-                    .foregroundColor(.bobbyCharcoal)
-
-                Text(step.description)
-                    .font(.body)
-                    .multilineTextAlignment(.center)
-                    .foregroundColor(.bobbyWarmGray)
-                    .padding(.horizontal, 32)
             }
             .id(currentStep)
             .transition(.asymmetric(
@@ -121,9 +111,6 @@ struct WelcomeView: View {
                 removal: .move(edge: .leading).combined(with: .opacity)
             ))
 
-            Spacer()
-
-            // Navigation buttons
             HStack {
                 if currentStep > 0 {
                     Button(L10n.tr("Indietro", english: "Back")) {
@@ -137,22 +124,23 @@ struct WelcomeView: View {
 
                 Spacer()
 
-                Button(currentStep < welcomeSteps.count - 1 ? L10n.tr("Avanti", english: "Next") : L10n.tr("Inizia a Correre!", english: "Start running!")) {
-                    withAnimation(.easeInOut(duration: 0.3)) {
-                        if currentStep < welcomeSteps.count - 1 {
-                            currentStep += 1
-                        } else {
-                            isFirstLaunch = false
+                if currentStep != languageStep {
+                    Button(isLastStep ? L10n.tr("Inizia a Correre!", english: "Start running!") : L10n.tr("Avanti", english: "Next")) {
+                        withAnimation(.easeInOut(duration: 0.3)) {
+                            if isLastStep {
+                                isFirstLaunch = false
+                            } else {
+                                currentStep += 1
+                            }
                         }
                     }
+                    .font(.headline)
+                    .foregroundColor(.white)
+                    .frame(height: 50)
+                    .frame(maxWidth: isLastStep ? .infinity : 140)
+                    .background(Color.bobbyRed)
+                    .clipShape(Capsule())
                 }
-                .font(.headline)
-                .foregroundColor(.white)
-                .frame(height: 50)
-                .frame(maxWidth: currentStep < welcomeSteps.count - 1 ? 140 : .infinity)
-                .background(Color.bobbyRed)
-                .clipShape(Capsule())
-                .animation(.spring(response: 0.4), value: currentStep)
             }
             .padding(.horizontal, 24)
             .padding(.bottom, 40)
@@ -166,6 +154,95 @@ struct WelcomeView: View {
             )
             .ignoresSafeArea()
         )
+    }
+
+    private var languageStepContent: some View {
+        VStack(spacing: 24) {
+            Spacer()
+            ZStack {
+                Circle()
+                    .fill(Color.bobbyRed.opacity(0.12))
+                    .frame(width: 120, height: 120)
+                Image(systemName: "globe")
+                    .font(.system(size: 48, weight: .medium))
+                    .foregroundStyle(Color.bobbyRed)
+            }
+
+            Text("Lingua / Language")
+                .font(.title2.weight(.bold))
+                .multilineTextAlignment(.center)
+                .foregroundColor(.bobbyCharcoal)
+
+            Text("Bobby parla italiano o inglese.\nBobby speaks Italian or English.")
+                .font(.body)
+                .multilineTextAlignment(.center)
+                .foregroundColor(.bobbyWarmGray)
+                .padding(.horizontal, 32)
+
+            VStack(spacing: 12) {
+                languageButton(title: "Italiano", preference: .italian)
+                languageButton(title: "English", preference: .english)
+            }
+            .padding(.horizontal, 24)
+            Spacer()
+        }
+    }
+
+    private func languageButton(title: String, preference: AppLanguagePreference) -> some View {
+        Button {
+            aiSettings.languagePreference = preference
+            withAnimation(.easeInOut(duration: 0.3)) {
+                currentStep = sourcesStep
+            }
+        } label: {
+            Text(title)
+                .font(.headline)
+                .foregroundColor(.white)
+                .frame(maxWidth: .infinity)
+                .frame(height: 50)
+                .background(Color.bobbyRed)
+                .clipShape(Capsule())
+        }
+    }
+
+    private var sourcesStepContent: some View {
+        ScrollView {
+            VStack(spacing: 16) {
+                Text(L10n.tr("Fonti e sicurezza", english: "Sources and safety"))
+                    .font(.title2.weight(.bold))
+                    .multilineTextAlignment(.center)
+                    .foregroundColor(.bobbyCharcoal)
+
+                SourcesList()
+            }
+            .padding(.horizontal, 8)
+        }
+    }
+
+    private func introStepContent(_ step: WelcomeStep) -> some View {
+        VStack(spacing: 24) {
+            Spacer()
+            ZStack {
+                Circle()
+                    .fill(step.color.opacity(0.12))
+                    .frame(width: 120, height: 120)
+                Image(systemName: step.icon)
+                    .font(.system(size: 48, weight: .medium))
+                    .foregroundStyle(step.color)
+            }
+
+            Text(step.title)
+                .font(.title2.weight(.bold))
+                .multilineTextAlignment(.center)
+                .foregroundColor(.bobbyCharcoal)
+
+            Text(step.description)
+                .font(.body)
+                .multilineTextAlignment(.center)
+                .foregroundColor(.bobbyWarmGray)
+                .padding(.horizontal, 32)
+            Spacer()
+        }
     }
 }
 

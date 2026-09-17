@@ -2,7 +2,7 @@
 
 Copia questi campi in App Store Connect per la scheda pubblica di **Run with Bobby** (`com.runwithbobby.app`, adamId `6761195463`).
 
-Versione binario da reinviare: **1.5.3 (8)** — stesso binario già in review. Non creare 1.5.4. La build 5 in TestFlight è precedente al coach deterministico e ai gate di conferma.
+Versione binario da inviare: **1.5.4 (10)**. Note review e Resolution Center: [`AppStoreConnect-1.5.4.md`](AppStoreConnect-1.5.4.md).
 
 ## Informazioni app
 

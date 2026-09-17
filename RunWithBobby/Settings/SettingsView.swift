@@ -49,6 +49,7 @@ struct SettingsView: View {
     var body: some View {
         NavigationView {
             Form {
+                sourcesSection
                 qwenModelSection
                 bonsaiModelSection
                 advancedToggleSection
@@ -85,6 +86,25 @@ struct SettingsView: View {
                 anthropicKeyInput = aiSettings.anthropicAPIKey ?? ""
                 openRouterKeyInput = aiSettings.openRouterAPIKey ?? ""
             }
+        }
+    }
+
+    private var sourcesSection: some View {
+        Section {
+            NavigationLink {
+                SourcesDetailView()
+            } label: {
+                Label(
+                    L10n.tr("Fonti e sicurezza", english: "Sources and safety"),
+                    systemImage: "book.closed"
+                )
+            }
+        } footer: {
+            Text(L10n.tr(
+                "Citazioni ISSN e ACSM per nutrizione e recupero, con link alle fonti.",
+                english: "ISSN and ACSM citations for nutrition and recovery, with links to the sources."
+            ))
+            .font(.caption)
         }
     }
 

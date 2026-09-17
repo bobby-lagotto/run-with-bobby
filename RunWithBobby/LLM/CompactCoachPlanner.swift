@@ -334,7 +334,7 @@ struct CompactCoachPlanner {
             "Food-first: carboidrati intorno agli allenamenti, proteine nel post, acqua regolare. Confermi che vuoi salvare questo piano alimentare?",
             english: "Food-first: carbs around workouts, protein afterwards, regular water. Confirm that you want to save this nutrition plan?"
         ))
-        return lines.joined(separator: "\n")
+        return HealthCitations.appendingFooter(to: lines.joined(separator: "\n"))
     }
 
     static func formatHealthStatus(healthJSON: String, briefingJSON: String?) -> String {
@@ -398,7 +398,7 @@ struct CompactCoachPlanner {
             lines.append(L10n.format("Oggi: %@", english: "Today: %@", line))
         }
 
-        return lines.joined(separator: "\n")
+        return HealthCitations.appendingFooter(to: lines.joined(separator: "\n"))
     }
 
     static func formatTodayBriefing(from json: String) -> String {

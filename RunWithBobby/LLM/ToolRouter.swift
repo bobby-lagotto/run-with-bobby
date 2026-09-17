@@ -753,11 +753,11 @@ class ToolRouter {
 
     private func calculateNutritionPlan(userProfile: RunnerProfile, planManager: TrainingPlanManager, nutritionManager: NutritionPlanManager?, toolCallId: String) -> ToolResult {
         guard nutritionManager != nil else {
-            return ToolResult(toolCallId: toolCallId, name: "calculate_nutrition_plan", content: "{\"errore\": \"NutritionManager non disponibile.\"}")
+            return ToolResult(toolCallId: toolCallId, name: "calculate_nutrition_plan", content: "{\"errore\": \"\(L10n.tr("NutritionManager non disponibile.", english: "Nutrition manager is unavailable."))\"}")
         }
 
         guard let trainingPlan = planManager.currentActivePlan else {
-            return ToolResult(toolCallId: toolCallId, name: "calculate_nutrition_plan", content: "{\"errore\": \"Nessun piano di allenamento attivo. Crea prima un piano di allenamento.\"}")
+            return ToolResult(toolCallId: toolCallId, name: "calculate_nutrition_plan", content: "{\"errore\": \"\(L10n.tr("Nessun piano di allenamento attivo. Crea prima un piano di allenamento.", english: "No active training plan. Create a training plan first."))\"}")
         }
 
         let weight = userProfile.effectiveWeight
@@ -821,7 +821,10 @@ class ToolRouter {
                 "verdure_frutta_totali_g": totalVerdure,
                 "peso_utente_kg": weight
             ],
-            "messaggio": "Piano alimentare calcolato. Presenta il piano all'utente e chiedi conferma prima di salvarlo."
+            "messaggio": L10n.tr(
+                "Piano alimentare calcolato. Presenta il piano all'utente e chiedi conferma prima di salvarlo.",
+                english: "Nutrition plan calculated. Present it to the user and ask for confirmation before saving."
+            )
         ]
 
         return ToolResult(toolCallId: toolCallId, name: "calculate_nutrition_plan", content: serializeJSON(result))
@@ -966,18 +969,36 @@ class ToolRouter {
     private func noteForDay(intensity: String, workoutType: WorkoutType) -> String {
         switch intensity {
         case "riposo":
-            return "Giorno di riposo: meno carboidrati, focus su verdure e proteine per il recupero."
+            return L10n.tr(
+                "Giorno di riposo: meno carboidrati, focus su verdure e proteine per il recupero.",
+                english: "Rest day: fewer carbs, focus on vegetables and protein for recovery."
+            )
         case "leggero":
-            return "Allenamento leggero: alimentazione bilanciata con carboidrati moderati."
+            return L10n.tr(
+                "Allenamento leggero: alimentazione bilanciata con carboidrati moderati.",
+                english: "Easy session: balanced eating with moderate carbs."
+            )
         case "moderato":
-            return "Allenamento moderato: aumenta i carboidrati per sostenere lo sforzo."
+            return L10n.tr(
+                "Allenamento moderato: aumenta i carboidrati per sostenere lo sforzo.",
+                english: "Moderate session: increase carbs to support the effort."
+            )
         case "intenso":
             if workoutType == .long {
-                return "Lungo: carica di carboidrati pre-allenamento, recupera con proteine dopo."
+                return L10n.tr(
+                    "Lungo: carica di carboidrati pre-allenamento, recupera con proteine dopo.",
+                    english: "Long run: carb-load before, recover with protein afterwards."
+                )
             }
-            return "Allenamento intenso: massimizza carboidrati prima e proteine dopo l'allenamento."
+            return L10n.tr(
+                "Allenamento intenso: massimizza carboidrati prima e proteine dopo l'allenamento.",
+                english: "Hard session: emphasise carbs beforehand and protein afterwards."
+            )
         default:
-            return ""
+            return L10n.tr(
+                "Alimentazione food-first intorno all'allenamento.",
+                english: "Food-first eating around the workout."
+            )
         }
     }
 

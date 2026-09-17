@@ -58,4 +58,11 @@ final class AppLanguageTests: XCTestCase {
             .proposeOptimize
         )
     }
+
+    func testEnglishCitationFooterIsNotItalian() {
+        AppLanguage.sync(from: .english)
+        XCTAssertTrue(HealthCitations.chatFooter.lowercased().contains("not medical advice"))
+        XCTAssertFalse(HealthCitations.chatFooter.contains("consiglio medico"))
+        XCTAssertTrue(HealthCitations.disclaimer.lowercased().contains("not a doctor"))
+    }
 }

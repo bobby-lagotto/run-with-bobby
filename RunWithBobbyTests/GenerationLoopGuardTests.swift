@@ -218,4 +218,50 @@ final class GenerationLoopGuardTests: XCTestCase {
             ChatMarkdown.spaceCount(text) * 8
         )
     }
+
+    func testHealthCitationsHaveTappableDOILinks() {
+        XCTAssertEqual(HealthCitations.all.count, 4)
+        XCTAssertTrue(HealthCitations.all.allSatisfy { $0.url.scheme == "https" })
+        XCTAssertTrue(HealthCitations.all.allSatisfy { $0.url.host?.contains("doi.org") == true })
+    }
+
+    func testHealthStatusIncludesCitationFooter() {
+        AppLanguage.sync(from: .italian)
+        let json = """
+        {
+          "periodo": "ultimi 7 giorni",
+          "sonno_media_ore": 5.9,
+          "variabilita_cardiaca_hrv_ms": 63
+        }
+        """
+        let text = CompactCoachPlanner.formatHealthStatus(healthJSON: json, briefingJSON: nil)
+        XCTAssertTrue(text.contains("Ecco come ti vedo dai dati"))
+        XCTAssertTrue(text.contains(HealthCitations.chatFooter))
+        XCTAssertTrue(text.contains("ISSN"))
+    }
+
+    func testEnglishNutritionPlanIncludesCitationFooter() {
+        AppLanguage.sync(from: .english)
+        let json = """
+        {
+          "piano_alimentare": [
+            {
+              "giorno": "LUNEDI",
+              "intensita": "leggero",
+              "proteine_g": 112,
+              "carboidrati_g": 210,
+              "verdure_frutta_g": 360
+            }
+          ]
+        }
+        """
+        let text = CompactCoachPlanner.formatNutritionPlan(from: json)
+        XCTAssertNotNil(text)
+        XCTAssertTrue(text?.contains("Draft nutrition plan") == true)
+        XCTAssertTrue(text?.contains("protein 112 g") == true)
+        XCTAssertTrue(text?.contains(HealthCitations.chatFooter) == true)
+        XCTAssertTrue(text?.contains("not medical advice") == true)
+        XCTAssertFalse(text?.contains("Indicazione food-first") == true)
+        AppLanguage.sync(from: .italian)
+    }
 }

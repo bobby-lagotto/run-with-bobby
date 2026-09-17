@@ -70,6 +70,8 @@
 		F3A00005AAAA0004BBBB0003 /* TodaySnapshot.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0A0000BAAAA0001BBBB0006 /* TodaySnapshot.swift */; };
 		F3A0000EAAAA0004BBBB0004 /* BobbyWatch.app in Embed Watch Content */ = {isa = PBXBuildFile; fileRef = F3A00001AAAA0004BBBB0001 /* BobbyWatch.app */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		F4S00002AAAA0005BBBB0002 /* AppStoreScreenshotSeed.swift in Sources */ = {isa = PBXBuildFile; fileRef = F4S00001AAAA0005BBBB0001 /* AppStoreScreenshotSeed.swift */; };
+		H1C00002AAAA0007BBBB0001 /* HealthCitations.swift in Sources */ = {isa = PBXBuildFile; fileRef = H1C00001AAAA0007BBBB0001 /* HealthCitations.swift */; };
+		H1C00004AAAA0007BBBB0002 /* SourcesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = H1C00003AAAA0007BBBB0002 /* SourcesView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -131,6 +133,8 @@
 		EE15000200000001AABBCCDD /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		L10N0001AAAA0006BBBB0001 /* AppLanguage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppLanguage.swift; sourceTree = "<group>"; };
 		L10N0003AAAA0006BBBB0001 /* CoachPrompts.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CoachPrompts.swift; sourceTree = "<group>"; };
+		H1C00001AAAA0007BBBB0001 /* HealthCitations.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HealthCitations.swift; sourceTree = "<group>"; };
+		H1C00003AAAA0007BBBB0002 /* SourcesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SourcesView.swift; sourceTree = "<group>"; };
 		L10N0007AAAA0006BBBB0001 /* AppLanguageTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppLanguageTests.swift; sourceTree = "<group>"; };
 		L10N0009AAAA0006BBBB0001 /* InfoPlist.xcstrings */ = {isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; path = InfoPlist.xcstrings; sourceTree = "<group>"; };
 		3D92FB372C8E4B5600123456 /* ChatView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatView.swift; sourceTree = "<group>"; };
@@ -251,6 +255,8 @@
 				L10N0009AAAA0006BBBB0001 /* InfoPlist.xcstrings */,
 				L10N0001AAAA0006BBBB0001 /* AppLanguage.swift */,
 				L10N0003AAAA0006BBBB0001 /* CoachPrompts.swift */,
+				H1C00001AAAA0007BBBB0001 /* HealthCitations.swift */,
+				H1C00003AAAA0007BBBB0002 /* SourcesView.swift */,
 				3D92FB292C8E4B2A00123456 /* RunWithBobbyApp.swift */,
 				F4S00001AAAA0005BBBB0001 /* AppStoreScreenshotSeed.swift */,
 				3D92FB2B2C8E4B2A00123456 /* ContentView.swift */,
@@ -538,6 +544,8 @@
 				3D92FB2C2C8E4B2A00123456 /* ContentView.swift in Sources */,
 				L10N0002AAAA0006BBBB0001 /* AppLanguage.swift in Sources */,
 				L10N0004AAAA0006BBBB0001 /* CoachPrompts.swift in Sources */,
+				H1C00002AAAA0007BBBB0001 /* HealthCitations.swift in Sources */,
+				H1C00004AAAA0007BBBB0002 /* SourcesView.swift in Sources */,
 				3D92FB382C8E4B5600123456 /* ChatView.swift in Sources */,
 				3D92FB3E2C8E4B8900123456 /* BobbyAI.swift in Sources */,
 				3D92FB2A2C8E4B2A00123456 /* RunWithBobbyApp.swift in Sources */,
@@ -760,7 +768,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = RunWithBobby/RunWithBobby.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-                CURRENT_PROJECT_VERSION = 6;
+                CURRENT_PROJECT_VERSION = 10;
                 DEVELOPMENT_ASSET_PATHS = "\"RunWithBobby/Preview Content\"";
                 DEVELOPMENT_TEAM = 4YW6S35MTZ;
                 ENABLE_PREVIEWS = YES;
@@ -781,7 +789,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.5.3;
+				MARKETING_VERSION = 1.5.4;
 				PRODUCT_BUNDLE_IDENTIFIER = com.runwithbobby.app;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SUPPORTS_MACCATALYST = NO;
@@ -798,7 +806,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = RunWithBobby/RunWithBobby.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-                CURRENT_PROJECT_VERSION = 6;
+                CURRENT_PROJECT_VERSION = 10;
                 DEVELOPMENT_ASSET_PATHS = "\"RunWithBobby/Preview Content\"";
                 DEVELOPMENT_TEAM = 4YW6S35MTZ;
                 ENABLE_PREVIEWS = YES;
@@ -819,7 +827,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.5.3;
+				MARKETING_VERSION = 1.5.4;
 				PRODUCT_BUNDLE_IDENTIFIER = com.runwithbobby.app;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SUPPORTS_MACCATALYST = NO;
@@ -872,7 +880,7 @@
 			buildSettings = {
 				CODE_SIGN_ENTITLEMENTS = BobbyTodayWidget/BobbyTodayWidget.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-                CURRENT_PROJECT_VERSION = 6;
+                CURRENT_PROJECT_VERSION = 10;
                 DEVELOPMENT_TEAM = 4YW6S35MTZ;
                 GENERATE_INFOPLIST_FILE = YES;
                 INFOPLIST_FILE = BobbyTodayWidget/Info.plist;
@@ -884,7 +892,7 @@
 					"@executable_path/Frameworks",
 					"@executable_path/../../Frameworks",
 				);
-				MARKETING_VERSION = 1.5.3;
+				MARKETING_VERSION = 1.5.4;
 				PRODUCT_BUNDLE_IDENTIFIER = com.runwithbobby.app.BobbyTodayWidget;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
@@ -900,7 +908,7 @@
 			buildSettings = {
 				CODE_SIGN_ENTITLEMENTS = BobbyTodayWidget/BobbyTodayWidget.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-                CURRENT_PROJECT_VERSION = 6;
+                CURRENT_PROJECT_VERSION = 10;
                 DEVELOPMENT_TEAM = 4YW6S35MTZ;
                 GENERATE_INFOPLIST_FILE = YES;
                 INFOPLIST_FILE = BobbyTodayWidget/Info.plist;
@@ -912,7 +920,7 @@
 					"@executable_path/Frameworks",
 					"@executable_path/../../Frameworks",
 				);
-				MARKETING_VERSION = 1.5.3;
+				MARKETING_VERSION = 1.5.4;
 				PRODUCT_BUNDLE_IDENTIFIER = com.runwithbobby.app.BobbyTodayWidget;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
@@ -928,7 +936,7 @@
 			buildSettings = {
 				CODE_SIGN_ENTITLEMENTS = BobbyWatch/BobbyWatch.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-                CURRENT_PROJECT_VERSION = 6;
+                CURRENT_PROJECT_VERSION = 10;
                 DEVELOPMENT_TEAM = 4YW6S35MTZ;
                 GENERATE_INFOPLIST_FILE = YES;
                 INFOPLIST_KEY_CFBundleDisplayName = Bobby;
@@ -938,7 +946,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.5.3;
+				MARKETING_VERSION = 1.5.4;
 				PRODUCT_BUNDLE_IDENTIFIER = com.runwithbobby.app.watchkitapp;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = watchos;
@@ -955,7 +963,7 @@
 			buildSettings = {
 				CODE_SIGN_ENTITLEMENTS = BobbyWatch/BobbyWatch.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-                CURRENT_PROJECT_VERSION = 6;
+                CURRENT_PROJECT_VERSION = 10;
                 DEVELOPMENT_TEAM = 4YW6S35MTZ;
                 GENERATE_INFOPLIST_FILE = YES;
                 INFOPLIST_KEY_CFBundleDisplayName = Bobby;
@@ -965,7 +973,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.5.3;
+				MARKETING_VERSION = 1.5.4;
 				PRODUCT_BUNDLE_IDENTIFIER = com.runwithbobby.app.watchkitapp;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = watchos;

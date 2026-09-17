@@ -17,6 +17,7 @@ struct ChatView: View {
     @State private var showingConversationHistory = false
     @State private var showingNutritionPlan = false
     @State private var showingToday = false
+    @State private var showingSources = false
     @State private var showingDeleteDataConfirm = false
     @State private var showingCloudHealthConfirm = false
     @State private var pendingCloudHealthMessage: String?
@@ -64,6 +65,9 @@ struct ChatView: View {
                         sendQuickMessage("Vorrei modificare il mio piano alimentare")
                     }
                 })
+            }
+            .sheet(isPresented: $showingSources) {
+                SourcesView()
             }
             .sheet(isPresented: $showingToday) {
                 NavigationView {
@@ -154,6 +158,9 @@ struct ChatView: View {
                     }
                     Button(action: { showingNutritionPlan = true }) {
                         Label(L10n.tr("Piano Alimentare", english: "Nutrition plan"), systemImage: "fork.knife")
+                    }
+                    Button(action: { showingSources = true }) {
+                        Label(L10n.tr("Fonti", english: "Sources"), systemImage: "book.closed")
                     }
                     Button(action: { showingConversationHistory = true }) {
                         Label(L10n.tr("Storico Chat", english: "Chat history"), systemImage: "clock.arrow.circlepath")
