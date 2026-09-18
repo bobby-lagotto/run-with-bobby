@@ -20,13 +20,13 @@ enum CompactCoachIntent: Equatable {
     ) -> CompactCoachIntent? {
         let text = normalize(raw)
         if isNutritionCreate(text) { return .createNutritionPlan }
+        if isProposeOptimize(text) { return .proposeOptimize }
         if isTrainingCreate(text) { return .createTrainingPlan }
         if isSaveConfirmation(text) {
             if hasPendingTrainingPlan { return .savePendingTraining }
             if hasPendingNutritionPlan { return .savePendingNutrition }
             if hasPendingOptimization { return .savePendingOptimize }
         }
-        if isProposeOptimize(text) { return .proposeOptimize }
         if isHealthStatus(text) { return .healthStatus }
         if isTodayBriefing(text) { return .todayBriefing }
         if isAdherence(text) { return .adherence }
@@ -43,15 +43,42 @@ enum CompactCoachIntent: Equatable {
     }
 
     private static func isTrainingCreate(_ text: String) -> Bool {
-        containsAny(text, [
+        if isProposeOptimize(text) || isActivePlan(text) {
+            return false
+        }
+        return containsAny(text, [
             "nuovo piano",
             "crea un nuovo piano",
+            "crea un piano",
+            "crea il piano",
+            "mi fai un piano",
+            "mi fai il piano",
+            "fammi un piano",
+            "fammi il piano",
+            "fai un piano",
+            "faccio un piano",
+            "puoi farmi un piano",
+            "puoi fare un piano",
+            "mi prepari un piano",
+            "mi crei un piano",
+            "voglio un piano",
+            "vorrei un piano",
+            "prepara un piano",
             "piano di allenamento",
-            "crea un piano di allenamento",
+            "piano allenamento",
+            "piano di corsa",
+            "piano corsa",
             "new plan",
             "create a new plan",
-            "training plan",
-            "create a training plan"
+            "create a plan",
+            "create a training plan",
+            "make me a plan",
+            "make a plan",
+            "make a training plan",
+            "give me a plan",
+            "i want a plan",
+            "can you make a plan",
+            "training plan"
         ])
     }
 
@@ -59,9 +86,17 @@ enum CompactCoachIntent: Equatable {
         containsAny(text, [
             "piano alimentare",
             "crea un piano alimentare",
+            "cosa posso mangiare",
+            "cosa mangio",
+            "cosa mangiare",
+            "che posso mangiare",
+            "che mangio",
             "nutrition plan",
             "meal plan",
-            "create a nutrition plan"
+            "create a nutrition plan",
+            "what can i eat",
+            "what should i eat",
+            "what do i eat"
         ])
     }
 
@@ -282,16 +317,16 @@ struct CompactCoachPlanner {
 
         var lines = [
             L10n.format(
-                "Proposta di piano (non salvata), calcolata sul tuo profilo: %d km/settimana, %d allenamenti.",
-                english: "Draft plan (not saved), calculated from your profile: %d km/week, %d workouts.",
+                "Ecco un piano sul tuo profilo: %d km/settimana, %d allenamenti.",
+                english: "Here's a plan from your profile: %d km/week, %d workouts.",
                 totalKm,
                 workouts
             )
         ]
         lines.append(contentsOf: dayLines(days))
         lines.append(L10n.tr(
-            "Questa è una proposta non salvata. Confermi che vuoi salvare questo piano?",
-            english: "This is an unsaved draft. Confirm that you want to save this plan?"
+            "Va bene così? Se sì, dimmi «salva» e lo attivo.",
+            english: "Does this work? If yes, say “save” and I'll activate it."
         ))
         return lines.joined(separator: "\n")
     }
@@ -300,8 +335,8 @@ struct CompactCoachPlanner {
         if let root = parseObject(json), let error = stringValue(root["errore"]) {
             if error.contains("Nessun piano di allenamento") || error.lowercased().contains("no active training") {
                 return L10n.tr(
-                    "Per un piano alimentare mi serve prima un piano di allenamento attivo. Crea o attiva un piano corsa, poi chiedimi di nuovo il piano alimentare.",
-                    english: "I need an active training plan before a nutrition plan. Create or activate a run plan, then ask again for nutrition."
+                    "Per dirti cosa mangiare in modo preciso mi serve prima un piano di corsa. Vuoi che te lo prepari? Intanto: proteine 1,6-1,8 g/kg, più carboidrati nei giorni di qualità o lungo, acqua regolare.",
+                    english: "To tell you what to eat more precisely I need a run plan first. Want me to make one? Meanwhile: protein 1.6-1.8 g/kg, more carbs on quality or long-run days, regular water."
                 )
             }
             return error
@@ -313,8 +348,8 @@ struct CompactCoachPlanner {
         }
 
         var lines = [L10n.tr(
-            "Proposta di piano alimentare (non salvata), calcolata sul piano di allenamento attivo.",
-            english: "Draft nutrition plan (not saved), calculated from the active training plan."
+            "Ecco cosa mangiare in base al piano di corsa di questa settimana.",
+            english: "Here's what to eat based on this week's run plan."
         )]
 
         for day in days {
@@ -331,8 +366,8 @@ struct CompactCoachPlanner {
         }
 
         lines.append(L10n.tr(
-            "Food-first: carboidrati intorno agli allenamenti, proteine nel post, acqua regolare. Confermi che vuoi salvare questo piano alimentare?",
-            english: "Food-first: carbs around workouts, protein afterwards, regular water. Confirm that you want to save this nutrition plan?"
+            "Carboidrati intorno agli allenamenti, proteine dopo, acqua regolare. Se va bene, dimmi «salva».",
+            english: "Carbs around workouts, protein afterwards, regular water. If this works, say “save”."
         ))
         return HealthCitations.appendingFooter(to: lines.joined(separator: "\n"))
     }
@@ -352,8 +387,8 @@ struct CompactCoachPlanner {
         }
 
         var lines = [L10n.tr(
-            "Ecco come ti vedo dai dati Apple Health sul telefono. Non è una diagnosi.",
-            english: "Here's how I see you from Apple Health data on the phone. This is not a diagnosis."
+            "Così ti vedo dai dati Salute di questi giorni.",
+            english: "This is how I see you from the last few days of Health data."
         )]
         var facts: [String] = []
 
@@ -447,8 +482,8 @@ struct CompactCoachPlanner {
         guard let root = parseObject(json),
               let days = root["piano_settimanale"] as? [[String: Any]] else {
             return L10n.tr(
-                "Nessun piano attivo al momento. Dimmi «Crea un nuovo piano di allenamento» per una proposta da confermare.",
-                english: "No active plan right now. Say “Create a new training plan” for a draft to confirm."
+                "Non hai ancora un piano attivo. Vuoi che te ne faccia uno sul tuo profilo?",
+                english: "You don't have an active plan yet. Want me to make one from your profile?"
             )
         }
         let title = stringValue(root["titolo"]) ?? L10n.tr("Piano attivo", english: "Active plan")
@@ -465,22 +500,22 @@ struct CompactCoachPlanner {
             return formatted
                 .replacingOccurrences(
                     of: L10n.tr(
-                        "Proposta di piano (non salvata), calcolata sul tuo profilo",
-                        english: "Draft plan (not saved), calculated from your profile"
+                        "Ecco un piano sul tuo profilo",
+                        english: "Here's a plan from your profile"
                     ),
                     with: L10n.tr(
-                        "Proposta di ottimizzazione (non applicata)",
-                        english: "Optimisation draft (not applied)"
+                        "Proposta di ottimizzazione",
+                        english: "Optimisation draft"
                     )
                 )
                 .replacingOccurrences(
                     of: L10n.tr(
-                        "Questa è una proposta non salvata. Confermi che vuoi salvare questo piano?",
-                        english: "This is an unsaved draft. Confirm that you want to save this plan?"
+                        "Va bene così? Se sì, dimmi «salva» e lo attivo.",
+                        english: "Does this work? If yes, say “save” and I'll activate it."
                     ),
                     with: L10n.tr(
-                        "Questa è una proposta non applicata. Confermi che vuoi applicare questa ottimizzazione?",
-                        english: "This is a draft, not applied. Confirm that you want to apply this optimisation?"
+                        "Se vuoi applicarla, dimmi «salva».",
+                        english: "If you want this applied, say “save”."
                     )
                 )
         }
@@ -724,13 +759,13 @@ struct CompactCoachPlanner {
 
         if tired {
             return L10n.tr(
-                "Segnale da monitorare sui dati presenti: oggi tieni facile o riposa, niente qualità. Se il quadro resta così 48 ore, scala il carico.",
-                english: "Signal to watch on the available data: keep today easy or rest, no quality. If this holds 48 hours, cut the load."
+                "Oggi tieni facile o riposa, niente qualità. Se resta così per 48 ore, scala il carico.",
+                english: "Keep today easy or rest, no quality. If this holds 48 hours, cut the load."
             )
         }
         return L10n.tr(
-            "Sui dati presenti non c'è un allarme: puoi seguire il piano, con i giorni facili davvero facili.",
-            english: "No alarm on the available data: you can follow the plan, with easy days truly easy."
+            "Puoi seguire il piano: i giorni facili lasciali davvero facili.",
+            english: "You can follow the plan: keep easy days truly easy."
         )
     }
 

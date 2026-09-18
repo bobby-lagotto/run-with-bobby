@@ -768,7 +768,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = RunWithBobby/RunWithBobby.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-                CURRENT_PROJECT_VERSION = 10;
+                CURRENT_PROJECT_VERSION = 11;
                 DEVELOPMENT_ASSET_PATHS = "\"RunWithBobby/Preview Content\"";
                 DEVELOPMENT_TEAM = 4YW6S35MTZ;
                 ENABLE_PREVIEWS = YES;
@@ -789,7 +789,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.5.4;
+				MARKETING_VERSION = 1.5.5;
 				PRODUCT_BUNDLE_IDENTIFIER = com.runwithbobby.app;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SUPPORTS_MACCATALYST = NO;
@@ -806,7 +806,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = RunWithBobby/RunWithBobby.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-                CURRENT_PROJECT_VERSION = 10;
+                CURRENT_PROJECT_VERSION = 11;
                 DEVELOPMENT_ASSET_PATHS = "\"RunWithBobby/Preview Content\"";
                 DEVELOPMENT_TEAM = 4YW6S35MTZ;
                 ENABLE_PREVIEWS = YES;
@@ -827,7 +827,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.5.4;
+				MARKETING_VERSION = 1.5.5;
 				PRODUCT_BUNDLE_IDENTIFIER = com.runwithbobby.app;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SUPPORTS_MACCATALYST = NO;
@@ -880,7 +880,7 @@
 			buildSettings = {
 				CODE_SIGN_ENTITLEMENTS = BobbyTodayWidget/BobbyTodayWidget.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-                CURRENT_PROJECT_VERSION = 10;
+                CURRENT_PROJECT_VERSION = 11;
                 DEVELOPMENT_TEAM = 4YW6S35MTZ;
                 GENERATE_INFOPLIST_FILE = YES;
                 INFOPLIST_FILE = BobbyTodayWidget/Info.plist;
@@ -892,7 +892,7 @@
 					"@executable_path/Frameworks",
 					"@executable_path/../../Frameworks",
 				);
-				MARKETING_VERSION = 1.5.4;
+				MARKETING_VERSION = 1.5.5;
 				PRODUCT_BUNDLE_IDENTIFIER = com.runwithbobby.app.BobbyTodayWidget;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
@@ -908,7 +908,7 @@
 			buildSettings = {
 				CODE_SIGN_ENTITLEMENTS = BobbyTodayWidget/BobbyTodayWidget.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-                CURRENT_PROJECT_VERSION = 10;
+                CURRENT_PROJECT_VERSION = 11;
                 DEVELOPMENT_TEAM = 4YW6S35MTZ;
                 GENERATE_INFOPLIST_FILE = YES;
                 INFOPLIST_FILE = BobbyTodayWidget/Info.plist;
@@ -920,7 +920,7 @@
 					"@executable_path/Frameworks",
 					"@executable_path/../../Frameworks",
 				);
-				MARKETING_VERSION = 1.5.4;
+				MARKETING_VERSION = 1.5.5;
 				PRODUCT_BUNDLE_IDENTIFIER = com.runwithbobby.app.BobbyTodayWidget;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
@@ -936,7 +936,7 @@
 			buildSettings = {
 				CODE_SIGN_ENTITLEMENTS = BobbyWatch/BobbyWatch.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-                CURRENT_PROJECT_VERSION = 10;
+                CURRENT_PROJECT_VERSION = 11;
                 DEVELOPMENT_TEAM = 4YW6S35MTZ;
                 GENERATE_INFOPLIST_FILE = YES;
                 INFOPLIST_KEY_CFBundleDisplayName = Bobby;
@@ -946,7 +946,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.5.4;
+				MARKETING_VERSION = 1.5.5;
 				PRODUCT_BUNDLE_IDENTIFIER = com.runwithbobby.app.watchkitapp;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = watchos;
@@ -963,7 +963,7 @@
 			buildSettings = {
 				CODE_SIGN_ENTITLEMENTS = BobbyWatch/BobbyWatch.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-                CURRENT_PROJECT_VERSION = 10;
+                CURRENT_PROJECT_VERSION = 11;
                 DEVELOPMENT_TEAM = 4YW6S35MTZ;
                 GENERATE_INFOPLIST_FILE = YES;
                 INFOPLIST_KEY_CFBundleDisplayName = Bobby;
@@ -973,7 +973,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.5.4;
+				MARKETING_VERSION = 1.5.5;
 				PRODUCT_BUNDLE_IDENTIFIER = com.runwithbobby.app.watchkitapp;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = watchos;

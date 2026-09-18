@@ -50,6 +50,7 @@ struct SettingsView: View {
         NavigationView {
             Form {
                 sourcesSection
+                healthSection
                 qwenModelSection
                 bonsaiModelSection
                 advancedToggleSection
@@ -59,7 +60,6 @@ struct SettingsView: View {
                     openAISection
                     anthropicSection
                     openRouterSection
-                    healthSection
                     infoSection
                 }
             }
@@ -798,12 +798,14 @@ struct SettingsView: View {
 
     private var healthStatusDescription: String {
         if !healthManager.isAvailable {
-            return "Non disponibile su questo dispositivo"
+            return L10n.tr("Non disponibile su questo dispositivo", english: "Not available on this device")
         }
         if healthConnected {
-            return healthManager.isAuthorized ? "Collegato" : "In attesa di autorizzazione"
+            return healthManager.isAuthorized
+                ? L10n.tr("Collegato", english: "Connected")
+                : L10n.tr("In attesa di autorizzazione", english: "Waiting for authorization")
         }
-        return "Non collegato"
+        return L10n.tr("Non collegato", english: "Not connected")
     }
 
     private func handleHealthToggle(_ connect: Bool) {

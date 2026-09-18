@@ -437,24 +437,12 @@ struct ChatView: View {
     private func showWelcomeMessage() {
         let welcomeMessage = L10n.tr(
             """
-            Ciao! Sono Bobby, il tuo personal trainer di corsa! 🏃‍♂️
-
-            Sono qui per aiutarti a:
-            • Creare piani di allenamento personalizzati
-            • Migliorare le tue performance
-            • Raggiungere i tuoi obiettivi di corsa
-
-            Per iniziare, dimmi qualcosa sui tuoi allenamenti attuali!
+            Ciao, ho già il tuo profilo.
+            Dimmi cosa ti serve: un piano, come stai, cosa fare oggi o cosa mangiare.
             """,
             english: """
-            Hi! I'm Bobby, your running coach! 🏃‍♂️
-
-            I'm here to help you:
-            • Build personalised training plans
-            • Improve your performance
-            • Hit your running goals
-
-            To start, tell me something about your current training!
+            Hi — I already have your profile.
+            Tell me what you need: a plan, how you're feeling, what to do today or what to eat.
             """
         )
 
@@ -1151,6 +1139,103 @@ struct TrainingPlanEditView: View {
     }
 }
 
+// MARK: - Runner Profile Form
+struct RunnerProfileForm: View {
+    @Binding var profile: RunnerProfile
+
+    var body: some View {
+        Section {
+            HStack(spacing: 12) {
+                Image(systemName: "road.lanes")
+                    .foregroundColor(.bobbyCaramel)
+                    .frame(width: 28)
+                Text(L10n.tr("Km alla settimana", english: "Km per week"))
+                Spacer()
+                TextField("20", value: $profile.weeklyKilometers, format: .number)
+                    .textFieldStyle(.roundedBorder)
+                    .frame(width: 80)
+            }
+
+            HStack(spacing: 12) {
+                Image(systemName: "calendar.badge.clock")
+                    .foregroundColor(.bobbyCaramel)
+                    .frame(width: 28)
+                Stepper(L10n.format("Allenamenti/sett: %d", english: "Workouts/week: %d", profile.workoutsPerWeek), value: $profile.workoutsPerWeek, in: 1...7)
+            }
+
+            HStack(spacing: 12) {
+                Image(systemName: "speedometer")
+                    .foregroundColor(.bobbyCaramel)
+                    .frame(width: 28)
+                Text(L10n.tr("Ritmo attuale", english: "Current pace"))
+                Spacer()
+                TextField("5:30", text: $profile.currentPace)
+                    .textFieldStyle(.roundedBorder)
+                    .frame(width: 80)
+            }
+
+            HStack(spacing: 12) {
+                Image(systemName: "scalemass.fill")
+                    .foregroundColor(.bobbyCaramel)
+                    .frame(width: 28)
+                Text(L10n.tr("Peso (kg)", english: "Weight (kg)"))
+                Spacer()
+                TextField("70", value: $profile.weight, format: .number)
+                    .textFieldStyle(.roundedBorder)
+                    .frame(width: 80)
+                    .keyboardType(.decimalPad)
+            }
+        } header: {
+            Label(L10n.tr("Allenamento Attuale", english: "Current training"), systemImage: "figure.run")
+                .foregroundColor(.bobbyRed)
+        }
+
+        Section {
+            HStack(spacing: 12) {
+                Image(systemName: "flag.fill")
+                    .foregroundColor(.bobbyCaramel)
+                    .frame(width: 28)
+                Picker(L10n.tr("Obiettivo principale", english: "Main goal"), selection: $profile.primaryGoal) {
+                    ForEach(TrainingGoal.allCases, id: \.self) { goal in
+                        Text(goal.displayName).tag(goal)
+                    }
+                }
+            }
+
+            HStack(spacing: 12) {
+                Image(systemName: "chart.bar.fill")
+                    .foregroundColor(.bobbyCaramel)
+                    .frame(width: 28)
+                Picker(L10n.tr("Livello esperienza", english: "Experience level"), selection: $profile.experience) {
+                    ForEach(ExperienceLevel.allCases, id: \.self) { level in
+                        Text(level.displayName).tag(level)
+                    }
+                }
+            }
+        } header: {
+            Label(L10n.tr("Obiettivi", english: "Goals"), systemImage: "target")
+                .foregroundColor(.bobbyRed)
+        }
+
+        Section {
+            HStack(spacing: 12) {
+                Image(systemName: "flag.checkered")
+                    .foregroundColor(.bobbyCaramel)
+                    .frame(width: 28)
+                Picker(L10n.tr("Distanza gara", english: "Race distance"), selection: $profile.raceDistance) {
+                    Text(L10n.tr("Nessuna gara specifica", english: "No specific race")).tag(nil as RaceDistance?)
+                    ForEach(RaceDistance.allCases, id: \.self) { distance in
+                        Text(distance.rawValue).tag(distance as RaceDistance?)
+                    }
+                }
+            }
+        } header: {
+            Label(L10n.tr("Gara Obiettivo", english: "Target race"), systemImage: "medal.fill")
+                .foregroundColor(.bobbyRed)
+        }
+    }
+}
+
 // MARK: - Runner Profile View
 struct RunnerProfileView: View {
     @ObservedObject var appState: AppState
@@ -1160,95 +1245,7 @@ struct RunnerProfileView: View {
     var body: some View {
         NavigationView {
             Form {
-                Section {
-                    HStack(spacing: 12) {
-                        Image(systemName: "road.lanes")
-                            .foregroundColor(.bobbyCaramel)
-                            .frame(width: 28)
-                        Text(L10n.tr("Km alla settimana", english: "Km per week"))
-                        Spacer()
-                        TextField("20", value: $appState.userProfile.weeklyKilometers, format: .number)
-                            .textFieldStyle(.roundedBorder)
-                            .frame(width: 80)
-                    }
-
-                    HStack(spacing: 12) {
-                        Image(systemName: "calendar.badge.clock")
-                            .foregroundColor(.bobbyCaramel)
-                            .frame(width: 28)
-                        Stepper(L10n.format("Allenamenti/sett: %d", english: "Workouts/week: %d", appState.userProfile.workoutsPerWeek), value: $appState.userProfile.workoutsPerWeek, in: 1...7)
-                    }
-
-                    HStack(spacing: 12) {
-                        Image(systemName: "speedometer")
-                            .foregroundColor(.bobbyCaramel)
-                            .frame(width: 28)
-                        Text(L10n.tr("Ritmo attuale", english: "Current pace"))
-                        Spacer()
-                        TextField("5:30", text: $appState.userProfile.currentPace)
-                            .textFieldStyle(.roundedBorder)
-                            .frame(width: 80)
-                    }
-
-                    HStack(spacing: 12) {
-                        Image(systemName: "scalemass.fill")
-                            .foregroundColor(.bobbyCaramel)
-                            .frame(width: 28)
-                        Text(L10n.tr("Peso (kg)", english: "Weight (kg)"))
-                        Spacer()
-                        TextField("70", value: $appState.userProfile.weight, format: .number)
-                            .textFieldStyle(.roundedBorder)
-                            .frame(width: 80)
-                            .keyboardType(.decimalPad)
-                    }
-                } header: {
-                    Label(L10n.tr("Allenamento Attuale", english: "Current training"), systemImage: "figure.run")
-                        .foregroundColor(.bobbyRed)
-                }
-
-                Section {
-                    HStack(spacing: 12) {
-                        Image(systemName: "flag.fill")
-                            .foregroundColor(.bobbyCaramel)
-                            .frame(width: 28)
-                        Picker(L10n.tr("Obiettivo principale", english: "Main goal"), selection: $appState.userProfile.primaryGoal) {
-                            ForEach(TrainingGoal.allCases, id: \.self) { goal in
-                                Text(goal.displayName).tag(goal)
-                            }
-                        }
-                    }
-
-                    HStack(spacing: 12) {
-                        Image(systemName: "chart.bar.fill")
-                            .foregroundColor(.bobbyCaramel)
-                            .frame(width: 28)
-                        Picker(L10n.tr("Livello esperienza", english: "Experience level"), selection: $appState.userProfile.experience) {
-                            ForEach(ExperienceLevel.allCases, id: \.self) { level in
-                                Text(level.displayName).tag(level)
-                            }
-                        }
-                    }
-                } header: {
-                    Label(L10n.tr("Obiettivi", english: "Goals"), systemImage: "target")
-                        .foregroundColor(.bobbyRed)
-                }
-
-                Section {
-                    HStack(spacing: 12) {
-                        Image(systemName: "flag.checkered")
-                            .foregroundColor(.bobbyCaramel)
-                            .frame(width: 28)
-                        Picker(L10n.tr("Distanza gara", english: "Race distance"), selection: $appState.userProfile.raceDistance) {
-                            Text(L10n.tr("Nessuna gara specifica", english: "No specific race")).tag(nil as RaceDistance?)
-                            ForEach(RaceDistance.allCases, id: \.self) { distance in
-                                Text(distance.rawValue).tag(distance as RaceDistance?)
-                            }
-                        }
-                    }
-                } header: {
-                    Label(L10n.tr("Gara Obiettivo", english: "Target race"), systemImage: "medal.fill")
-                        .foregroundColor(.bobbyRed)
-                }
+                RunnerProfileForm(profile: $appState.userProfile)
             }
             .scrollContentBackground(.hidden)
             .background(BobbyTheme.background(for: colorScheme).ignoresSafeArea())

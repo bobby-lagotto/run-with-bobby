@@ -26,6 +26,7 @@ final class AppLanguageTests: XCTestCase {
     }
 
     func testEnglishChipMessagesMapToIntents() {
+        XCTAssertEqual(CompactCoachIntent.detect("Make me a plan"), .createTrainingPlan)
         XCTAssertEqual(
             CompactCoachIntent.detect("Create a new training plan for me"),
             .createTrainingPlan

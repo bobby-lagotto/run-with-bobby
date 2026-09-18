@@ -541,36 +541,6 @@ private struct OfflineCoachFallback {
         case providerDidNotAnswer
         case providerError
         case compactModel
-
-        var intro: String {
-            switch self {
-            case .noProviderConfigured:
-                return L10n.tr(
-                    "Modalità gratuita locale fallback: rispondo senza cloud perché non c'è un provider pronto.",
-                    english: "Free on-device fallback: I answer without cloud because no provider is ready."
-                )
-            case .localModelUnavailable:
-                return L10n.tr(
-                    "Modalità gratuita locale fallback: il modello MLX non è pronto, quindi uso coaching deterministico sul dispositivo.",
-                    english: "Free on-device fallback: the MLX model isn't ready, so I use deterministic coaching on device."
-                )
-            case .providerDidNotAnswer:
-                return L10n.tr(
-                    "Non ho completato la risposta col modello. Ti do un consiglio conservativo sul dispositivo.",
-                    english: "I didn't finish the model reply. Here's conservative on-device advice."
-                )
-            case .providerError:
-                return L10n.tr(
-                    "Modalità gratuita locale fallback: il provider selezionato ha avuto un errore, quindi resto sul dispositivo.",
-                    english: "Free on-device fallback: the selected provider errored, so I stay on device."
-                )
-            case .compactModel:
-                return L10n.tr(
-                    "Questo modello è troppo piccolo per la chat libera: resto sul coaching deterministico sul dispositivo.",
-                    english: "This model is too small for free chat: I stay on deterministic coaching on device."
-                )
-            }
-        }
     }
 
     func response(
@@ -581,31 +551,24 @@ private struct OfflineCoachFallback {
         reason: Reason
     ) -> String {
         let normalized = normalize(userMessage)
-        var sections: [String] = [reason.intro]
 
         if containsRedFlag(normalized) {
-            sections.append(redFlagAdvice())
-            sections.append(HealthCitations.chatFooter)
-        } else if isHealthStatusRequest(normalized) {
-            sections.append(healthStatusAdvice())
-            sections.append(HealthCitations.chatFooter)
-        } else if isNutritionRequest(normalized) {
-            sections.append(nutritionAdvice(for: userProfile, activePlan: activePlan, nutritionPlan: nutritionPlan))
-            sections.append(HealthCitations.chatFooter)
-        } else if isRecoveryRequest(normalized) {
-            sections.append(recoveryAdvice(for: userProfile, activePlan: activePlan))
-            sections.append(HealthCitations.chatFooter)
-        } else if isTrainingRequest(normalized) {
-            sections.append(trainingAdvice(for: userProfile, activePlan: activePlan))
-        } else {
-            sections.append(defaultAdvice(for: userProfile, activePlan: activePlan))
+            return [redFlagAdvice(), HealthCitations.chatFooter].joined(separator: "\n\n")
         }
-
-        sections.append(L10n.tr(
-            "Non salvo e non modifico piani senza una tua conferma esplicita.",
-            english: "I don't save or change plans without your explicit confirmation."
-        ))
-        return sections.joined(separator: "\n\n")
+        if isHealthStatusRequest(normalized) {
+            return [healthStatusAdvice(), HealthCitations.chatFooter].joined(separator: "\n\n")
+        }
+        if isNutritionRequest(normalized) {
+            return [nutritionAdvice(for: userProfile, activePlan: activePlan, nutritionPlan: nutritionPlan), HealthCitations.chatFooter].joined(separator: "\n\n")
+        }
+        if isRecoveryRequest(normalized) {
+            return [recoveryAdvice(for: userProfile, activePlan: activePlan), HealthCitations.chatFooter].joined(separator: "\n\n")
+        }
+        if isTrainingRequest(normalized) {
+            return trainingAdvice(for: userProfile, activePlan: activePlan)
+        }
+        _ = reason
+        return defaultAdvice(for: userProfile, activePlan: activePlan)
     }
 
     private func trainingAdvice(for profile: RunnerProfile, activePlan: TrainingPlan?) -> String {
@@ -633,8 +596,8 @@ private struct OfflineCoachFallback {
         }
 
         return L10n.tr(
-            "Non ho un piano attivo e non invento i km. Dimmi «Crea un nuovo piano di allenamento» e ti calcolo una proposta da confermare.",
-            english: "I don't have an active plan and I don't invent kilometres. Say “Create a new training plan” and I'll draft a proposal to confirm."
+            "Non hai ancora un piano attivo. Vuoi che te ne faccia uno sul tuo profilo?",
+            english: "You don't have an active plan yet. Want me to make one from your profile?"
         )
     }
 
@@ -647,8 +610,8 @@ private struct OfflineCoachFallback {
 
         var lines = [
             L10n.format(
-                "Indicazione food-first non clinica, calcolata localmente su %d kg.",
-                english: "Food-first, non-clinical guidance, calculated on-device for %d kg.",
+                "Indicazione pratica, calcolata sul tuo peso (%d kg). Non è un piano clinico.",
+                english: "Practical guidance from your weight (%d kg). This is not a clinical plan.",
                 Int(weight)
             ),
             L10n.format(
@@ -688,8 +651,8 @@ private struct OfflineCoachFallback {
             ))
         } else {
             lines.append(L10n.tr(
-                "Per un piano completo mi servono preferenze alimentari, allergie/intolleranze e orari degli allenamenti.",
-                english: "For a full plan I need food preferences, allergies/intolerances and training times."
+                "Se vuoi un piano alimentare vero, dimmelo e lo costruisco sul piano di corsa.",
+                english: "If you want a full nutrition plan, say so and I'll build it on the run plan."
             ))
         }
 
@@ -699,8 +662,8 @@ private struct OfflineCoachFallback {
     private func recoveryAdvice(for profile: RunnerProfile, activePlan: TrainingPlan?) -> String {
         var lines = [
             L10n.tr(
-                "Senza dati Health live in questa modalità, usa una regola conservativa: se sonno scarso, FC a riposo più alta del solito o gambe pesanti, trasforma la seduta in facile.",
-                english: "Without live Health data in this mode, use a conservative rule: if sleep is poor, resting HR is higher than usual or legs feel heavy, turn the session easy."
+                "Se hai dormito poco, hai FC a riposo più alta del solito o gambe pesanti, oggi vai facile.",
+                english: "If sleep was poor, resting HR is higher than usual or legs feel heavy, keep today easy."
             ),
             L10n.tr(
                 "Oggi scegli RPE 2-4, niente qualità, e chiudi con 5-10 minuti di mobilità leggera.",
@@ -736,8 +699,8 @@ private struct OfflineCoachFallback {
         }
 
         return L10n.tr(
-            "Non ho un piano attivo. Dimmi «Crea un nuovo piano di allenamento» e ti preparo una proposta non salvata.",
-            english: "I don't have an active plan. Say “Create a new training plan” and I'll prepare an unsaved draft."
+            "Dimmi cosa ti serve: un piano, come stai, cosa fare oggi o cosa mangiare. Parto dal tuo profilo.",
+            english: "Tell me what you need: a plan, how you're feeling, what to do today or what to eat. I'll start from your profile."
         )
     }
 
@@ -759,14 +722,12 @@ private struct OfflineCoachFallback {
     private func healthStatusAdvice() -> String {
         L10n.tr(
             """
-            Per dirti come stai mi servono sonno, HRV, FC a riposo e allenamenti recenti da Apple Health.
-            In questa modalità non li ho letti: se l'accesso Salute non è attivo, aprilo da Impostazioni. Poi riprova «Come sto?».
-            Nel dubbio resta facile oggi, niente qualità.
+            Per dirti come stai mi servono sonno, HRV e FC a riposo da Apple Health.
+            Se l'accesso non è attivo, aprilo da Impostazioni AI > Salute. Nel dubbio oggi resta facile.
             """,
             english: """
-            To tell you how you're doing I need sleep, HRV, resting HR and recent workouts from Apple Health.
-            I didn't read them in this mode: if Health access isn't on, open it in Settings. Then try “How am I?” again.
-            When in doubt keep today easy, no quality work.
+            To tell you how you're doing I need sleep, HRV and resting HR from Apple Health.
+            If access isn't on, open it from AI Settings > Health. When in doubt keep today easy.
             """
         )
     }

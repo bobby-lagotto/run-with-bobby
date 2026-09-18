@@ -54,7 +54,7 @@ final class ToolRouterIntegrationTests: XCTestCase {
         profile.experience = .intermediate
 
         let text = await planner.respond(
-            to: "Crea un nuovo piano di allenamento per me",
+            to: "Mi fai un piano?",
             userProfile: profile,
             planManager: manager,
             nutritionManager: nil
@@ -66,8 +66,8 @@ final class ToolRouterIntegrationTests: XCTestCase {
                 || text?.localizedCaseInsensitiveContains("martedì") == true,
             text ?? ""
         )
-        XCTAssertTrue(text?.contains("non salvata") == true, text ?? "")
-        XCTAssertTrue(text?.contains("Confermi") == true, text ?? "")
+        XCTAssertTrue(text?.contains("salva") == true, text ?? "")
+        XCTAssertTrue(text?.localizedCaseInsensitiveContains("piano") == true, text ?? "")
         XCTAssertFalse(text?.contains("Modalità gratuita") == true, text ?? "")
         XCTAssertNil(manager.currentActivePlan)
         XCTAssertTrue(router.hasPendingTrainingPlan)

@@ -96,6 +96,12 @@ final class GenerationLoopGuardTests: XCTestCase {
         XCTAssertEqual(CompactCoachIntent.detect("ho troppa fatica"), .healthStatus)
         XCTAssertEqual(CompactCoachIntent.detect("Cosa mi manca?"), .adherence)
         XCTAssertEqual(CompactCoachIntent.detect("Vorrei ottimizzare il mio piano attuale"), .proposeOptimize)
+        XCTAssertEqual(CompactCoachIntent.detect("Mi fai un piano?"), .createTrainingPlan)
+        XCTAssertEqual(CompactCoachIntent.detect("Fammi un piano"), .createTrainingPlan)
+        XCTAssertEqual(CompactCoachIntent.detect("Cosa posso mangiare?"), .createNutritionPlan)
+        XCTAssertEqual(CompactCoachIntent.detect("What can I eat?"), .createNutritionPlan)
+        XCTAssertEqual(CompactCoachIntent.detect("Che piano ho?"), .activePlan)
+        XCTAssertEqual(CompactCoachIntent.detect("Mostrami il piano"), .activePlan)
     }
 
     func testUnverifiedKilometersAreDiscarded() {
@@ -182,7 +188,7 @@ final class GenerationLoopGuardTests: XCTestCase {
         """
         let text = CompactCoachPlanner.formatHealthStatus(healthJSON: json, briefingJSON: nil)
 
-        XCTAssertTrue(text.contains("Ecco come ti vedo dai dati"))
+        XCTAssertTrue(text.contains("Così ti vedo dai dati") || text.contains("This is how I see you"))
         XCTAssertFalse(ChatMarkdown.containsInlineMarkup(text))
         XCTAssertGreaterThan(ChatMarkdown.spaceCount(text), 10)
 
@@ -235,7 +241,7 @@ final class GenerationLoopGuardTests: XCTestCase {
         }
         """
         let text = CompactCoachPlanner.formatHealthStatus(healthJSON: json, briefingJSON: nil)
-        XCTAssertTrue(text.contains("Ecco come ti vedo dai dati"))
+        XCTAssertTrue(text.contains("Così ti vedo dai dati") || text.contains("This is how I see you"))
         XCTAssertTrue(text.contains(HealthCitations.chatFooter))
         XCTAssertTrue(text.contains("ISSN"))
     }
@@ -257,7 +263,7 @@ final class GenerationLoopGuardTests: XCTestCase {
         """
         let text = CompactCoachPlanner.formatNutritionPlan(from: json)
         XCTAssertNotNil(text)
-        XCTAssertTrue(text?.contains("Draft nutrition plan") == true)
+        XCTAssertTrue(text?.contains("Here's what to eat") == true)
         XCTAssertTrue(text?.contains("protein 112 g") == true)
         XCTAssertTrue(text?.contains(HealthCitations.chatFooter) == true)
         XCTAssertTrue(text?.contains("not medical advice") == true)

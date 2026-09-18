@@ -3,28 +3,15 @@ import SwiftUI
 struct ContentView: View {
     @EnvironmentObject var appState: AppState
     @EnvironmentObject var aiSettings: AISettings
-    @State private var isFirstLaunch = true
 
     var body: some View {
         Group {
-            if isFirstLaunch && !appState.isProfileComplete {
-                WelcomeView(appState: appState, isFirstLaunch: $isFirstLaunch)
+            if !appState.isProfileComplete {
+                WelcomeView(appState: appState)
             } else {
                 ChatView()
                     .id(aiSettings.languagePreference)
             }
-        }
-        .onAppear {
-            checkFirstLaunch()
-        }
-    }
-
-    private func checkFirstLaunch() {
-        let hasLaunchedBefore = UserDefaults.standard.bool(forKey: "hasLaunchedBefore")
-        if hasLaunchedBefore {
-            isFirstLaunch = false
-        } else {
-            UserDefaults.standard.set(true, forKey: "hasLaunchedBefore")
         }
     }
 }
@@ -32,9 +19,13 @@ struct ContentView: View {
 // MARK: - Welcome View
 struct WelcomeView: View {
     @ObservedObject var appState: AppState
-    @Binding var isFirstLaunch: Bool
     @EnvironmentObject var aiSettings: AISettings
+    @EnvironmentObject var healthManager: HealthKitManager
     @State private var currentStep = 0
+    @State private var healthDecisionMade = UserDefaults.standard.bool(forKey: "healthkit_connected")
+    @State private var healthConnected = UserDefaults.standard.bool(forKey: "healthkit_connected")
+    @State private var isConnectingHealth = false
+    @State private var healthErrorMessage: String?
 
     private let languageStep = 0
     private let sourcesStep = 1
@@ -81,8 +72,13 @@ struct WelcomeView: View {
         ]
     }
 
-    private var totalStepCount: Int { introOffset + welcomeSteps.count }
+    private var healthStep: Int { introOffset + welcomeSteps.count }
+    private var profileStep: Int { healthStep + 1 }
+    private var totalStepCount: Int { profileStep + 1 }
     private var isLastStep: Bool { currentStep >= totalStepCount - 1 }
+    private var showsPrimaryAction: Bool {
+        currentStep != languageStep && (currentStep != healthStep || healthDecisionMade)
+    }
 
     var body: some View {
         VStack(spacing: 24) {
@@ -101,6 +97,10 @@ struct WelcomeView: View {
                     languageStepContent
                 } else if currentStep == sourcesStep {
                     sourcesStepContent
+                } else if currentStep == healthStep {
+                    healthStepContent
+                } else if currentStep == profileStep {
+                    profileStepContent
                 } else {
                     introStepContent(welcomeSteps[currentStep - introOffset])
                 }
@@ -124,11 +124,11 @@ struct WelcomeView: View {
 
                 Spacer()
 
-                if currentStep != languageStep {
+                if showsPrimaryAction {
                     Button(isLastStep ? L10n.tr("Inizia a Correre!", english: "Start running!") : L10n.tr("Avanti", english: "Next")) {
                         withAnimation(.easeInOut(duration: 0.3)) {
                             if isLastStep {
-                                isFirstLaunch = false
+                                appState.saveUserProfile()
                             } else {
                                 currentStep += 1
                             }
@@ -216,6 +216,164 @@ struct WelcomeView: View {
                 SourcesList()
             }
             .padding(.horizontal, 8)
+        }
+    }
+
+    private var healthLaterHint: String {
+        L10n.tr(
+            "Puoi collegare Apple Health in qualsiasi momento dal menu ··· > Impostazioni AI > Salute.",
+            english: "You can connect Apple Health anytime from the ··· menu > AI Settings > Health."
+        )
+    }
+
+    private var healthStepContent: some View {
+        VStack(spacing: 24) {
+            Spacer()
+            ZStack {
+                Circle()
+                    .fill(Color.bobbyRed.opacity(0.12))
+                    .frame(width: 120, height: 120)
+                Image(systemName: healthConnected ? "heart.fill" : "heart.text.clipboard")
+                    .font(.system(size: 48, weight: .medium))
+                    .foregroundStyle(Color.bobbyRed)
+            }
+
+            Text(L10n.tr("Collega Apple Health", english: "Connect Apple Health"))
+                .font(.title2.weight(.bold))
+                .multilineTextAlignment(.center)
+                .foregroundColor(.bobbyCharcoal)
+
+            Text(L10n.tr(
+                "Bobby usa sonno, HRV, frequenza cardiaca e gli allenamenti per personalizzare recupero e briefing. I dati restano sul telefono.",
+                english: "Bobby uses sleep, HRV, heart rate and workouts to personalise recovery and briefings. The data stays on the phone."
+            ))
+            .font(.body)
+            .multilineTextAlignment(.center)
+            .foregroundColor(.bobbyWarmGray)
+            .padding(.horizontal, 32)
+
+            if !healthManager.isAvailable {
+                Text(L10n.tr(
+                    "Apple Health non è disponibile su questo dispositivo.",
+                    english: "Apple Health is not available on this device."
+                ))
+                .font(.subheadline)
+                .multilineTextAlignment(.center)
+                .foregroundColor(.bobbyWarmGray)
+                .padding(.horizontal, 32)
+                Text(healthLaterHint)
+                    .font(.subheadline)
+                    .multilineTextAlignment(.center)
+                    .foregroundColor(.bobbyWarmGray)
+                    .padding(.horizontal, 32)
+            } else if healthConnected {
+                Label(
+                    L10n.tr("Salute collegata", english: "Health connected"),
+                    systemImage: "checkmark.circle.fill"
+                )
+                .font(.headline)
+                .foregroundColor(.bobbyRed)
+            } else {
+                VStack(spacing: 12) {
+                    Button(action: connectHealth) {
+                        HStack(spacing: 8) {
+                            if isConnectingHealth {
+                                ProgressView()
+                                    .tint(.white)
+                            }
+                            Text(L10n.tr("Collega Salute", english: "Connect Health"))
+                        }
+                        .font(.headline)
+                        .foregroundColor(.white)
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 50)
+                        .background(Color.bobbyRed)
+                        .clipShape(Capsule())
+                    }
+                    .disabled(isConnectingHealth)
+
+                    Button(L10n.tr("Più tardi", english: "Later")) {
+                        withAnimation(.easeInOut(duration: 0.3)) {
+                            healthDecisionMade = true
+                            healthConnected = false
+                        }
+                    }
+                    .font(.body.weight(.medium))
+                    .foregroundColor(.bobbyWarmGray)
+                    .disabled(isConnectingHealth)
+                }
+                .padding(.horizontal, 24)
+            }
+
+            if let healthErrorMessage {
+                Text(healthErrorMessage)
+                    .font(.footnote)
+                    .multilineTextAlignment(.center)
+                    .foregroundColor(.bobbyRed)
+                    .padding(.horizontal, 32)
+            }
+
+            if healthDecisionMade && !healthConnected && healthManager.isAvailable {
+                Text(healthLaterHint)
+                    .font(.subheadline)
+                    .multilineTextAlignment(.center)
+                    .foregroundColor(.bobbyWarmGray)
+                    .padding(.horizontal, 32)
+            }
+
+            Spacer()
+        }
+        .onAppear {
+            if !healthManager.isAvailable {
+                healthDecisionMade = true
+            }
+        }
+    }
+
+    private func connectHealth() {
+        isConnectingHealth = true
+        healthErrorMessage = nil
+        Task {
+            let authorized = await healthManager.requestAuthorization()
+            await MainActor.run {
+                isConnectingHealth = false
+                if authorized {
+                    healthConnected = true
+                    healthDecisionMade = true
+                    UserDefaults.standard.set(true, forKey: "healthkit_connected")
+                } else {
+                    healthConnected = false
+                    healthDecisionMade = true
+                    healthErrorMessage = L10n.tr(
+                        "Autorizzazione Health non concessa.",
+                        english: "Health authorization was not granted."
+                    )
+                }
+            }
+        }
+    }
+
+    private var profileStepContent: some View {
+        VStack(spacing: 16) {
+            Text(L10n.tr("Il tuo profilo runner", english: "Your runner profile"))
+                .font(.title2.weight(.bold))
+                .multilineTextAlignment(.center)
+                .foregroundColor(.bobbyCharcoal)
+
+            Text(L10n.tr(
+                "Compila i dati di partenza: Bobby li usa per piani e consigli su misura.",
+                english: "Fill in your starting data: Bobby uses it for tailored plans and advice."
+            ))
+            .font(.body)
+            .multilineTextAlignment(.center)
+            .foregroundColor(.bobbyWarmGray)
+            .padding(.horizontal, 16)
+
+            Form {
+                RunnerProfileForm(profile: $appState.userProfile)
+            }
+            .scrollContentBackground(.hidden)
+            .scrollDismissesKeyboard(.interactively)
         }
     }
 
