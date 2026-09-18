@@ -221,8 +221,8 @@ struct WelcomeView: View {
 
     private var healthLaterHint: String {
         L10n.tr(
-            "Puoi collegare Apple Health in qualsiasi momento dal menu ··· > Impostazioni AI > Salute.",
-            english: "You can connect Apple Health anytime from the ··· menu > AI Settings > Health."
+            "Puoi collegare HealthKit in qualsiasi momento dal menu ··· > Apple Health (HealthKit), oppure Impostazioni AI > Salute (HealthKit).",
+            english: "You can connect HealthKit anytime from the ··· menu > Apple Health (HealthKit), or AI Settings > Health (HealthKit)."
         )
     }
 
@@ -238,14 +238,14 @@ struct WelcomeView: View {
                     .foregroundStyle(Color.bobbyRed)
             }
 
-            Text(L10n.tr("Collega Apple Health", english: "Connect Apple Health"))
+            Text(L10n.tr("Apple Health (HealthKit)", english: "Apple Health (HealthKit)"))
                 .font(.title2.weight(.bold))
                 .multilineTextAlignment(.center)
                 .foregroundColor(.bobbyCharcoal)
 
             Text(L10n.tr(
-                "Bobby usa sonno, HRV, frequenza cardiaca e gli allenamenti per personalizzare recupero e briefing. I dati restano sul telefono.",
-                english: "Bobby uses sleep, HRV, heart rate and workouts to personalise recovery and briefings. The data stays on the phone."
+                "Bobby usa HealthKit per leggere sonno, HRV, frequenza cardiaca e allenamenti e personalizzare recupero e briefing. L'app non usa CareKit. I dati restano sul dispositivo salvo se attivi un provider cloud in chat.",
+                english: "Bobby uses HealthKit to read sleep, HRV, heart rate and workouts to personalise recovery and briefings. The app does not use CareKit. Data stays on the device unless you use a cloud provider in chat."
             ))
             .font(.body)
             .multilineTextAlignment(.center)

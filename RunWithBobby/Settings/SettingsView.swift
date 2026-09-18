@@ -725,13 +725,25 @@ struct SettingsView: View {
 
     private var healthSection: some View {
         Section {
+            NavigationLink {
+                HealthKitInfoView(healthManager: healthManager, onConnectionChanged: {
+                    healthConnected = UserDefaults.standard.bool(forKey: "healthkit_connected")
+                    onHealthChanged?()
+                })
+            } label: {
+                Label(
+                    L10n.tr("Apple Health (HealthKit)", english: "Apple Health (HealthKit)"),
+                    systemImage: "heart.text.square"
+                )
+            }
+
             HStack(spacing: 12) {
                 Image(systemName: "heart.fill")
                     .foregroundColor(.bobbyCaramel)
                     .frame(width: 28)
 
                 VStack(alignment: .leading, spacing: 2) {
-                    Text("Apple Health")
+                    Text(L10n.tr("Connessione HealthKit", english: "HealthKit connection"))
                         .font(.body)
                     Text(healthStatusDescription)
                         .font(.caption)
@@ -781,13 +793,14 @@ struct SettingsView: View {
                 }
             }
         } header: {
-            Label(L10n.tr("Salute", english: "Health"), systemImage: "heart.text.clipboard")
+            Label(L10n.tr("Salute (HealthKit)", english: "Health (HealthKit)"), systemImage: "heart.text.clipboard")
                 .foregroundColor(.bobbyRed)
         } footer: {
-            if healthConnected {
-                Text("I dati vengono letti in sola lettura. Per revocare l'accesso vai in Impostazioni > Salute > Accesso Dati. Usa il provider Locale se vuoi evitare invii a provider cloud.")
-                    .font(.caption)
-            }
+            Text(L10n.tr(
+                "Run with Bobby usa HealthKit, non CareKit. Apri «Apple Health (HealthKit)» sopra per l'elenco completo di dati e utilizzo. Per revocare: Impostazioni iOS > Salute > Accesso dati.",
+                english: "Run with Bobby uses HealthKit, not CareKit. Open “Apple Health (HealthKit)” above for the full list of data types and usage. To revoke: iOS Settings > Health > Data Access."
+            ))
+            .font(.caption)
         }
         .alert("Errore", isPresented: $showingHealthError) {
             Button("OK", role: .cancel) {}

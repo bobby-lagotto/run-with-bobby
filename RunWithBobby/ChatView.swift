@@ -18,6 +18,7 @@ struct ChatView: View {
     @State private var showingNutritionPlan = false
     @State private var showingToday = false
     @State private var showingSources = false
+    @State private var showingHealthKitInfo = false
     @State private var showingDeleteDataConfirm = false
     @State private var showingCloudHealthConfirm = false
     @State private var pendingCloudHealthMessage: String?
@@ -68,6 +69,18 @@ struct ChatView: View {
             }
             .sheet(isPresented: $showingSources) {
                 SourcesView()
+            }
+            .sheet(isPresented: $showingHealthKitInfo) {
+                NavigationView {
+                    HealthKitInfoView(
+                        healthManager: healthManager,
+                        onConnectionChanged: {
+                            healthConnected = UserDefaults.standard.bool(forKey: "healthkit_connected")
+                            bobbyAI.configure(with: aiSettings, healthManager: healthConnected ? healthManager : nil)
+                        },
+                        showsDismissButton: true
+                    )
+                }
             }
             .sheet(isPresented: $showingToday) {
                 NavigationView {
@@ -161,6 +174,9 @@ struct ChatView: View {
                     }
                     Button(action: { showingSources = true }) {
                         Label(L10n.tr("Fonti", english: "Sources"), systemImage: "book.closed")
+                    }
+                    Button(action: { showingHealthKitInfo = true }) {
+                        Label(L10n.tr("Apple Health (HealthKit)", english: "Apple Health (HealthKit)"), systemImage: "heart.text.square")
                     }
                     Button(action: { showingConversationHistory = true }) {
                         Label(L10n.tr("Storico Chat", english: "Chat history"), systemImage: "clock.arrow.circlepath")
