@@ -2,7 +2,7 @@
 
 Copia questi campi in App Store Connect per la scheda pubblica di **Run with Bobby** (`com.runwithbobby.app`, adamId `6761195463`).
 
-Versione binario da inviare: **1.5.5 (13)**. Note review e Resolution Center: [`AppStoreConnect-1.5.5.md`](AppStoreConnect-1.5.5.md).
+Versione binario da inviare: **1.5.6 (14)**. Note review e Resolution Center: [`AppStoreConnect-1.5.6.md`](AppStoreConnect-1.5.6.md).
 
 ## Informazioni app
 
@@ -165,7 +165,7 @@ Open source: https://github.com/bobby-lagotto/run-with-bobby
 
 ## Risposta al messaggio Apple (Guideline 2.1)
 
-Thread Messaggi della submission `ec406992-4537-4119-869a-98cc584a1b8e`. Testo completo: [`AppStoreConnect-1.5.5.md`](AppStoreConnect-1.5.5.md).
+Thread Messaggi della submission `ec406992-4537-4119-869a-98cc584a1b8e`. Testo completo: [`AppStoreConnect-1.5.6.md`](AppStoreConnect-1.5.6.md).
 
 ```
 Hello,
@@ -174,7 +174,7 @@ Thank you for the Guideline 2.1 feedback on 1.5.3 (12), reviewed on iPad Air 11-
 
 The chat could not create a plan when no on-device model and no cloud API key were configured (typical first launch). The coach asked “Want me to make a plan from your profile?” and never built it, so the same question repeated after “create a new plan”.
 
-This is fixed in 1.5.5 (13). No API key and no model download are required to get a plan:
+This is fixed in 1.5.6 (14). No API key and no model download are required to get a plan:
 
 1. Complete onboarding (defaults are fine; language Italian or English).
 2. Chat opens with an example request that builds a weekly plan from the onboarding profile.
@@ -192,13 +192,13 @@ Thank you.
 
 1. Esegui `scripts/scan-secrets.sh`.
 2. In Apple Developer, App ID `com.runwithbobby.app`: HealthKit, App Groups `group.com.runwithbobby.app`, Increased Memory Limit.
-3. Archive Release e upload con `ExportOptions-upload.plist` (comandi in `DEVELOPMENT.md`). Build **13**, versione **1.5.5**.
-4. Seleziona la build **13** sulla versione 1.5.5.
+3. Archive Release e upload con `ExportOptions-upload.plist` (comandi in `DEVELOPMENT.md`). Build **14**, versione **1.5.6**.
+4. Seleziona la build **14** sulla versione 1.5.6.
 5. Carica gli 8 PNG 6.5" (slot di default) da `AppStore/screenshots/iphone-6.5/` se non sono già in scheda.
 6. Informazioni sull’app: categoria + classificazioni.
 7. Privacy dell’app: URL Pages + etichette.
 8. Prezzi: Gratis. **Availability: China mainland deselezionato** (obbligatorio se i metadata citano OpenAI).
-9. Review Notes: Guideline 2.1 + conferma EN che la Cina continentale è esclusa (vedi sopra e `AppStoreConnect-1.5.5.md`).
+9. Review Notes: Guideline 2.1 + conferma EN che la Cina continentale è esclusa (vedi sopra e `AppStoreConnect-1.5.6.md`).
 10. Rispondi al thread Messaggi Apple, poi Submit for Review / Invia di nuovo.
 
 Da questo repository non si può cliccare Submit: servono le credenziali App Store Connect.
