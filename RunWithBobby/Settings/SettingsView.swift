@@ -87,6 +87,7 @@ struct SettingsView: View {
                 openRouterKeyInput = aiSettings.openRouterAPIKey ?? ""
             }
         }
+        .navigationViewStyle(.stack)
     }
 
     private var sourcesSection: some View {

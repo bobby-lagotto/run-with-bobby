@@ -217,4 +217,81 @@ final class ToolRouterIntegrationTests: XCTestCase {
         XCTAssertNotNil(missing)
         XCTAssertTrue(missing?.contains("Nessun piano") == true || missing?.contains("Aderenza") == true, missing ?? "")
     }
+
+    @MainActor
+    func testGenerateResponseWithoutProviderCreatesPlanFromChip() async {
+        AppLanguage.sync(from: .english)
+        let ai = BobbyAI()
+        let settings = AISettings()
+        settings.providerType = .local
+        settings.downloadedModelIds = []
+        ai.configure(with: settings)
+
+        let manager = HabitFixtures.isolatedManager()
+        var profile = RunnerProfile()
+        profile.weeklyKilometers = 24
+        profile.workoutsPerWeek = 4
+        profile.primaryGoal = .fitness
+        profile.experience = .beginner
+
+        let text = await ai.generateResponse(
+            to: CompactCoachIntent.exampleNewPlanRequest,
+            userProfile: profile,
+            planManager: manager,
+            conversationHistory: []
+        )
+
+        XCTAssertTrue(
+            text.contains("Here's a plan from your profile") || text.contains("Ecco un piano sul tuo profilo"),
+            text
+        )
+        XCTAssertFalse(text.contains("Want me to make one"), text)
+        XCTAssertFalse(text.contains("Vuoi che te ne faccia uno"), text)
+        XCTAssertTrue(ai.hasPendingSave)
+        XCTAssertNil(manager.currentActivePlan)
+
+        let saved = await ai.generateResponse(
+            to: "yes",
+            userProfile: profile,
+            planManager: manager,
+            conversationHistory: []
+        )
+        XCTAssertTrue(
+            saved.contains("Plan saved and activated") || saved.contains("Piano salvato e attivato"),
+            saved
+        )
+        XCTAssertNotNil(manager.currentActivePlan)
+        XCTAssertFalse(ai.hasPendingSave)
+        AppLanguage.sync(from: .italian)
+    }
+
+    @MainActor
+    func testGenerateResponseWithoutProviderDoesNotLoopOnCreatePlan() async {
+        AppLanguage.sync(from: .english)
+        let ai = BobbyAI()
+        let settings = AISettings()
+        settings.providerType = .local
+        settings.downloadedModelIds = []
+        ai.configure(with: settings)
+
+        let manager = HabitFixtures.isolatedManager()
+        let first = await ai.generateResponse(
+            to: "create a new plan",
+            userProfile: RunnerProfile(),
+            planManager: manager,
+            conversationHistory: []
+        )
+        let second = await ai.generateResponse(
+            to: "create a new plan",
+            userProfile: RunnerProfile(),
+            planManager: manager,
+            conversationHistory: []
+        )
+
+        XCTAssertTrue(first.contains("Here's a plan from your profile") || first.contains("Ecco un piano"), first)
+        XCTAssertTrue(second.contains("Here's a plan from your profile") || second.contains("Ecco un piano"), second)
+        XCTAssertFalse(first.contains("Want me to make one"))
+        XCTAssertFalse(second.contains("Want me to make one"))
+        AppLanguage.sync(from: .italian)
+    }
 }

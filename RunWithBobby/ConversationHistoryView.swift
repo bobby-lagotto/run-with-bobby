@@ -45,6 +45,7 @@ struct ConversationHistoryView: View {
                 }
             }
         }
+        .navigationViewStyle(.stack)
     }
 
     private var emptyState: some View {

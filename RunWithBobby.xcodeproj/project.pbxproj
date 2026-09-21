@@ -772,7 +772,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = RunWithBobby/RunWithBobby.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-                CURRENT_PROJECT_VERSION = 11;
+                CURRENT_PROJECT_VERSION = 13;
                 DEVELOPMENT_ASSET_PATHS = "\"RunWithBobby/Preview Content\"";
                 DEVELOPMENT_TEAM = 4YW6S35MTZ;
                 ENABLE_PREVIEWS = YES;
@@ -810,7 +810,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = RunWithBobby/RunWithBobby.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-                CURRENT_PROJECT_VERSION = 11;
+                CURRENT_PROJECT_VERSION = 13;
                 DEVELOPMENT_ASSET_PATHS = "\"RunWithBobby/Preview Content\"";
                 DEVELOPMENT_TEAM = 4YW6S35MTZ;
                 ENABLE_PREVIEWS = YES;
@@ -884,7 +884,7 @@
 			buildSettings = {
 				CODE_SIGN_ENTITLEMENTS = BobbyTodayWidget/BobbyTodayWidget.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-                CURRENT_PROJECT_VERSION = 11;
+                CURRENT_PROJECT_VERSION = 13;
                 DEVELOPMENT_TEAM = 4YW6S35MTZ;
                 GENERATE_INFOPLIST_FILE = YES;
                 INFOPLIST_FILE = BobbyTodayWidget/Info.plist;
@@ -912,7 +912,7 @@
 			buildSettings = {
 				CODE_SIGN_ENTITLEMENTS = BobbyTodayWidget/BobbyTodayWidget.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-                CURRENT_PROJECT_VERSION = 11;
+                CURRENT_PROJECT_VERSION = 13;
                 DEVELOPMENT_TEAM = 4YW6S35MTZ;
                 GENERATE_INFOPLIST_FILE = YES;
                 INFOPLIST_FILE = BobbyTodayWidget/Info.plist;
@@ -940,7 +940,7 @@
 			buildSettings = {
 				CODE_SIGN_ENTITLEMENTS = BobbyWatch/BobbyWatch.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-                CURRENT_PROJECT_VERSION = 11;
+                CURRENT_PROJECT_VERSION = 13;
                 DEVELOPMENT_TEAM = 4YW6S35MTZ;
                 GENERATE_INFOPLIST_FILE = YES;
                 INFOPLIST_KEY_CFBundleDisplayName = Bobby;
@@ -967,7 +967,7 @@
 			buildSettings = {
 				CODE_SIGN_ENTITLEMENTS = BobbyWatch/BobbyWatch.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-                CURRENT_PROJECT_VERSION = 11;
+                CURRENT_PROJECT_VERSION = 13;
                 DEVELOPMENT_TEAM = 4YW6S35MTZ;
                 GENERATE_INFOPLIST_FILE = YES;
                 INFOPLIST_KEY_CFBundleDisplayName = Bobby;

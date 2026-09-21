@@ -49,7 +49,19 @@ final class AppLanguageTests: XCTestCase {
             CompactCoachIntent.detect("save", hasPendingTrainingPlan: true),
             .savePendingTraining
         )
-        XCTAssertNil(CompactCoachIntent.detect("ok", hasPendingTrainingPlan: true))
+        XCTAssertEqual(
+            CompactCoachIntent.detect("ok", hasPendingTrainingPlan: true),
+            .savePendingTraining
+        )
+        XCTAssertEqual(
+            CompactCoachIntent.detect("yes", hasPendingTrainingPlan: true),
+            .savePendingTraining
+        )
+        XCTAssertNil(CompactCoachIntent.detect("ok"))
+        XCTAssertEqual(
+            CompactCoachIntent.detect(CompactCoachIntent.exampleNewPlanRequest),
+            .createTrainingPlan
+        )
     }
 
     func testEnglishReduceVolumeMapsToDecrease() {

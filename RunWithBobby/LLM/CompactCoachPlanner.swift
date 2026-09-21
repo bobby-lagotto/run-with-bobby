@@ -22,7 +22,7 @@ enum CompactCoachIntent: Equatable {
         if isNutritionCreate(text) { return .createNutritionPlan }
         if isProposeOptimize(text) { return .proposeOptimize }
         if isTrainingCreate(text) { return .createTrainingPlan }
-        if isSaveConfirmation(text) {
+        if isSaveConfirmation(text) || isShortAffirmation(text) {
             if hasPendingTrainingPlan { return .savePendingTraining }
             if hasPendingNutritionPlan { return .savePendingNutrition }
             if hasPendingOptimization { return .savePendingOptimize }
@@ -36,6 +36,13 @@ enum CompactCoachIntent: Equatable {
 
     func shouldGroundDeterministically() -> Bool {
         true
+    }
+
+    static var exampleNewPlanRequest: String {
+        L10n.tr(
+            "Crea un nuovo piano di allenamento per me",
+            english: "Create a new training plan for me"
+        )
     }
 
     static func isExplicitConfirmation(_ raw: String) -> Bool {
@@ -125,6 +132,25 @@ enum CompactCoachIntent: Equatable {
         if exact.contains(compact) { return true }
         return (compact.contains("salva") && compact.contains("piano") && compact.count < 50)
             || (compact.contains("save") && compact.contains("plan") && compact.count < 50)
+    }
+
+    /// Short yes/ok replies save only when `detect` sees a pending plan.
+    /// Kept out of `isSaveConfirmation` so the LLM mutation gate still requires “salva” / “save”.
+    private static func isShortAffirmation(_ text: String) -> Bool {
+        let compact = text
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+            .trimmingCharacters(in: CharacterSet.punctuationCharacters.union(.whitespacesAndNewlines))
+        return [
+            "yes",
+            "ok",
+            "okay",
+            "si",
+            "va bene",
+            "sure",
+            "please do",
+            "yep",
+            "yeah"
+        ].contains(compact)
     }
 
     private static func isHealthStatus(_ text: String) -> Bool {
@@ -335,8 +361,8 @@ struct CompactCoachPlanner {
         if let root = parseObject(json), let error = stringValue(root["errore"]) {
             if error.contains("Nessun piano di allenamento") || error.lowercased().contains("no active training") {
                 return L10n.tr(
-                    "Per dirti cosa mangiare in modo preciso mi serve prima un piano di corsa. Vuoi che te lo prepari? Intanto: proteine 1,6-1,8 g/kg, più carboidrati nei giorni di qualità o lungo, acqua regolare.",
-                    english: "To tell you what to eat more precisely I need a run plan first. Want me to make one? Meanwhile: protein 1.6-1.8 g/kg, more carbs on quality or long-run days, regular water."
+                    "Per dirti cosa mangiare in modo preciso mi serve prima un piano di corsa. Tocca «Nuovo piano» e lo preparo dal tuo profilo. Intanto: proteine 1,6-1,8 g/kg, più carboidrati nei giorni di qualità o lungo, acqua regolare.",
+                    english: "To tell you what to eat more precisely I need a run plan first. Tap “New plan” and I'll build one from your profile. Meanwhile: protein 1.6-1.8 g/kg, more carbs on quality or long-run days, regular water."
                 )
             }
             return error
@@ -482,8 +508,8 @@ struct CompactCoachPlanner {
         guard let root = parseObject(json),
               let days = root["piano_settimanale"] as? [[String: Any]] else {
             return L10n.tr(
-                "Non hai ancora un piano attivo. Vuoi che te ne faccia uno sul tuo profilo?",
-                english: "You don't have an active plan yet. Want me to make one from your profile?"
+                "Non hai ancora un piano attivo. Tocca «Nuovo piano» e lo costruisco sul tuo profilo.",
+                english: "You don't have an active plan yet. Tap “New plan” and I'll build one from your profile."
             )
         }
         let title = stringValue(root["titolo"]) ?? L10n.tr("Piano attivo", english: "Active plan")

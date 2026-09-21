@@ -6,6 +6,7 @@ class BobbyAI: ObservableObject {
     @Published var errorMessage: String?
     @Published var activeProviderName: String = ""
     @Published var streamingText: String = ""
+    @Published var hasPendingSave = false
 
     private var aiSettings: AISettings?
     private var openAIProvider: OpenAIProvider?
@@ -117,6 +118,16 @@ class BobbyAI: ObservableObject {
         defer {
             isLoading = false
             streamingText = ""
+            refreshPendingSave()
+        }
+
+        if let grounded = await groundedCoachReply(
+            userMessage: userMessage,
+            userProfile: userProfile,
+            planManager: planManager,
+            nutritionManager: nutritionManager
+        ) {
+            return grounded
         }
 
         guard let provider = resolveProvider() else {
@@ -136,23 +147,6 @@ class BobbyAI: ObservableObject {
         let supportsNativeTools = !usingLocalModel || (selectedLocalModel?.supportsNativeToolCalling ?? true)
         let toolDefinitions: [ToolDefinitionSchema]? = supportsNativeTools ? ToolRouter.toolDefinitions : nil
 
-        let intent = CompactCoachIntent.detect(
-            userMessage,
-            hasPendingTrainingPlan: toolRouter.hasPendingTrainingPlan,
-            hasPendingNutritionPlan: toolRouter.hasPendingNutritionPlan,
-            hasPendingOptimization: toolRouter.hasPendingOptimization
-        )
-        if let intent, intent.shouldGroundDeterministically() {
-            if let deterministic = await compactPlanner.respond(
-                to: userMessage,
-                userProfile: userProfile,
-                planManager: planManager,
-                nutritionManager: nutritionManager,
-                healthManager: healthManager
-            ) {
-                return deterministic
-            }
-        }
         if usingLocalModel && !supportsNativeTools {
             return compactModelFallback(
                 userMessage: userMessage,
@@ -412,6 +406,34 @@ class BobbyAI: ObservableObject {
         )
     }
 
+    private func groundedCoachReply(
+        userMessage: String,
+        userProfile: RunnerProfile,
+        planManager: TrainingPlanManager,
+        nutritionManager: NutritionPlanManager?
+    ) async -> String? {
+        let intent = CompactCoachIntent.detect(
+            userMessage,
+            hasPendingTrainingPlan: toolRouter.hasPendingTrainingPlan,
+            hasPendingNutritionPlan: toolRouter.hasPendingNutritionPlan,
+            hasPendingOptimization: toolRouter.hasPendingOptimization
+        )
+        guard let intent, intent.shouldGroundDeterministically() else { return nil }
+        return await compactPlanner.respond(
+            to: userMessage,
+            userProfile: userProfile,
+            planManager: planManager,
+            nutritionManager: nutritionManager,
+            healthManager: healthManager
+        )
+    }
+
+    private func refreshPendingSave() {
+        hasPendingSave = toolRouter.hasPendingTrainingPlan
+            || toolRouter.hasPendingNutritionPlan
+            || toolRouter.hasPendingOptimization
+    }
+
     private func groundedOrOfflineFallback(
         userMessage: String,
         userProfile: RunnerProfile,
@@ -419,12 +441,11 @@ class BobbyAI: ObservableObject {
         nutritionManager: NutritionPlanManager?,
         reason: OfflineCoachFallback.Reason
     ) async -> String {
-        if let grounded = await compactPlanner.respond(
-            to: userMessage,
+        if let grounded = await groundedCoachReply(
+            userMessage: userMessage,
             userProfile: userProfile,
             planManager: planManager,
-            nutritionManager: nutritionManager,
-            healthManager: healthManager
+            nutritionManager: nutritionManager
         ) {
             return grounded
         }
@@ -596,8 +617,8 @@ private struct OfflineCoachFallback {
         }
 
         return L10n.tr(
-            "Non hai ancora un piano attivo. Vuoi che te ne faccia uno sul tuo profilo?",
-            english: "You don't have an active plan yet. Want me to make one from your profile?"
+            "Non hai ancora un piano attivo. Tocca «Nuovo piano» o scrivi «crea un nuovo piano» e lo costruisco sul tuo profilo.",
+            english: "You don't have an active plan yet. Tap “New plan” or type “create a new plan” and I'll build one from your profile."
         )
     }
 

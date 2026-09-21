@@ -24,6 +24,7 @@ struct ChatView: View {
     @State private var pendingCloudHealthMessage: String?
     @State private var planToDiscuss: TrainingPlan?
     @State private var healthConnected = UserDefaults.standard.bool(forKey: "healthkit_connected")
+    @State private var didBootstrapFirstPlan = false
 
     var body: some View {
         NavigationView {
@@ -81,11 +82,13 @@ struct ChatView: View {
                         showsDismissButton: true
                     )
                 }
+                .navigationViewStyle(.stack)
             }
             .sheet(isPresented: $showingToday) {
                 NavigationView {
                     TodayView(onTalkToBobby: { showingToday = false })
                 }
+                .navigationViewStyle(.stack)
             }
             .alert(L10n.tr("Cancellare i dati locali?", english: "Delete local data?"), isPresented: $showingDeleteDataConfirm) {
                 Button(L10n.tr("Annulla", english: "Cancel"), role: .cancel) {}
@@ -116,11 +119,16 @@ struct ChatView: View {
             }
             .onAppear {
                 bobbyAI.configure(with: aiSettings, healthManager: healthConnected ? healthManager : nil)
-                if appState.conversations.isEmpty {
+                if FirstChatBootstrap.shouldStart(
+                    hasConversations: !appState.conversations.isEmpty,
+                    alreadyStarted: didBootstrapFirstPlan
+                ) {
+                    didBootstrapFirstPlan = true
                     showWelcomeMessage()
                 }
             }
         }
+        .navigationViewStyle(.stack)
     }
 
     // MARK: - Header View
@@ -381,11 +389,13 @@ struct ChatView: View {
     private var quickActionButtons: some View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: 8) {
+                if bobbyAI.hasPendingSave {
+                    QuickButton(L10n.tr("Salva piano", english: "Save plan")) {
+                        sendQuickMessage(L10n.tr("salva", english: "save"))
+                    }
+                }
                 QuickButton(L10n.tr("Nuovo piano", english: "New plan")) {
-                    sendQuickMessage(L10n.tr(
-                        "Crea un nuovo piano di allenamento per me",
-                        english: "Create a new training plan for me"
-                    ))
+                    sendQuickMessage(CompactCoachIntent.exampleNewPlanRequest)
                 }
                 QuickButton(L10n.tr("Piano alimentare", english: "Nutrition plan")) {
                     sendQuickMessage(L10n.tr(
@@ -454,15 +464,16 @@ struct ChatView: View {
         let welcomeMessage = L10n.tr(
             """
             Ciao, ho già il tuo profilo.
-            Dimmi cosa ti serve: un piano, come stai, cosa fare oggi o cosa mangiare.
+            Ti preparo un primo piano da questi dati.
             """,
             english: """
             Hi — I already have your profile.
-            Tell me what you need: a plan, how you're feeling, what to do today or what to eat.
+            I'll prepare a first plan from those details.
             """
         )
 
         appState.addMessage(welcomeMessage, isFromUser: false)
+        sendQuickMessage(FirstChatBootstrap.exampleUserMessage)
     }
 
     private func sendMessage() {
@@ -554,7 +565,18 @@ struct ChatView: View {
         healthConnected = false
         bobbyAI.configure(with: aiSettings, healthManager: nil)
         habitCoordinator.refresh(plan: nil)
+        didBootstrapFirstPlan = true
         showWelcomeMessage()
+    }
+}
+
+enum FirstChatBootstrap {
+    static var exampleUserMessage: String {
+        CompactCoachIntent.exampleNewPlanRequest
+    }
+
+    static func shouldStart(hasConversations: Bool, alreadyStarted: Bool) -> Bool {
+        !hasConversations && !alreadyStarted
     }
 }
 
@@ -784,6 +806,7 @@ struct TrainingPlansArchiveView: View {
                 }
             }
         }
+        .navigationViewStyle(.stack)
     }
 }
 
@@ -1003,6 +1026,7 @@ struct TrainingPlanDetailView: View {
                 Text(L10n.tr("Questa azione non può essere annullata.", english: "This action cannot be undone."))
             }
         }
+        .navigationViewStyle(.stack)
     }
 }
 
@@ -1152,6 +1176,7 @@ struct TrainingPlanEditView: View {
                 }
             }
         }
+        .navigationViewStyle(.stack)
     }
 }
 
@@ -1282,5 +1307,6 @@ struct RunnerProfileView: View {
                 }
             }
         }
+        .navigationViewStyle(.stack)
     }
 }

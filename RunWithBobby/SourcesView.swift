@@ -57,6 +57,7 @@ struct SourcesView: View {
                 }
             }
         }
+        .navigationViewStyle(.stack)
     }
 }
 

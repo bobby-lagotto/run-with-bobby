@@ -56,6 +56,7 @@ struct NutritionPlanView: View {
                 }
             }
         }
+        .navigationViewStyle(.stack)
     }
 
     private func heroCard(plan: NutritionPlan) -> some View {

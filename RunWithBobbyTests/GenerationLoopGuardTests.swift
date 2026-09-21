@@ -55,10 +55,26 @@ final class GenerationLoopGuardTests: XCTestCase {
             .createNutritionPlan
         )
         XCTAssertNil(CompactCoachIntent.detect("ok"))
-        XCTAssertNil(CompactCoachIntent.detect("ok", hasPendingTrainingPlan: true))
+        XCTAssertEqual(
+            CompactCoachIntent.detect("ok", hasPendingTrainingPlan: true),
+            .savePendingTraining
+        )
+        XCTAssertEqual(
+            CompactCoachIntent.detect("yes", hasPendingTrainingPlan: true),
+            .savePendingTraining
+        )
+        XCTAssertEqual(
+            CompactCoachIntent.detect("sì", hasPendingTrainingPlan: true),
+            .savePendingTraining
+        )
+        XCTAssertNil(CompactCoachIntent.detect("yes"))
         XCTAssertEqual(
             CompactCoachIntent.detect("salva", hasPendingTrainingPlan: true),
             .savePendingTraining
+        )
+        XCTAssertEqual(
+            CompactCoachIntent.detect(CompactCoachIntent.exampleNewPlanRequest),
+            .createTrainingPlan
         )
     }
 
@@ -269,5 +285,35 @@ final class GenerationLoopGuardTests: XCTestCase {
         XCTAssertTrue(text?.contains("not medical advice") == true)
         XCTAssertFalse(text?.contains("Indicazione food-first") == true)
         AppLanguage.sync(from: .italian)
+    }
+
+    func testFirstChatBootstrapSendsExamplePlanRequest() {
+        XCTAssertFalse(FirstChatBootstrap.shouldStart(hasConversations: true, alreadyStarted: false))
+        XCTAssertFalse(FirstChatBootstrap.shouldStart(hasConversations: false, alreadyStarted: true))
+        XCTAssertTrue(FirstChatBootstrap.shouldStart(hasConversations: false, alreadyStarted: false))
+        XCTAssertEqual(
+            CompactCoachIntent.detect(FirstChatBootstrap.exampleUserMessage),
+            .createTrainingPlan
+        )
+        XCTAssertEqual(
+            FirstChatBootstrap.exampleUserMessage,
+            CompactCoachIntent.exampleNewPlanRequest
+        )
+    }
+
+    func testShortAffirmationSavesOnlyWhenPlanIsPending() {
+        XCTAssertNil(CompactCoachIntent.detect("va bene"))
+        XCTAssertEqual(
+            CompactCoachIntent.detect("va bene", hasPendingTrainingPlan: true),
+            .savePendingTraining
+        )
+        XCTAssertEqual(
+            CompactCoachIntent.detect("sure", hasPendingNutritionPlan: true),
+            .savePendingNutrition
+        )
+        XCTAssertFalse(CompactCoachIntent.isExplicitConfirmation("ok"))
+        XCTAssertFalse(CompactCoachIntent.isExplicitConfirmation("yes"))
+        XCTAssertTrue(CompactCoachIntent.isExplicitConfirmation("salva"))
+        XCTAssertTrue(CompactCoachIntent.isExplicitConfirmation("save"))
     }
 }

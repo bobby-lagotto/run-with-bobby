@@ -2,7 +2,7 @@
 
 Copia questi campi in App Store Connect per la scheda pubblica di **Run with Bobby** (`com.runwithbobby.app`, adamId `6761195463`).
 
-Versione binario da inviare: **1.5.4 (10)**. Note review e Resolution Center: [`AppStoreConnect-1.5.4.md`](AppStoreConnect-1.5.4.md).
+Versione binario da inviare: **1.5.5 (13)**. Note review e Resolution Center: [`AppStoreConnect-1.5.5.md`](AppStoreConnect-1.5.5.md).
 
 ## Informazioni app
 
@@ -142,6 +142,12 @@ Allineata a `PRIVACY_AND_SECURITY.md`:
 Incolla in testa (inglese, per il reviewer):
 
 ```
+Guideline 2.1: a training plan is created from the onboarding profile on first chat, with no model download and no API key.
+
+Path: finish onboarding (defaults OK) → chat shows a generated weekly plan → tap Save plan. “New plan” regenerates a draft from the profile.
+
+Demo account: not required. Do not download a local model. Do not paste an API key.
+
 China mainland storefront is deselected. Run with Bobby is not distributed in mainland China.
 
 Optional OpenAI / Anthropic / OpenRouter remain available only outside China, and only if the user pastes their own API key. There is no ChatGPT or Claude.ai consumer login. Default coaching is on-device (MLX).
@@ -153,20 +159,31 @@ Run with Bobby è gratuita. Il coaching locale resta disponibile senza acquisti,
 
 Apple Health: lettura di metriche di recupero e allenamento per personalizzare il briefing. L’app scrive un workout in Salute solo se l’utente registra una seduta di corsa. In modalità Locale questi dati non escono dal dispositivo. Quando un provider cloud è selezionato, chat, profilo runner e i riepiloghi Health necessari possono essere inviati al provider scelto per generare la risposta.
 
-Account demo: non richiesto. Al primo avvio si può saltare il profilo e parlare con Bobby; il profilo si compila dal foglio Profilo. Per l’AI locale scaricare un modello dalla schermata Impostazioni AI (consigliato Qwen 2.5 1.5B). L’inferenza MLX non gira sul simulatore: testare su iPhone fisico.
+Account demo: non richiesto. Completare l’onboarding (i default vanno bene; HealthKit si può saltare con Later). La chat apre con una richiesta di esempio che crea un piano settimanale dal profilo: non scaricare un modello locale e non incollare una API key. Toccare **Save plan** per attivarlo. L’inferenza MLX non gira sul simulatore: per il modello locale testare su iPhone fisico.
 
 Open source: https://github.com/bobby-lagotto/run-with-bobby
 
-## Risposta al messaggio Apple (Guideline 5)
+## Risposta al messaggio Apple (Guideline 2.1)
 
-Thread Messaggi della submission `ec406992-4537-4119-869a-98cc584a1b8e`:
+Thread Messaggi della submission `ec406992-4537-4119-869a-98cc584a1b8e`. Testo completo: [`AppStoreConnect-1.5.5.md`](AppStoreConnect-1.5.5.md).
 
 ```
 Hello,
 
-China mainland has been deselected in App Availability. Run with Bobby is not distributed in mainland China.
+Thank you for the Guideline 2.1 feedback on 1.5.3 (12), reviewed on iPad Air 11-inch.
 
-Optional OpenAI / Anthropic / OpenRouter stay available only outside China, and only if the user pastes their own API key. There is no ChatGPT consumer login. We are resubmitting the same build 1.5.3 (8).
+The chat could not create a plan when no on-device model and no cloud API key were configured (typical first launch). The coach asked “Want me to make a plan from your profile?” and never built it, so the same question repeated after “create a new plan”.
+
+This is fixed in 1.5.5 (13). No API key and no model download are required to get a plan:
+
+1. Complete onboarding (defaults are fine; language Italian or English).
+2. Chat opens with an example request that builds a weekly plan from the onboarding profile.
+3. Tap “New plan” at any time to generate another draft.
+4. Tap “Save plan” (or type yes / save) to activate it. Today and Plan archive then show that plan.
+
+The app is iPhone-only; we also verified the chat layout and those actions on iPad in compatibility mode.
+
+China mainland remains deselected. Optional OpenAI / Anthropic / OpenRouter still require the user’s own API key.
 
 Thank you.
 ```
@@ -175,13 +192,13 @@ Thank you.
 
 1. Esegui `scripts/scan-secrets.sh`.
 2. In Apple Developer, App ID `com.runwithbobby.app`: HealthKit, App Groups `group.com.runwithbobby.app`, Increased Memory Limit.
-3. Archive Release e upload con `ExportOptions-upload.plist` (comandi in `DEVELOPMENT.md`). Per questo resubmit Guideline 5: **salta l’archive**, usa la build **8** già caricata.
-4. Seleziona la build **8** sulla versione 1.5.3. Non cambiare nome, sottotitolo, descrizione, screenshot, keyword.
+3. Archive Release e upload con `ExportOptions-upload.plist` (comandi in `DEVELOPMENT.md`). Build **13**, versione **1.5.5**.
+4. Seleziona la build **13** sulla versione 1.5.5.
 5. Carica gli 8 PNG 6.5" (slot di default) da `AppStore/screenshots/iphone-6.5/` se non sono già in scheda.
 6. Informazioni sull’app: categoria + classificazioni.
 7. Privacy dell’app: URL Pages + etichette.
 8. Prezzi: Gratis. **Availability: China mainland deselezionato** (obbligatorio se i metadata citano OpenAI).
-9. Review Notes: conferma EN che la Cina continentale è esclusa (vedi sopra).
+9. Review Notes: Guideline 2.1 + conferma EN che la Cina continentale è esclusa (vedi sopra e `AppStoreConnect-1.5.5.md`).
 10. Rispondi al thread Messaggi Apple, poi Submit for Review / Invia di nuovo.
 
 Da questo repository non si può cliccare Submit: servono le credenziali App Store Connect.
